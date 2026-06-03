@@ -18,11 +18,17 @@
     @keyframes fadeIn       { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes spin         { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes glowPulse    { from { opacity: 0.7; } to { opacity: 1; } }
+    @keyframes msgPop       { 0% { opacity:0; transform:translateY(8px) scale(0.95); } 15% { opacity:1; transform:translateY(0) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translateY(-6px); } }
 
     .live-pulse  { animation: pulse 1s infinite alternate; }
     .clip-pulse  { animation: pulse 0.3s infinite alternate; }
     .spin        { animation: spin 1s linear infinite; }
     .glow-pulse  { animation: glowPulse 1.8s ease-in-out infinite alternate; }
+
+    .glow-top, .glow-bottom {
+      /* Slow fade — 800ms out, instant in */
+      transition: opacity 0.8s ease-out, background 0.25s ease;
+    }
 
     .banner-track {
       display: inline-block;
@@ -107,18 +113,16 @@
     .glow-top {
       position: fixed;
       top: 0; left: 0; right: 0;
-      height: 35vh;
+      height: 40vh;
       pointer-events: none;
       z-index: 999;
-      transition: opacity 0.35s ease, background 0.35s ease;
     }
     .glow-bottom {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 35vh;
+      height: 40vh;
       pointer-events: none;
       z-index: 999;
-      transition: opacity 0.35s ease, background 0.35s ease;
     }
   </style>
 </head>
@@ -283,47 +287,141 @@ function PitchIndicator({ cents }) {
   );
 }
 
+// ── MESSAGES ─────────────────────────────────────────────────────────────────
+const MESSAGES = {
+  pocket: ["Hell yeah! 🔥","Whooooo! 🎉","LOCK IT IN!","That's the one!","NAILED IT!","Stay there!","Perfection 👑","You got it!","YES! YES! YES!","Sounding GOOD!"],
+  sharp:  ["Soften up a bit","Ease back","Too hot — cool it","Come down a touch","Dial it back","Gentle now","Float it down","Less ceiling, more floor"],
+  flat:   ["Push it higher","Lift that note","Find the ceiling","Reach for it","More air, push up","Dig deeper","Bring it up!","Unlock your chest"],
+};
+
 // ── SCREEN GLOW ───────────────────────────────────────────────────────────────
 function ScreenGlow({ cents }) {
-  if (cents === null) return null;
+  // Hysteresis — track confirmed zone (must hold 200ms before switching)
+  const zoneRef      = useRef(null);   // current confirmed zone
+  const zoneCandRef  = useRef(null);   // candidate zone
+  const zoneTimerRef = useRef(null);
+  const [zone, setZone] = useState(null);
 
-  const a = Math.abs(cents);
-  // Intensity scales with distance from pocket, maxes out at 100¢
-  const intensity = Math.min(1, Math.max(0, (a - POCKET_CENTS) / (100 - POCKET_CENTS)));
+  // Decay — opacity lingers after signal drops
+  const opacityRef   = useRef(0);
+  const [opacity, setOpacity] = useState(0);
+  const decayTimer   = useRef(null);
 
-  if (a <= POCKET_CENTS) {
-    // Golden glow — both edges
-    const opacity = 0.18 + 0.12 * Math.sin(Date.now() / 800); // subtle breathe via CSS
-    return (
-      <>
-        <div className="glow-top glow-pulse" style={{
-          background: "linear-gradient(to bottom, rgba(201,168,76,0.22) 0%, transparent 100%)",
-          opacity: 0.9,
-        }}/>
-        <div className="glow-bottom glow-pulse" style={{
-          background: "linear-gradient(to top, rgba(201,168,76,0.22) 0%, transparent 100%)",
-          opacity: 0.9,
-        }}/>
-      </>
-    );
-  }
+  // Message system
+  const [msg, setMsg]       = useState(null);
+  const msgKey              = useRef(0);
+  const lastMsgZone         = useRef(null);
+  const lastMsgText         = useRef(null);
+  const msgTimer            = useRef(null);
 
-  if (cents > POCKET_CENTS) {
-    // Sharp — top glows red (ceiling)
-    return (
-      <div className="glow-top" style={{
-        background: `linear-gradient(to bottom, rgba(255,34,0,${0.15 + intensity * 0.35}) 0%, transparent 100%)`,
-        opacity: 1,
-      }}/>
-    );
-  }
+  const fireMessage = useCallback((z) => {
+    const pool = MESSAGES[z];
+    const filtered = pool.filter(m => m !== lastMsgText.current);
+    const text = filtered[Math.floor(Math.random() * filtered.length)];
+    lastMsgText.current = text;
+    lastMsgZone.current = z;
+    msgKey.current += 1;
+    setMsg({ text, key: msgKey.current, zone: z });
+    clearTimeout(msgTimer.current);
+    const duration = z === "pocket" ? 4000 : 3000;
+    msgTimer.current = setTimeout(() => setMsg(null), duration);
+  }, []);
 
-  // Flat — bottom glows red (floor)
+  useEffect(() => {
+    const newZoneCandidate = cents === null ? null
+      : Math.abs(cents) <= POCKET_CENTS ? "pocket"
+      : cents > POCKET_CENTS ? "sharp" : "flat";
+
+    // Hysteresis — only commit to new zone after 200ms of consistency
+    if (newZoneCandidate !== zoneCandRef.current) {
+      zoneCandRef.current = newZoneCandidate;
+      clearTimeout(zoneTimerRef.current);
+      zoneTimerRef.current = setTimeout(() => {
+        if (zoneCandRef.current !== zoneRef.current) {
+          zoneRef.current = zoneCandRef.current;
+          setZone(zoneCandRef.current);
+          // Fire message on zone entry
+          if (zoneCandRef.current) fireMessage(zoneCandRef.current);
+        }
+      }, 200);
+    }
+
+    // Opacity — instant to full on signal, slow decay on silence
+    if (cents !== null) {
+      clearTimeout(decayTimer.current);
+      const a = Math.abs(cents);
+      const intensity = Math.min(1, Math.max(0.4, (a - POCKET_CENTS) / (100 - POCKET_CENTS)));
+      const target = zone === "pocket" ? 0.9 : 0.18 + intensity * 0.55;
+      opacityRef.current = target;
+      setOpacity(target);
+    } else {
+      // Decay over 800ms
+      clearTimeout(decayTimer.current);
+      decayTimer.current = setTimeout(() => { opacityRef.current = 0; setOpacity(0); }, 800);
+    }
+
+    return () => { clearTimeout(zoneTimerRef.current); clearTimeout(decayTimer.current); };
+  }, [cents, zone, fireMessage]);
+
+  const intensity = cents !== null
+    ? Math.min(1, Math.max(0, (Math.abs(cents) - POCKET_CENTS) / (100 - POCKET_CENTS)))
+    : 0;
+
   return (
-    <div className="glow-bottom" style={{
-      background: `linear-gradient(to top, rgba(255,34,0,${0.15 + intensity * 0.35}) 0%, transparent 100%)`,
-      opacity: 1,
-    }}/>
+    <>
+      {/* TOP glow — sharp or pocket */}
+      <div className={`glow-top${zone === "pocket" ? " glow-pulse" : ""}`} style={{
+        background: zone === "pocket"
+          ? "linear-gradient(to bottom, rgba(201,168,76,0.30) 0%, transparent 100%)"
+          : zone === "sharp"
+            ? `linear-gradient(to bottom, rgba(255,34,0,${0.2 + intensity * 0.55}) 0%, transparent 100%)`
+            : "transparent",
+        opacity: zone === "pocket" ? opacity : zone === "sharp" ? opacity : 0,
+      }}/>
+
+      {/* BOTTOM glow — flat or pocket */}
+      <div className={`glow-bottom${zone === "pocket" ? " glow-pulse" : ""}`} style={{
+        background: zone === "pocket"
+          ? "linear-gradient(to top, rgba(201,168,76,0.30) 0%, transparent 100%)"
+          : zone === "flat"
+            ? `linear-gradient(to top, rgba(255,34,0,${0.2 + intensity * 0.55}) 0%, transparent 100%)`
+            : "transparent",
+        opacity: zone === "pocket" ? opacity : zone === "flat" ? opacity : 0,
+      }}/>
+
+      {/* IMMERSIVE MESSAGE */}
+      {msg && (
+        <div key={msg.key} style={{
+          position: "fixed",
+          // Sharp → top third, Flat → bottom third, Pocket → centre
+          top: msg.zone === "sharp" ? "8vh"
+             : msg.zone === "flat"  ? "auto" : "50%",
+          bottom: msg.zone === "flat" ? "8vh" : msg.zone === "pocket" ? "auto" : "auto",
+          transform: msg.zone === "pocket" ? "translateY(-50%)" : "none",
+          left: 0, right: 0,
+          textAlign: "center",
+          pointerEvents: "none",
+          zIndex: 1000,
+          animation: `msgPop ${msg.zone === "pocket" ? 4 : 3}s ease forwards`,
+          padding: "0 20px",
+        }}>
+          <div style={{
+            display: "inline-block",
+            fontSize: msg.zone === "pocket" ? "36px" : "24px",
+            fontWeight: "900",
+            fontFamily: "Georgia, serif",
+            letterSpacing: msg.zone === "pocket" ? "0.08em" : "0.05em",
+            color: msg.zone === "pocket" ? "#C9A84C" : "#ffffff",
+            textShadow: msg.zone === "pocket"
+              ? "0 0 30px rgba(201,168,76,0.9), 0 0 60px rgba(201,168,76,0.5), 0 2px 4px rgba(0,0,0,0.9)"
+              : "0 0 20px rgba(255,34,0,0.8), 0 0 40px rgba(255,34,0,0.4), 0 2px 4px rgba(0,0,0,0.9)",
+            textTransform: msg.zone === "pocket" ? "uppercase" : "none",
+          }}>
+            {msg.text}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -465,6 +563,8 @@ function MicDrop() {
   const [lastTrackKey,  setLastTrackKey]  = useState(null);
   const [reportData,    setReportData]    = useState([]);
   const [showReport,    setShowReport]    = useState(false);
+  const [countdown,     setCountdown]     = useState(null); // 10→1 during recording
+  const countdownTimer = useRef(null);
 
   const roomPeakTimer  = useRef(null);
   const voxPeakTimer   = useRef(null);
@@ -498,7 +598,16 @@ function MicDrop() {
     if (!mediaStream.current || identifying.current) return;
     identifying.current = true;
     setIsIdentifying(true);
-    setStatusMsg("Recording 10 seconds...");
+    setStatusMsg("");
+    // Countdown — 10 seconds matches AUDIO_SAMPLE_MS
+    setCountdown(10);
+    let cd = 10;
+    clearInterval(countdownTimer.current);
+    countdownTimer.current = setInterval(() => {
+      cd -= 1;
+      if (cd <= 0) { clearInterval(countdownTimer.current); setCountdown(null); }
+      else setCountdown(cd);
+    }, 1000);
     try {
       const chunks   = [];
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -555,6 +664,8 @@ function MicDrop() {
       setStatusMsg(`Error: ${err.message}`);
       setTimeout(()=>setStatusMsg(""),5000);
     } finally {
+      clearInterval(countdownTimer.current);
+      setCountdown(null);
       identifying.current = false;
       setIsIdentifying(false);
     }
@@ -566,6 +677,8 @@ function MicDrop() {
       setArmed(false);
       clearInterval(autoTimer.current);
       clearInterval(reportTimer.current);
+      clearInterval(countdownTimer.current);
+      setCountdown(null);
       cancelAnimationFrame(animFrame.current);
       if (analyser.current)   { analyser.current.disconnect(); analyser.current = null; }
       if (audioCtx.current)   { audioCtx.current.close(); audioCtx.current = null; }
@@ -594,7 +707,10 @@ function MicDrop() {
 
         setArmed(true);
 
-        // Auto recognition
+        // Identify immediately on arm — don't make user wait 45s
+        setTimeout(() => recognizeTrack(), 300);
+
+        // Auto recognition every 45s after that
         autoTimer.current = setInterval(() => {
           if (!identifying.current) recognizeTrack();
         }, RECOGNITION_INTERVAL);
@@ -666,8 +782,8 @@ function MicDrop() {
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
 
-      {/* SCREEN GLOW — peripheral pitch indicator */}
-      {armed && <ScreenGlow cents={smoothCents} />}
+      {/* SCREEN GLOW — only active after track identified */}
+      {armed && trackInfo && <ScreenGlow cents={smoothCents} />}
 
       {/* HEADER */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"22px 20px 6px", textAlign:"center" }}>
@@ -684,13 +800,41 @@ function MicDrop() {
       {/* BANNER */}
       <TrackBanner trackInfo={trackInfo} isIdentifying={isIdentifying} />
 
-      {/* PITCH INDICATOR */}
+      {/* PITCH INDICATOR — hidden during countdown, shown after track identified */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"12px 20px 8px" }}>
-        <PitchIndicator cents={pitchCents} />
+        {trackInfo
+          ? <PitchIndicator cents={pitchCents} />
+          : armed && countdown !== null
+            ? (
+              <div style={{ borderRadius:"12px", background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.15)", padding:"18px 12px", textAlign:"center" }}>
+                <div style={{ fontSize:"9px", letterSpacing:"0.28em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>
+                  IDENTIFYING SONG
+                </div>
+                <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"14px" }}>
+                  Pitch monitoring starts in
+                </div>
+                <div style={{ fontSize:"64px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1, textShadow:"0 0 30px rgba(201,168,76,0.4)" }}>
+                  {countdown}
+                </div>
+                <div style={{ marginTop:"10px", fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+                  HOLD PHONE NEAR SPEAKER
+                </div>
+              </div>
+            )
+            : armed
+              ? (
+                <div style={{ borderRadius:"12px", background:"rgba(0,0,0,0)", border:"1px solid #1a1a1a", padding:"18px 12px", textAlign:"center" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>
+                    TAP IDENTIFY TO BEGIN
+                  </div>
+                </div>
+              )
+              : <PitchIndicator cents={null} />
+        }
       </div>
 
-      {/* STATUS */}
-      {statusMsg && (
+      {/* STATUS — non-countdown messages only */}
+      {statusMsg && !countdown && (
         <div style={{ fontSize:"9px", color:"#C9A84C", letterSpacing:"0.12em", marginBottom:"4px", padding:"0 20px", textAlign:"center" }}>
           {isIdentifying && <span className="spin" style={{ display:"inline-block", marginRight:"6px" }}>◈</span>}
           {statusMsg}
@@ -767,7 +911,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v0.4 — Powered by AudD + Claude
+        Mic Drop v0.6 — Powered by AudD + Claude
       </div>
 
     </div>
