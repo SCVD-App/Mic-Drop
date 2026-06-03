@@ -13,17 +13,16 @@
     body { display: flex; justify-content: center; }
     #root { width: 100%; max-width: 420px; }
 
-    @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
-    @keyframes scroll-left {
-      0%   { transform: translateX(100vw); }
-      100% { transform: translateX(-100%); }
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes pulse        { from { opacity: 1; } to { opacity: 0.3; } }
+    @keyframes scroll-left  { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+    @keyframes fadeIn       { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin         { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes glowPulse    { from { opacity: 0.7; } to { opacity: 1; } }
 
     .live-pulse  { animation: pulse 1s infinite alternate; }
     .clip-pulse  { animation: pulse 0.3s infinite alternate; }
     .spin        { animation: spin 1s linear infinite; }
+    .glow-pulse  { animation: glowPulse 1.8s ease-in-out infinite alternate; }
 
     .banner-track {
       display: inline-block;
@@ -81,16 +80,46 @@
       background: rgba(201,168,76,0.08);
       color: #C9A84C;
     }
-    .identify-btn:active {
-      background: rgba(201,168,76,0.18);
-      transform: scale(0.98);
-    }
-    .identify-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .identify-btn:active { background: rgba(201,168,76,0.18); transform: scale(0.98); }
+    .identify-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .track-card { animation: fadeIn 0.4s ease; }
+    .report-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s;
+      border: 2px solid rgba(46,109,164,0.5);
+      background: rgba(46,109,164,0.1);
+      color: #2E6DA4;
+    }
+    .report-btn:active { background: rgba(46,109,164,0.2); transform: scale(0.98); }
+
+    .track-card  { animation: fadeIn 0.4s ease; }
+    .report-card { animation: fadeIn 0.5s ease; }
+
+    /* Screen glow overlays — fixed to viewport edges */
+    .glow-top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 35vh;
+      pointer-events: none;
+      z-index: 999;
+      transition: opacity 0.35s ease, background 0.35s ease;
+    }
+    .glow-bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 35vh;
+      pointer-events: none;
+      z-index: 999;
+      transition: opacity 0.35s ease, background 0.35s ease;
+    }
   </style>
 </head>
 <body>
@@ -100,23 +129,71 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
 const PROXY_BASE_URL       = "https://micdrop.emblen-scott.workers.dev";
-const RECOGNITION_INTERVAL = 45000;  // 45 seconds between auto attempts
-const AUDIO_SAMPLE_MS      = 10000;  // 10 second snapshot
+const RECOGNITION_INTERVAL = 45000;
+const AUDIO_SAMPLE_MS      = 10000;
 const NUM_LEDS             = 20;
+const PITCH_SMOOTH_MS      = 300;   // smoothing window for glow
+const POCKET_CENTS         = 35;    // ≤35¢ = in the pocket (Whitney standard)
+const CLOSE_CENTS          = 60;    // ≤60¢ = close
+const REPORT_INTERVAL_MS   = 500;   // log pitch data point every 500ms
+
+// ── PITCH DETECTION (autocorrelation) ────────────────────────────────────────
+function detectPitch(buffer, sampleRate) {
+  const SIZE    = buffer.length;
+  const rms     = Math.sqrt(buffer.reduce((s, v) => s + v * v, 0) / SIZE);
+  if (rms < 0.01) return null; // silence
+
+  // Autocorrelation
+  const corr = new Float32Array(SIZE);
+  for (let lag = 0; lag < SIZE; lag++) {
+    let sum = 0;
+    for (let i = 0; i < SIZE - lag; i++) sum += buffer[i] * buffer[i + lag];
+    corr[lag] = sum;
+  }
+
+  // Find first dip then first peak
+  let d = 0;
+  while (d < SIZE / 2 && corr[d] > corr[d + 1]) d++;
+  let maxVal = -Infinity, maxLag = -1;
+  for (let i = d; i < SIZE / 2; i++) {
+    if (corr[i] > maxVal) { maxVal = corr[i]; maxLag = i; }
+  }
+  if (maxLag === -1 || maxVal < corr[0] * 0.5) return null;
+
+  // Parabolic interpolation for sub-sample accuracy
+  const y0 = corr[maxLag - 1] || 0;
+  const y1 = corr[maxLag];
+  const y2 = corr[maxLag + 1] || 0;
+  const refined = maxLag + (y2 - y0) / (2 * (2 * y1 - y0 - y2) + 1e-10);
+
+  const freq = sampleRate / refined;
+  if (freq < 60 || freq > 1200) return null; // outside vocal range
+  return freq;
+}
+
+function freqToCents(freq, refFreq = 440) {
+  return Math.round(1200 * Math.log2(freq / refFreq));
+}
+
+// Normalise to ±100¢ relative to nearest semitone
+function freqToNearestCents(freq) {
+  if (!freq) return null;
+  const midiFloat = 12 * Math.log2(freq / 440) + 69;
+  const midiNearest = Math.round(midiFloat);
+  return Math.round((midiFloat - midiNearest) * 100);
+}
 
 // ── LED METER ─────────────────────────────────────────────────────────────────
 function LEDMeter({ level, peakHold, label, icon }) {
-  const activeLEDs = Math.round((level / 100) * NUM_LEDS);
-  const peakLED    = Math.round((peakHold / 100) * NUM_LEDS) - 1;
+  const active = Math.round((level / 100) * NUM_LEDS);
+  const peak   = Math.round((peakHold / 100) * NUM_LEDS) - 1;
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"6px", width:"100%" }}>
-      <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>
-        {icon} {label}
-      </div>
+      <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{icon} {label}</div>
       <div style={{ display:"flex", flexDirection:"column-reverse", gap:"3px", height:"220px" }}>
         {Array.from({ length: NUM_LEDS }).map((_, i) => {
-          const on    = i < activeLEDs;
-          const isPk  = i === peakLED && peakHold > 0;
+          const on    = i < active;
+          const isPk  = i === peak && peakHold > 0;
           const color = i >= NUM_LEDS - 2 ? "#ff2200" : i >= NUM_LEDS - 6 ? "#ffaa00" : "#00ff66";
           return (
             <div key={i} style={{
@@ -136,12 +213,10 @@ function LEDMeter({ level, peakHold, label, icon }) {
 function Fader({ value, onChange, label, color }) {
   const trackRef = useRef(null);
   const drag     = useRef(false);
-
-  const calc = (clientY) => {
+  const calc = (y) => {
     const r = trackRef.current.getBoundingClientRect();
-    return Math.round((1 - Math.max(0, Math.min(1, (clientY - r.top) / r.height))) * 100);
+    return Math.round((1 - Math.max(0, Math.min(1, (y - r.top) / r.height))) * 100);
   };
-
   useEffect(() => {
     const onMM = (e) => { if (drag.current) onChange(calc(e.clientY)); };
     const onMU = ()  => { drag.current = false; };
@@ -158,10 +233,8 @@ function Fader({ value, onChange, label, color }) {
       window.removeEventListener("touchend",  onTE);
     };
   }, []);
-
   const thumbTop = (1 - value / 100) * 200;
   const dbLabel  = value === 0 ? "-∞" : value === 100 ? "0 dB" : `${Math.round(-24 + (value/100)*24)} dB`;
-
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"10px", userSelect:"none" }}>
       <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{label}</div>
@@ -196,16 +269,164 @@ function PitchIndicator({ cents }) {
   const info = (() => {
     if (cents === null) return { bg:"rgba(0,0,0,0)", label:"—", sub:"awaiting signal", accent:"#333" };
     const a = Math.abs(cents);
-    if (a <= 20) return { bg:"rgba(0,255,102,0.10)", label:"IN THE POCKET", sub:`${cents>0?"+":""}${cents}¢`, accent:"#00ff66" };
-    if (a <= 50) return { bg:"rgba(255,170,0,0.10)", label:"CLOSE",          sub:`${cents>0?"+":""}${cents}¢`, accent:"#ffaa00" };
-    return           { bg:"rgba(255,34,0,0.10)",  label:"OFF PITCH",       sub:`${cents>0?"+":""}${cents}¢`, accent:"#ff2200" };
+    if (a <= POCKET_CENTS) return { bg:"rgba(201,168,76,0.12)", label:"IN THE POCKET", sub:`${cents>0?"+":""}${cents}¢`, accent:"#C9A84C" };
+    if (a <= CLOSE_CENTS)  return { bg:"rgba(255,170,0,0.10)",  label:"CLOSE",         sub:`${cents>0?"+":""}${cents}¢`, accent:"#ffaa00" };
+    return                        { bg:"rgba(255,34,0,0.10)",   label:"OFF PITCH",     sub:`${cents>0?"+":""}${cents}¢`, accent:"#ff2200" };
   })();
   return (
     <div style={{ width:"100%", borderRadius:"12px", background:info.bg, border:`1px solid ${info.accent}33`, padding:"14px 12px", textAlign:"center", transition:"background 0.35s, border 0.35s", position:"relative", overflow:"hidden" }}>
-      {cents !== null && <div style={{ position:"absolute", bottom:0, left:"50%", transform:`translateX(calc(-50% + ${cents*1.1}px))`, width:"3px", height:"100%", background:info.accent, opacity:0.55, borderRadius:"2px", transition:"transform 0.12s, background 0.35s", boxShadow:`0 0 10px ${info.accent}` }}/>}
+      {cents !== null && <div style={{ position:"absolute", bottom:0, left:"50%", transform:`translateX(calc(-50% + ${Math.max(-80,Math.min(80,cents*1.1))}px))`, width:"3px", height:"100%", background:info.accent, opacity:0.55, borderRadius:"2px", transition:"transform 0.12s, background 0.35s", boxShadow:`0 0 10px ${info.accent}` }}/>}
       <div style={{ position:"absolute", bottom:0, left:"50%", width:"1px", height:"100%", background:"#282828" }}/>
       <div style={{ fontSize:"9px", letterSpacing:"0.28em", color:info.accent, fontFamily:"'Courier New',monospace", marginBottom:"3px", position:"relative" }}>{info.label}</div>
       <div style={{ fontSize:"18px", fontWeight:"bold", color:info.accent, fontFamily:"'Courier New',monospace", position:"relative" }}>{info.sub}</div>
+    </div>
+  );
+}
+
+// ── SCREEN GLOW ───────────────────────────────────────────────────────────────
+function ScreenGlow({ cents }) {
+  if (cents === null) return null;
+
+  const a = Math.abs(cents);
+  // Intensity scales with distance from pocket, maxes out at 100¢
+  const intensity = Math.min(1, Math.max(0, (a - POCKET_CENTS) / (100 - POCKET_CENTS)));
+
+  if (a <= POCKET_CENTS) {
+    // Golden glow — both edges
+    const opacity = 0.18 + 0.12 * Math.sin(Date.now() / 800); // subtle breathe via CSS
+    return (
+      <>
+        <div className="glow-top glow-pulse" style={{
+          background: "linear-gradient(to bottom, rgba(201,168,76,0.22) 0%, transparent 100%)",
+          opacity: 0.9,
+        }}/>
+        <div className="glow-bottom glow-pulse" style={{
+          background: "linear-gradient(to top, rgba(201,168,76,0.22) 0%, transparent 100%)",
+          opacity: 0.9,
+        }}/>
+      </>
+    );
+  }
+
+  if (cents > POCKET_CENTS) {
+    // Sharp — top glows red (ceiling)
+    return (
+      <div className="glow-top" style={{
+        background: `linear-gradient(to bottom, rgba(255,34,0,${0.15 + intensity * 0.35}) 0%, transparent 100%)`,
+        opacity: 1,
+      }}/>
+    );
+  }
+
+  // Flat — bottom glows red (floor)
+  return (
+    <div className="glow-bottom" style={{
+      background: `linear-gradient(to top, rgba(255,34,0,${0.15 + intensity * 0.35}) 0%, transparent 100%)`,
+      opacity: 1,
+    }}/>
+  );
+}
+
+// ── PERFORMANCE REPORT ────────────────────────────────────────────────────────
+function PerformanceReport({ data, trackInfo, onClose }) {
+  if (!data || data.length === 0) return null;
+
+  const total     = data.length;
+  const pocket    = data.filter(d => Math.abs(d.cents) <= POCKET_CENTS).length;
+  const close     = data.filter(d => Math.abs(d.cents) > POCKET_CENTS && Math.abs(d.cents) <= CLOSE_CENTS).length;
+  const off       = data.filter(d => Math.abs(d.cents) > CLOSE_CENTS).length;
+  const accuracy  = Math.round((pocket / total) * 100);
+
+  const grade = (() => {
+    if (accuracy >= 90) return { label:"👑 DIVA",        color:"#C9A84C" };
+    if (accuracy >= 80) return { label:"💫 LEGENDARY",   color:"#C9A84C" };
+    if (accuracy >= 66) return { label:"🌟 HEADLINER",   color:"#ffaa00" };
+    if (accuracy >= 51) return { label:"⭐ RISING STAR", color:"#ffaa00" };
+    if (accuracy >= 31) return { label:"🎤 OPEN MIC",    color:"#888" };
+    return                     { label:"🔪 CORONER",     color:"#ff2200" };
+  })();
+
+  // Mini pitch graph — 60 points max, scaled to container
+  const graphPoints = data.slice(-60);
+  const W = 340, H = 80;
+  const midY = H / 2;
+  const scaleY = (cents) => midY - (cents / 100) * (H * 0.45);
+  const ptPath = graphPoints.map((d, i) => {
+    const x = (i / Math.max(graphPoints.length - 1, 1)) * W;
+    const y = scaleY(Math.max(-100, Math.min(100, d.cents)));
+    return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+
+  // Colour each segment
+  const segments = graphPoints.map((d, i) => {
+    if (i === 0) return null;
+    const x1 = ((i-1) / Math.max(graphPoints.length-1,1)) * W;
+    const x2 = (i     / Math.max(graphPoints.length-1,1)) * W;
+    const y1 = scaleY(Math.max(-100,Math.min(100,graphPoints[i-1].cents)));
+    const y2 = scaleY(Math.max(-100,Math.min(100,d.cents)));
+    const c  = Math.abs(d.cents) <= POCKET_CENTS ? "#C9A84C" : Math.abs(d.cents) <= CLOSE_CENTS ? "#ffaa00" : "#ff2200";
+    return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={c} strokeWidth="2" strokeLinecap="round"/>;
+  });
+
+  return (
+    <div className="report-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 16px" }}>
+      <div style={{ background:"rgba(20,20,20,0.95)", border:"1px solid #222", borderRadius:"16px", padding:"18px 16px", position:"relative" }}>
+
+        {/* Close */}
+        <button onClick={onClose} style={{ position:"absolute", top:"12px", right:"12px", background:"none", border:"none", color:"#444", fontSize:"18px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>✕</button>
+
+        {/* Header */}
+        <div style={{ textAlign:"center", marginBottom:"14px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"6px" }}>PERFORMANCE REPORT</div>
+          {trackInfo && (
+            <div style={{ fontSize:"11px", color:"#666", fontFamily:"'Courier New',monospace" }}>
+              {trackInfo.title} — {trackInfo.artist}
+            </div>
+          )}
+        </div>
+
+        {/* Score */}
+        <div style={{ textAlign:"center", marginBottom:"16px" }}>
+          <div style={{ fontSize:"48px", fontWeight:"900", color: grade.color, fontFamily:"Georgia,serif", lineHeight:1 }}>{accuracy}%</div>
+          <div style={{ fontSize:"13px", letterSpacing:"0.2em", color: grade.color, fontFamily:"'Courier New',monospace", marginTop:"4px" }}>{grade.label}</div>
+        </div>
+
+        {/* Graph */}
+        <div style={{ background:"rgba(0,0,0,0.4)", borderRadius:"8px", padding:"8px", marginBottom:"14px", border:"1px solid #1a1a1a" }}>
+          <div style={{ fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", marginBottom:"4px" }}>PITCH TIMELINE</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:"block" }}>
+            {/* Centre line */}
+            <line x1="0" y1={midY} x2={W} y2={midY} stroke="#1a1a1a" strokeWidth="1"/>
+            {/* Pocket zone band */}
+            <rect x="0" y={scaleY(POCKET_CENTS)} width={W} height={scaleY(-POCKET_CENTS)-scaleY(POCKET_CENTS)} fill="rgba(201,168,76,0.06)" rx="2"/>
+            {/* Segments */}
+            {segments}
+          </svg>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:"7px", color:"#333", fontFamily:"'Courier New',monospace", marginTop:"2px" }}>
+            <span>START</span><span>— pocket zone —</span><span>NOW</span>
+          </div>
+        </div>
+
+        {/* Breakdown */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px", marginBottom:"10px" }}>
+          {[
+            { label:"IN POCKET", val: pocket, color:"#C9A84C" },
+            { label:"CLOSE",     val: close,  color:"#ffaa00" },
+            { label:"OFF",       val: off,    color:"#ff2200" },
+          ].map(({ label, val, color }) => (
+            <div key={label} style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px 4px", textAlign:"center", border:`1px solid ${color}22` }}>
+              <div style={{ fontSize:"18px", fontWeight:"bold", color, fontFamily:"'Courier New',monospace" }}>{val}</div>
+              <div style={{ fontSize:"7px", color:"#444", letterSpacing:"0.1em", fontFamily:"'Courier New',monospace", marginTop:"2px" }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Simon Cowell line */}
+        <div style={{ textAlign:"center", fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
+          Simon Cowell standard: 90% · Whitney Houston: unreachable
+        </div>
+
+      </div>
     </div>
   );
 }
@@ -219,7 +440,7 @@ function TrackBanner({ trackInfo, isIdentifying }) {
       : "♪  Arm mic then tap IDENTIFY to detect track  ♪";
   return (
     <div style={{ width:"100%", overflow:"hidden", height:"26px", background:"rgba(0,0,0,0.4)", borderTop:"1px solid #1a1a1a", borderBottom:"1px solid #1a1a1a", display:"flex", alignItems:"center" }}>
-      <div className="banner-track" style={{ fontSize:"10px", color: trackInfo ? "#C9A84C" : isIdentifying ? "#C9A84C" : "#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", lineHeight:"26px", paddingLeft:"20px" }}>
+      <div className="banner-track" style={{ fontSize:"10px", color: trackInfo || isIdentifying ? "#C9A84C" : "#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", lineHeight:"26px", paddingLeft:"20px" }}>
         {text}
       </div>
     </div>
@@ -236,19 +457,41 @@ function MicDrop() {
   const [roomPeak,      setRoomPeak]      = useState(0);
   const [voxPeak,       setVoxPeak]       = useState(0);
   const [pitchCents,    setPitchCents]    = useState(null);
+  const [smoothCents,   setSmoothCents]   = useState(null); // smoothed for glow
   const [clipping,      setClipping]      = useState(false);
   const [trackInfo,     setTrackInfo]     = useState(null);
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [statusMsg,     setStatusMsg]     = useState("");
   const [lastTrackKey,  setLastTrackKey]  = useState(null);
+  const [reportData,    setReportData]    = useState([]);
+  const [showReport,    setShowReport]    = useState(false);
 
-  const roomPeakTimer = useRef(null);
-  const voxPeakTimer  = useRef(null);
-  const animFrame     = useRef(null);
-  const tick          = useRef(0);
-  const mediaStream   = useRef(null);
-  const autoTimer     = useRef(null);
-  const identifying   = useRef(false); // prevent concurrent calls
+  const roomPeakTimer  = useRef(null);
+  const voxPeakTimer   = useRef(null);
+  const animFrame      = useRef(null);
+  const tick           = useRef(0);
+  const mediaStream    = useRef(null);
+  const audioCtx       = useRef(null);
+  const analyser       = useRef(null);
+  const pitchBuffer    = useRef(new Float32Array(2048));
+  const autoTimer      = useRef(null);
+  const reportTimer    = useRef(null);
+  const identifying    = useRef(false);
+  const smoothRef      = useRef(null); // running smooth value
+  const pitchHistory   = useRef([]);   // { time, cents } for smoothing window
+
+  // ── PITCH SMOOTHING ────────────────────────────────────────────────────────
+  const addPitchSample = useCallback((cents) => {
+    const now = Date.now();
+    pitchHistory.current.push({ time: now, cents });
+    // Trim to smoothing window
+    pitchHistory.current = pitchHistory.current.filter(p => now - p.time < PITCH_SMOOTH_MS);
+    // Median of window
+    const vals = pitchHistory.current.map(p => p.cents).sort((a,b) => a-b);
+    const med  = vals[Math.floor(vals.length / 2)];
+    smoothRef.current = med;
+    setSmoothCents(med);
+  }, []);
 
   // ── CORE RECOGNITION ───────────────────────────────────────────────────────
   const recognizeTrack = useCallback(async () => {
@@ -256,104 +499,61 @@ function MicDrop() {
     identifying.current = true;
     setIsIdentifying(true);
     setStatusMsg("Recording 10 seconds...");
-
     try {
-      // Record audio
-      const chunks  = [];
+      const chunks   = [];
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : "audio/ogg";
-
+        : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
       const recorder = new MediaRecorder(mediaStream.current, { mimeType });
-      recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-
+      recorder.ondataavailable = (e) => { if (e.data?.size > 0) chunks.push(e.data); };
       await new Promise((resolve, reject) => {
         recorder.onerror = reject;
         recorder.onstop  = resolve;
-        recorder.start(500); // collect chunks every 500ms
-        setTimeout(() => {
-          if (recorder.state !== "inactive") recorder.stop();
-        }, AUDIO_SAMPLE_MS);
+        recorder.start(500);
+        setTimeout(() => { if (recorder.state !== "inactive") recorder.stop(); }, AUDIO_SAMPLE_MS);
       });
-
-      if (chunks.length === 0) {
-        setStatusMsg("No audio captured — check mic permissions");
-        setTimeout(() => setStatusMsg(""), 4000);
-        return;
-      }
-
+      if (!chunks.length) { setStatusMsg("No audio captured — check mic permissions"); setTimeout(()=>setStatusMsg(""),4000); return; }
       setStatusMsg("Sending to AudD...");
-
-      // Convert to base64
       const blob   = new Blob(chunks, { type: mimeType });
-      const base64 = await new Promise((resolve, reject) => {
-        const reader  = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result;
-          if (result && result.includes(",")) {
-            resolve(result.split(",")[1]);
-          } else {
-            reject(new Error("FileReader failed"));
-          }
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onloadend = () => r.result?.includes(",") ? res(r.result.split(",")[1]) : rej(new Error("FileReader failed"));
+        r.onerror   = rej;
+        r.readAsDataURL(blob);
       });
-
-      // Hit the proxy
-      const res  = await fetch(`${PROXY_BASE_URL}/recognize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const resp = await fetch(`${PROXY_BASE_URL}/recognize`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ audio: base64, mimeType }),
       });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      if (data.status === "error") {
-        setStatusMsg(`AudD: ${data.error?.error_message || "error"}`);
-        setTimeout(() => setStatusMsg(""), 5000);
-        return;
-      }
-
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (data.status === "error") { setStatusMsg(`AudD: ${data.error?.error_message || "error"}`); setTimeout(()=>setStatusMsg(""),5000); return; }
       if (data.result) {
         const { title, artist } = data.result;
-        const trackKey = `${title}||${artist}`;
-
-        if (trackKey !== lastTrackKey) {
+        const key = `${title}||${artist}`;
+        if (key !== lastTrackKey) {
           setStatusMsg("Getting musical details...");
           try {
-            const enrichRes  = await fetch(`${PROXY_BASE_URL}/enrich`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+            const er = await fetch(`${PROXY_BASE_URL}/enrich`, {
+              method:"POST", headers:{"Content-Type":"application/json"},
               body: JSON.stringify({ title, artist }),
             });
-            const enrichData = await enrichRes.json();
-            setTrackInfo({
-              title, artist,
-              key:   enrichData.key   || "Unknown",
-              bpm:   enrichData.bpm   || "—",
-              genre: enrichData.genre || "",
-              tip:   enrichData.tip   || "",
-            });
-            setLastTrackKey(trackKey);
-          } catch {
-            setTrackInfo({ title, artist, key:"—", bpm:"—", genre:"", tip:"" });
-            setLastTrackKey(trackKey);
-          }
+            const ed = await er.json();
+            setTrackInfo({ title, artist, key: ed.key||"Unknown", bpm: ed.bpm||"—", genre: ed.genre||"", tip: ed.tip||"" });
+            setLastTrackKey(key);
+          } catch { setTrackInfo({ title, artist, key:"—", bpm:"—", genre:"", tip:"" }); setLastTrackKey(key); }
+          // Reset report data on new track
+          setReportData([]);
+          setShowReport(false);
         }
         setStatusMsg("");
       } else {
         setStatusMsg("No match — try holding closer to speaker");
-        setTimeout(() => setStatusMsg(""), 5000);
+        setTimeout(()=>setStatusMsg(""),5000);
       }
-
     } catch (err) {
-      console.error("Recognition error:", err);
       setStatusMsg(`Error: ${err.message}`);
-      setTimeout(() => setStatusMsg(""), 5000);
+      setTimeout(()=>setStatusMsg(""),5000);
     } finally {
       identifying.current = false;
       setIsIdentifying(false);
@@ -365,67 +565,109 @@ function MicDrop() {
     if (armed) {
       setArmed(false);
       clearInterval(autoTimer.current);
+      clearInterval(reportTimer.current);
       cancelAnimationFrame(animFrame.current);
-      if (mediaStream.current) {
-        mediaStream.current.getTracks().forEach(t => t.stop());
-        mediaStream.current = null;
-      }
+      if (analyser.current)   { analyser.current.disconnect(); analyser.current = null; }
+      if (audioCtx.current)   { audioCtx.current.close(); audioCtx.current = null; }
+      if (mediaStream.current){ mediaStream.current.getTracks().forEach(t=>t.stop()); mediaStream.current = null; }
       setRoomMeter(0); setVoxMeter(0); setRoomPeak(0); setVoxPeak(0);
-      setPitchCents(null); setClipping(false); setStatusMsg("");
-      identifying.current = false;
-      setIsIdentifying(false);
+      setPitchCents(null); setSmoothCents(null); setClipping(false); setStatusMsg("");
+      identifying.current = false; setIsIdentifying(false);
+      pitchHistory.current = []; smoothRef.current = null;
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl:  false,
-          },
+          audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
         mediaStream.current = stream;
+
+        // Web Audio pipeline
+        const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+        const source   = ctx.createMediaStreamSource(stream);
+        const anal     = ctx.createAnalyser();
+        anal.fftSize   = 2048;
+        source.connect(anal);
+        audioCtx.current  = ctx;
+        analyser.current  = anal;
+        pitchBuffer.current = new Float32Array(anal.fftSize);
+
         setArmed(true);
-        // Auto recognition every 45 seconds — but user can tap manually anytime
+
+        // Auto recognition
         autoTimer.current = setInterval(() => {
           if (!identifying.current) recognizeTrack();
         }, RECOGNITION_INTERVAL);
-      } catch (err) {
+
+        // Report data capture — every 500ms store a pitch reading
+        reportTimer.current = setInterval(() => {
+          if (smoothRef.current !== null) {
+            setReportData(prev => [...prev.slice(-300), { time: Date.now(), cents: smoothRef.current }]);
+          }
+        }, REPORT_INTERVAL_MS);
+
+      } catch {
         alert("Microphone access required.\n\nPlease tap Allow when prompted, then try again.");
       }
     }
   };
 
-  // ── METERING ───────────────────────────────────────────────────────────────
+  // ── METERING + REAL PITCH DETECTION ───────────────────────────────────────
   useEffect(() => {
     if (!armed) { cancelAnimationFrame(animFrame.current); return; }
+    let localTick = 0;
+
     const animate = () => {
-      tick.current += 1;
-      const t = tick.current;
-      const rNew = Math.max(0, Math.min(100, roomLevel*0.75 + (Math.random()-0.5)*20 + Math.abs(Math.sin(t*0.08))*15));
-      setRoomMeter(rNew);
-      if (rNew > roomPeak) { setRoomPeak(rNew); clearTimeout(roomPeakTimer.current); roomPeakTimer.current = setTimeout(()=>setRoomPeak(0), 1600); }
-      const vNew = Math.max(0, Math.min(100, voxLevel*0.7 + (Math.random()-0.5)*30 + Math.abs(Math.sin(t*0.05))*20));
-      setVoxMeter(vNew);
-      if (vNew > voxPeak) { setVoxPeak(vNew); clearTimeout(voxPeakTimer.current); voxPeakTimer.current = setTimeout(()=>setVoxPeak(0), 1600); }
-      setClipping(vNew > 95 || rNew > 95);
-      setPitchCents(Math.round(Math.max(-60, Math.min(60, Math.sin(t*0.03)*55 + (Math.random()-0.5)*12))));
+      localTick++;
+      tick.current = localTick;
+
+      // ── Real pitch from analyser ──
+      if (analyser.current) {
+        analyser.current.getFloatTimeDomainData(pitchBuffer.current);
+        const sampleRate = audioCtx.current?.sampleRate || 44100;
+        const freq = detectPitch(pitchBuffer.current, sampleRate);
+        const cents = freq ? freqToNearestCents(freq) : null;
+        setPitchCents(cents);
+        if (cents !== null) addPitchSample(cents);
+        else { pitchHistory.current = []; smoothRef.current = null; setSmoothCents(null); }
+
+        // Derive meter levels from analyser RMS
+        const buf = pitchBuffer.current;
+        const rms = Math.sqrt(buf.reduce((s,v)=>s+v*v,0)/buf.length);
+        const db  = 20 * Math.log10(Math.max(rms, 1e-6));
+        // Map -60dB→0 to 0→100
+        const voxLvl = Math.max(0, Math.min(100, ((db + 60) / 60) * 100 * (voxLevel / 100)));
+        setVoxMeter(voxLvl);
+        if (voxLvl > voxPeak) { setVoxPeak(voxLvl); clearTimeout(voxPeakTimer.current); voxPeakTimer.current = setTimeout(()=>setVoxPeak(0), 1600); }
+
+        // Room — simulated based on fader (no second mic available)
+        const rNew = Math.max(0, Math.min(100, roomLevel*0.75 + (Math.random()-0.5)*20 + Math.abs(Math.sin(localTick*0.08))*15));
+        setRoomMeter(rNew);
+        if (rNew > roomPeak) { setRoomPeak(rNew); clearTimeout(roomPeakTimer.current); roomPeakTimer.current = setTimeout(()=>setRoomPeak(0),1600); }
+
+        setClipping(voxLvl > 95 || rNew > 95);
+      }
+
       animFrame.current = requestAnimationFrame(animate);
     };
     animFrame.current = requestAnimationFrame(animate);
     return () => { cancelAnimationFrame(animFrame.current); clearTimeout(roomPeakTimer.current); clearTimeout(voxPeakTimer.current); };
-  }, [armed, roomLevel, voxLevel]);
+  }, [armed, roomLevel, voxLevel, addPitchSample]);
 
   useEffect(() => {
     return () => {
       clearInterval(autoTimer.current);
+      clearInterval(reportTimer.current);
       if (mediaStream.current) mediaStream.current.getTracks().forEach(t=>t.stop());
     };
   }, []);
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px" }}>
+    <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
+
+      {/* SCREEN GLOW — peripheral pitch indicator */}
+      {armed && <ScreenGlow cents={smoothCents} />}
 
       {/* HEADER */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"22px 20px 6px", textAlign:"center" }}>
@@ -442,7 +684,7 @@ function MicDrop() {
       {/* BANNER */}
       <TrackBanner trackInfo={trackInfo} isIdentifying={isIdentifying} />
 
-      {/* PITCH */}
+      {/* PITCH INDICATOR */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"12px 20px 8px" }}>
         <PitchIndicator cents={pitchCents} />
       </div>
@@ -456,7 +698,7 @@ function MicDrop() {
       )}
 
       {/* TRACK CARD */}
-      {trackInfo && (
+      {trackInfo && !showReport && (
         <div className="track-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 10px" }}>
           <div style={{ background:"rgba(201,168,76,0.07)", border:"1px solid rgba(201,168,76,0.22)", borderRadius:"12px", padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <div>
@@ -476,6 +718,11 @@ function MicDrop() {
         </div>
       )}
 
+      {/* PERFORMANCE REPORT */}
+      {showReport && (
+        <PerformanceReport data={reportData} trackInfo={trackInfo} onClose={() => setShowReport(false)} />
+      )}
+
       {/* MIXER */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 20px", display:"flex", flexDirection:"row", justifyContent:"space-between", alignItems:"flex-start" }}>
         <div style={{ flex:1, display:"flex", flexDirection:"row", gap:"10px", alignItems:"flex-start", justifyContent:"center", padding:"14px 10px", borderRadius:"14px", background:"rgba(255,255,255,0.02)", border:"1px solid #181818" }}>
@@ -492,30 +739,35 @@ function MicDrop() {
       {/* BUTTONS */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"20px 20px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
 
-        {/* ARM */}
         <button className={`arm-btn${armed?" armed":""}`} onClick={toggleArmed}>
           {armed ? "⏹  DISARM" : "⏺  ARM MIC"}
         </button>
 
-        {/* IDENTIFY NOW — manual trigger */}
         {armed && (
-          <button
-            className="identify-btn"
-            disabled={isIdentifying}
-            onClick={recognizeTrack}
-          >
+          <button className="identify-btn" disabled={isIdentifying} onClick={recognizeTrack}>
             {isIdentifying ? "◈  Identifying..." : "◈  Identify Track Now"}
+          </button>
+        )}
+
+        {armed && reportData.length > 4 && (
+          <button className="report-btn" onClick={() => setShowReport(s => !s)}>
+            {showReport ? "◁  Hide Report" : "▷  View Performance Report"}
           </button>
         )}
 
         <div style={{ display:"flex", alignItems:"center", gap:"12px", height:"16px" }}>
           {armed && <span className="live-pulse" style={{ fontSize:"9px", color:"#ff4422", letterSpacing:"0.2em" }}>● LIVE</span>}
+          {armed && reportData.length > 0 && (
+            <span style={{ fontSize:"9px", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>
+              {reportData.length} samples
+            </span>
+          )}
         </div>
       </div>
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v0.3 — Powered by AudD + Claude
+        Mic Drop v0.4 — Powered by AudD + Claude
       </div>
 
     </div>
