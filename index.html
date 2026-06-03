@@ -492,7 +492,7 @@ function ProSplash({ onClose }) {
           ].map(([icon,text],i,arr)=>(
             <div key={i} style={{ padding:"12px 16px", borderBottom:i<arr.length-1?"1px solid #111":"none", display:"flex", alignItems:"flex-start", gap:"12px" }}>
               <span style={{ fontSize:"16px", flexShrink:0 }}>{icon}</span>
-              <span style={{ fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.5 }}>{text}</span>
+              <span style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.5 }}>{text}</span>
             </div>
           ))}
         </div>
@@ -500,25 +500,25 @@ function ProSplash({ onClose }) {
 
       {/* Pricing */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
-        <div style={{ fontSize:"8px", letterSpacing:"0.2em", color:"#333", fontFamily:"'Courier New',monospace", textAlign:"center", marginBottom:"12px" }}>CHOOSE YOUR PLAN — OPT IN, NO AUTO-RENEWAL</div>
+        <div style={{ fontSize:"10px", letterSpacing:"0.2em", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", marginBottom:"12px" }}>CHOOSE YOUR PLAN — OPT IN, NO AUTO-RENEWAL</div>
         <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
           {plans.map(plan => (
             <div key={plan.id}
               onClick={() => setSelected(plan.id)}
               style={{
-                padding:"12px 16px", borderRadius:"12px", cursor:"pointer",
-                border:`2px solid ${selected===plan.id?"#C9A84C":"#1a1a1a"}`,
-                background: selected===plan.id?"rgba(201,168,76,0.08)":"rgba(0,0,0,0.3)",
+                padding:"14px 16px", borderRadius:"12px", cursor:"pointer",
+                border:`2px solid ${selected===plan.id?"#C9A84C":"#2a2a2a"}`,
+                background: selected===plan.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)",
                 display:"flex", justifyContent:"space-between", alignItems:"center",
                 transition:"all 0.2s",
               }}
             >
               <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                <div style={{ width:"16px", height:"16px", borderRadius:"50%", border:`2px solid ${selected===plan.id?"#C9A84C":"#333"}`, background:selected===plan.id?"#C9A84C":"transparent", flexShrink:0 }}/>
-                <span style={{ fontSize:"11px", color:selected===plan.id?"#C9A84C":"#555", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{plan.label}</span>
-                {plan.saving && <span style={{ fontSize:"8px", color:"#C9A84C", fontFamily:"'Courier New',monospace", opacity:0.7 }}>{plan.saving}</span>}
+                <div style={{ width:"18px", height:"18px", borderRadius:"50%", border:`2px solid ${selected===plan.id?"#C9A84C":"#555"}`, background:selected===plan.id?"#C9A84C":"transparent", flexShrink:0 }}/>
+                <span style={{ fontSize:"13px", color:selected===plan.id?"#C9A84C":"#aaa", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{plan.label}</span>
+                {plan.saving && <span style={{ fontSize:"9px", color:"#C9A84C", fontFamily:"'Courier New',monospace", opacity:0.8 }}>{plan.saving}</span>}
               </div>
-              <span style={{ fontSize:"14px", fontWeight:"900", color:selected===plan.id?"#C9A84C":"#444", fontFamily:"Georgia,serif" }}>{plan.price}</span>
+              <span style={{ fontSize:"16px", fontWeight:"900", color:selected===plan.id?"#C9A84C":"#777", fontFamily:"Georgia,serif" }}>{plan.price}</span>
             </div>
           ))}
         </div>
@@ -526,19 +526,43 @@ function ProSplash({ onClose }) {
 
       {/* The manifesto */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 24px" }}>
-        <div style={{ background:"rgba(201,168,76,0.04)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:"14px", padding:"16px" }}>
-          <div style={{ fontSize:"13px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1.4, marginBottom:"12px", textAlign:"center" }}>
+        <div style={{ background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:"14px", padding:"20px" }}>
+          <div style={{ fontSize:"16px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1.5, marginBottom:"16px", textAlign:"center" }}>
             For less than your monthly gym fees for that membership you don't even use — enjoy a whole year of Pro.
           </div>
-          <div style={{ fontSize:"9px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, textAlign:"center" }}>
+          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:2.0, textAlign:"center" }}>
             Supporting Mic Drop is a good old fashioned F You to Google, Apple and Microsoft.<br/><br/>
-            <span style={{ color:"#2a2a2a", fontStyle:"italic" }}>(Disclaimer: Bill Gates doesn't even own Microsoft anymore but F that guy too.)</span><br/><br/>
+            <span style={{ color:"#666", fontStyle:"italic" }}>(Disclaimer: Bill Gates doesn't even own Microsoft anymore but F that guy too.)</span><br/><br/>
             Bezos gets nothing out of this either. Just sayin'.<br/><br/>
-            <span style={{ color:"#2a2a2a", fontStyle:"italic" }}>We have nothing further to say about other tech billionaires at this time.</span><br/><br/>
-            Mic Drop operates on an integrity model. Everyone pays the same. Elon's $2.99 is only as good as everyone else's.<br/><br/>
+            <span style={{ color:"#666", fontStyle:"italic" }}>We have nothing further to say about other tech billionaires at this time.</span><br/><br/>
+            <span style={{ color:"#ccc" }}>Mic Drop operates on an integrity model. Everyone pays the same. Elon's $2.99 is only as good as everyone else's.</span><br/><br/>
             Opt in. No auto-renewal. No surprises. Unlike your gym, we actually want you to show up.
           </div>
         </div>
+      </div>
+
+      {/* Font size toggle — for Lorna */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px", display:"flex", alignItems:"center", justifyContent:"center", gap:"12px" }}>
+        <span style={{ fontSize:"10px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>TEXT SIZE</span>
+        {["A","A","A"].map((a,i) => {
+          const sizes = [11,14,18];
+          const labels = ["S","M","L"];
+          return (
+            <button key={i}
+              onClick={() => {
+                document.documentElement.style.setProperty("--splash-font", sizes[i]+"px");
+                // Force re-render hint stored in sessionStorage
+                sessionStorage.setItem("splashFont", sizes[i]);
+              }}
+              style={{
+                width:"36px", height:"36px", borderRadius:"8px", cursor:"pointer",
+                border:"1px solid #2a2a2a", background:"rgba(255,255,255,0.03)",
+                color:"#666", fontFamily:"Georgia,serif", fontSize:sizes[i]+"px",
+                fontWeight:"bold", display:"flex", alignItems:"center", justifyContent:"center",
+              }}
+            >{labels[i]}</button>
+          );
+        })}
       </div>
 
       {/* CTA */}
@@ -546,18 +570,18 @@ function ProSplash({ onClose }) {
         <button
           onClick={() => alert("Stripe integration coming next build — token system and payment flow.")}
           style={{
-            width:"100%", padding:"18px",
+            width:"100%", padding:"20px",
             borderRadius:"14px", border:"none", cursor:"pointer",
             background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
             color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-            fontSize:"13px", fontWeight:"900", letterSpacing:"0.2em",
+            fontSize:"14px", fontWeight:"900", letterSpacing:"0.2em",
             textTransform:"uppercase",
-            boxShadow:"0 0 30px rgba(201,168,76,0.35)",
+            boxShadow:"0 0 30px rgba(201,168,76,0.4)",
           }}
         >
           Unlock Pro — {plans.find(p=>p.id===selected)?.price}
         </button>
-        <div style={{ textAlign:"center", marginTop:"10px", fontSize:"8px", color:"#222", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
+        <div style={{ textAlign:"center", marginTop:"12px", fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
           NO APP STORE · OPT-IN ONLY · NO AUTO-RENEWAL
         </div>
       </div>
@@ -1074,7 +1098,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v0.8 — Powered by AudD + Claude
+        Mic Drop v0.9 — Powered by AudD + Claude
       </div>
 
     </div>
