@@ -406,9 +406,169 @@ function CountdownDisplay({ phase, countdown }) {
   );
 }
 
+// ── PRO SPLASH PAGE ───────────────────────────────────────────────────────────
+function ProSplash({ onClose }) {
+  const [selected, setSelected] = useState("annual");
+
+  const plans = [
+    { id:"monthly", label:"1 Month",  price:"$2.99",  total:"$2.99",  saving:null },
+    { id:"quarter", label:"3 Months", price:"$7.99",  total:"$7.99",  saving:"11% off" },
+    { id:"biannual",label:"6 Months", price:"$14.99", total:"$14.99", saving:"16% off" },
+    { id:"annual",  label:"1 Year",   price:"$24.99", total:"$24.99", saving:"30% off — best value" },
+  ];
+
+  // Animated pitch graph — gold reference line, red singer line
+  const W = 320, H = 90, mid = H/2;
+  const refPoints  = [28,26,29,27,28,26,28,27,29,28,27,28,26,29,27,28,27,26,28,27];
+  const singPoints = [35,28,42,26,30,38,24,32,44,27,36,29,40,25,33,38,26,35,28,31];
+  const toPath = (pts) => pts.map((v,i) => {
+    const x = (i/(pts.length-1))*W;
+    const y = mid + (v - mid) * 1.4;
+    return `${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:2000,
+      background:"rgba(0,0,0,0.96)",
+      display:"flex", flexDirection:"column", alignItems:"center",
+      overflowY:"auto", padding:"0 0 40px",
+      animation:"fadeIn 0.3s ease",
+    }}>
+      {/* Close */}
+      <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#333", fontSize:"24px", cursor:"pointer", zIndex:2001 }}>✕</button>
+
+      {/* Hero */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 24px", textAlign:"center" }}>
+        <div style={{ fontSize:"11px", letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"16px" }}>MIC DROP PRO</div>
+        <div style={{ fontSize:"22px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", lineHeight:1.3, marginBottom:"12px" }}>
+          Improve your singing<br/>on the way to work.
+        </div>
+        <div style={{ fontSize:"12px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, marginBottom:"8px" }}>
+          No app store. No ads. No algorithms. No nonsense.
+        </div>
+      </div>
+
+      {/* Pitch graph preview */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
+        <div style={{ background:"rgba(0,0,0,0.6)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"14px 16px" }}>
+          <div style={{ fontSize:"8px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>PITCH TIMELINE — LIVE SESSION DATA</div>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:"block", borderRadius:"6px", background:"rgba(0,0,0,0.3)" }}>
+            {/* Pocket zone */}
+            <rect x="0" y={mid-14} width={W} height="28" fill="rgba(201,168,76,0.06)" rx="2"/>
+            <line x1="0" y1={mid} x2={W} y2={mid} stroke="#1a1a1a" strokeWidth="1"/>
+            {/* Reference line — gold */}
+            <path d={toPath(refPoints)} stroke="#C9A84C" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+            {/* Singer line — colour coded */}
+            {singPoints.map((v,i) => {
+              if (i===0) return null;
+              const x1=((i-1)/(singPoints.length-1))*W, x2=(i/(singPoints.length-1))*W;
+              const y1=mid+(singPoints[i-1]-mid)*1.4, y2=mid+(v-mid)*1.4;
+              const diff = Math.abs(v - refPoints[i]);
+              const col  = diff < 4 ? "#00cc55" : diff < 8 ? "#ffaa00" : "#ff2200";
+              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={col} strokeWidth="2" strokeLinecap="round"/>;
+            })}
+          </svg>
+          <div style={{ display:"flex", gap:"16px", marginTop:"10px", justifyContent:"center" }}>
+            {[["#C9A84C","Reference pitch"],["#00cc55","In pocket"],["#ffaa00","Close"],["#ff2200","Off pitch"]].map(([col,lbl])=>(
+              <div key={lbl} style={{ display:"flex", alignItems:"center", gap:"4px" }}>
+                <div style={{ width:"16px", height:"2px", background:col, borderRadius:"1px" }}/>
+                <span style={{ fontSize:"7px", color:"#333", fontFamily:"'Courier New',monospace" }}>{lbl}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Feature list */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
+        <div style={{ background:"rgba(0,0,0,0.4)", border:"1px solid #1a1a1a", borderRadius:"14px", overflow:"hidden" }}>
+          {[
+            ["📊","Full pitch timeline graph — every song, every session"],
+            ["🎯","Section breakdown — Verse, Chorus, Bridge accuracy"],
+            ["🤖","Claude coaching notes — personalised tips after every song"],
+            ["📈","Session history — track your improvement over time"],
+            ["👑","Full Coroner → Diva scoring with shareable score cards"],
+          ].map(([icon,text],i,arr)=>(
+            <div key={i} style={{ padding:"12px 16px", borderBottom:i<arr.length-1?"1px solid #111":"none", display:"flex", alignItems:"flex-start", gap:"12px" }}>
+              <span style={{ fontSize:"16px", flexShrink:0 }}>{icon}</span>
+              <span style={{ fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.5 }}>{text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pricing */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
+        <div style={{ fontSize:"8px", letterSpacing:"0.2em", color:"#333", fontFamily:"'Courier New',monospace", textAlign:"center", marginBottom:"12px" }}>CHOOSE YOUR PLAN — OPT IN, NO AUTO-RENEWAL</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+          {plans.map(plan => (
+            <div key={plan.id}
+              onClick={() => setSelected(plan.id)}
+              style={{
+                padding:"12px 16px", borderRadius:"12px", cursor:"pointer",
+                border:`2px solid ${selected===plan.id?"#C9A84C":"#1a1a1a"}`,
+                background: selected===plan.id?"rgba(201,168,76,0.08)":"rgba(0,0,0,0.3)",
+                display:"flex", justifyContent:"space-between", alignItems:"center",
+                transition:"all 0.2s",
+              }}
+            >
+              <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                <div style={{ width:"16px", height:"16px", borderRadius:"50%", border:`2px solid ${selected===plan.id?"#C9A84C":"#333"}`, background:selected===plan.id?"#C9A84C":"transparent", flexShrink:0 }}/>
+                <span style={{ fontSize:"11px", color:selected===plan.id?"#C9A84C":"#555", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{plan.label}</span>
+                {plan.saving && <span style={{ fontSize:"8px", color:"#C9A84C", fontFamily:"'Courier New',monospace", opacity:0.7 }}>{plan.saving}</span>}
+              </div>
+              <span style={{ fontSize:"14px", fontWeight:"900", color:selected===plan.id?"#C9A84C":"#444", fontFamily:"Georgia,serif" }}>{plan.price}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* The manifesto */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 24px" }}>
+        <div style={{ background:"rgba(201,168,76,0.04)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:"14px", padding:"16px" }}>
+          <div style={{ fontSize:"13px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1.4, marginBottom:"12px", textAlign:"center" }}>
+            For less than your monthly gym fees for that membership you don't even use — enjoy a whole year of Pro.
+          </div>
+          <div style={{ fontSize:"9px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, textAlign:"center" }}>
+            Supporting Mic Drop is a good old fashioned F You to Google, Apple and Microsoft.<br/><br/>
+            <span style={{ color:"#2a2a2a", fontStyle:"italic" }}>(Disclaimer: Bill Gates doesn't even own Microsoft anymore but F that guy too.)</span><br/><br/>
+            Bezos gets nothing out of this either. Just sayin'.<br/><br/>
+            <span style={{ color:"#2a2a2a", fontStyle:"italic" }}>We have nothing further to say about other tech billionaires at this time.</span><br/><br/>
+            Mic Drop operates on an integrity model. Everyone pays the same. Elon's $2.99 is only as good as everyone else's.<br/><br/>
+            Opt in. No auto-renewal. No surprises. Unlike your gym, we actually want you to show up.
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px" }}>
+        <button
+          onClick={() => alert("Stripe integration coming next build — token system and payment flow.")}
+          style={{
+            width:"100%", padding:"18px",
+            borderRadius:"14px", border:"none", cursor:"pointer",
+            background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+            color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+            fontSize:"13px", fontWeight:"900", letterSpacing:"0.2em",
+            textTransform:"uppercase",
+            boxShadow:"0 0 30px rgba(201,168,76,0.35)",
+          }}
+        >
+          Unlock Pro — {plans.find(p=>p.id===selected)?.price}
+        </button>
+        <div style={{ textAlign:"center", marginTop:"10px", fontSize:"8px", color:"#222", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
+          NO APP STORE · OPT-IN ONLY · NO AUTO-RENEWAL
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
 // ── SESSION REPORT ────────────────────────────────────────────────────────────
-function SessionReport({ songs, onClose }) {
-  const isPro = false; // token system coming in next build
+function SessionReport({ songs, onClose, onUnlock }) {
+  const isPro = false; // token system coming next build
 
   return (
     <div className="report-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 16px" }}>
@@ -430,7 +590,7 @@ function SessionReport({ songs, onClose }) {
               NO SONGS LOGGED YET
             </div>
           ) : songs.map((song, i) => {
-            const col = scoreColor(song.accuracy);
+            const col   = scoreColor(song.accuracy);
             const grade = gradeFromAccuracy(song.accuracy);
             return (
               <div key={i} style={{ padding:"10px 16px", borderBottom:"1px solid #111", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -447,51 +607,43 @@ function SessionReport({ songs, onClose }) {
           })}
         </div>
 
-        {/* PRO UPSELL — blurred preview of what's locked */}
-        <div style={{ position:"relative", margin:"0", borderTop:"1px solid #1a1a1a" }}>
-
-          {/* Blurred content behind */}
+        {/* PRO UPSELL */}
+        <div style={{ position:"relative", borderTop:"1px solid #1a1a1a" }}>
+          {/* Blurred content */}
           <div className="pro-blur" style={{ padding:"14px 16px" }}>
             <div style={{ fontSize:"9px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.2em", marginBottom:"10px" }}>PITCH TIMELINE</div>
-            <div style={{ height:"60px", background:"rgba(0,0,0,0.3)", borderRadius:"8px", position:"relative", overflow:"hidden" }}>
-              {/* Fake graph lines */}
+            <div style={{ height:"60px", background:"rgba(0,0,0,0.3)", borderRadius:"8px", overflow:"hidden" }}>
               <svg width="100%" height="60" style={{ display:"block" }}>
                 <path d="M0,30 C40,20 60,40 100,25 S160,35 200,22 S260,38 300,28 S340,20 380,30" stroke="#C9A84C" strokeWidth="2" fill="none" opacity="0.6"/>
                 <path d="M0,35 C30,45 70,25 110,38 S170,22 210,35 S270,28 310,40 S350,30 380,35" stroke="#ff2200" strokeWidth="2" fill="none" opacity="0.4"/>
               </svg>
             </div>
             <div style={{ marginTop:"10px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
-              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
-                SECTION BREAKDOWN<br/>
-                <span style={{ color:"#1a1a1a" }}>Verse 78% · Chorus 91%</span>
-              </div>
-              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
-                CLAUDE COACHING<br/>
-                <span style={{ color:"#1a1a1a" }}>Support your chest voice...</span>
-              </div>
+              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace" }}>SECTION BREAKDOWN<br/><span style={{ color:"#1a1a1a" }}>Verse 78% · Chorus 91%</span></div>
+              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace" }}>CLAUDE COACHING<br/><span style={{ color:"#1a1a1a" }}>Support your chest voice...</span></div>
             </div>
           </div>
 
           {/* Overlay */}
-          <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(10,10,10,0.65)", backdropFilter:"blur(1px)", padding:"16px" }}>
-            <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"6px", textAlign:"center" }}>
-              PITCH TIMELINE · SECTION BREAKDOWN · CLAUDE COACHING
+          <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(10,10,10,0.7)", backdropFilter:"blur(1px)", padding:"16px" }}>
+            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"center" }}>
+              PITCH TIMELINE · COACHING · HISTORY
             </div>
-            <div style={{ fontSize:"10px", color:"#C9A84C", fontFamily:"'Courier New',monospace", marginBottom:"14px", textAlign:"center", letterSpacing:"0.1em" }}>
-              Unlock Session Insights
-            </div>
-            <button style={{
-              padding:"12px 24px", borderRadius:"10px",
-              background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
-              border:"none", color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-              fontSize:"11px", fontWeight:"bold", letterSpacing:"0.2em",
-              cursor:"pointer", textTransform:"uppercase",
-              boxShadow:"0 0 20px rgba(201,168,76,0.3)",
-            }}>
-              Go Pro — $2.99 / month
+            <button
+              onClick={onUnlock}
+              style={{
+                padding:"14px 28px", borderRadius:"12px",
+                background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+                border:"none", color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+                fontSize:"12px", fontWeight:"900", letterSpacing:"0.2em",
+                cursor:"pointer", textTransform:"uppercase",
+                boxShadow:"0 0 25px rgba(201,168,76,0.4)",
+              }}
+            >
+              Unlock Pro ✦
             </button>
-            <div style={{ fontSize:"7px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"8px", letterSpacing:"0.12em" }}>
-              NO APP STORE · CANCEL ANYTIME
+            <div style={{ fontSize:"7px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"8px", textAlign:"center", letterSpacing:"0.1em", lineHeight:1.8 }}>
+              FROM $2.99 · NO APP STORE · OPT-IN ONLY
             </div>
           </div>
         </div>
@@ -547,6 +699,7 @@ function MicDrop() {
   const [sessionLog,  setSessionLog]  = useState([]);
   const [currentSamples, setCurrentSamples] = useState([]);
   const [showReport,  setShowReport]  = useState(false);
+  const [showSplash,  setShowSplash]  = useState(false);
 
   const roomPeakTimer  = useRef(null);
   const voxPeakTimer   = useRef(null);
@@ -804,6 +957,9 @@ function MicDrop() {
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
 
+      {/* PRO SPLASH */}
+      {showSplash && <ProSplash onClose={() => setShowSplash(false)} />}
+
       {/* SCREEN GLOW — only after track identified */}
       {armed && trackInfo && <ScreenGlow cents={smoothCents} />}
 
@@ -875,7 +1031,7 @@ function MicDrop() {
 
       {/* SESSION REPORT */}
       {showReport && (
-        <SessionReport songs={sessionLog} onClose={() => setShowReport(false)} />
+        <SessionReport songs={sessionLog} onClose={() => setShowReport(false)} onUnlock={() => { setShowReport(false); setShowSplash(true); }} />
       )}
 
       {/* MIXER */}
@@ -918,7 +1074,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v0.7 — Powered by AudD + Claude
+        Mic Drop v0.8 — Powered by AudD + Claude
       </div>
 
     </div>
