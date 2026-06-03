@@ -13,116 +13,71 @@
     body { display: flex; justify-content: center; }
     #root { width: 100%; max-width: 420px; }
 
-    @keyframes pulse        { from { opacity: 1; } to { opacity: 0.3; } }
-    @keyframes scroll-left  { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
-    @keyframes fadeIn       { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes spin         { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes glowPulse    { from { opacity: 0.7; } to { opacity: 1; } }
-    @keyframes msgPop       { 0% { opacity:0; transform:translateY(8px) scale(0.95); } 15% { opacity:1; transform:translateY(0) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translateY(-6px); } }
+    @keyframes pulse       { from { opacity:1; } to { opacity:0.3; } }
+    @keyframes scroll-left { 0% { transform:translateX(100vw); } 100% { transform:translateX(-100%); } }
+    @keyframes fadeIn      { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes spin        { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+    @keyframes glowPulse   { from { opacity:0.7; } to { opacity:1; } }
+    @keyframes msgPop      { 0% { opacity:0; transform:translateY(8px) scale(0.95); } 15% { opacity:1; transform:translateY(0) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translateY(-6px); } }
+    @keyframes countPop    { 0% { transform:scale(1.4); opacity:0; } 100% { transform:scale(1); opacity:1; } }
 
-    .live-pulse  { animation: pulse 1s infinite alternate; }
-    .clip-pulse  { animation: pulse 0.3s infinite alternate; }
-    .spin        { animation: spin 1s linear infinite; }
-    .glow-pulse  { animation: glowPulse 1.8s ease-in-out infinite alternate; }
+    .live-pulse { animation:pulse 1s infinite alternate; }
+    .clip-pulse { animation:pulse 0.3s infinite alternate; }
+    .spin       { animation:spin 1s linear infinite; }
+    .glow-pulse { animation:glowPulse 1.8s ease-in-out infinite alternate; }
+    .count-pop  { animation:countPop 0.3s ease-out forwards; }
 
-    .glow-top, .glow-bottom {
-      /* Slow fade — 800ms out, instant in */
-      transition: opacity 0.8s ease-out, background 0.25s ease;
-    }
+    .banner-track { display:inline-block; white-space:nowrap; animation:scroll-left 22s linear infinite; }
 
-    .banner-track {
-      display: inline-block;
-      white-space: nowrap;
-      animation: scroll-left 22s linear infinite;
-    }
+    .glow-top, .glow-bottom { transition:opacity 0.8s ease-out, background 0.25s ease; }
+    .glow-top    { position:fixed; top:0; left:0; right:0; height:40vh; pointer-events:none; z-index:999; }
+    .glow-bottom { position:fixed; bottom:0; left:0; right:0; height:40vh; pointer-events:none; z-index:999; }
 
     .fader-cap {
-      position: absolute;
-      left: 50%;
-      width: 48px;
-      height: 24px;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(180deg, #e8e8e8 0%, #b8b8b8 40%, #888 100%);
-      border-radius: 5px;
-      cursor: grab;
-      touch-action: none;
+      position:absolute; left:50%; width:48px; height:24px;
+      transform:translate(-50%,-50%);
+      background:linear-gradient(180deg,#e8e8e8 0%,#b8b8b8 40%,#888 100%);
+      border-radius:5px; cursor:grab; touch-action:none;
     }
-    .fader-cap:active { cursor: grabbing; }
+    .fader-cap:active { cursor:grabbing; }
 
     .arm-btn {
-      width: 100%;
-      padding: 18px;
-      border-radius: 14px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      font-weight: bold;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.25s;
-      border: 2px solid #333;
-      background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
-      color: #555;
+      width:100%; padding:18px; border-radius:14px;
+      font-family:'Courier New',monospace; font-size:13px; font-weight:bold;
+      letter-spacing:0.3em; text-transform:uppercase; cursor:pointer;
+      transition:all 0.25s; border:2px solid #333;
+      background:linear-gradient(180deg,#1a1a1a 0%,#111 100%); color:#555;
     }
     .arm-btn.armed {
-      border-color: #ff2200;
-      background: linear-gradient(180deg, #3a0000 0%, #1a0000 100%);
-      color: #ff4422;
-      box-shadow: 0 0 24px rgba(255,34,0,0.35);
+      border-color:#ff2200; background:linear-gradient(180deg,#3a0000 0%,#1a0000 100%);
+      color:#ff4422; box-shadow:0 0 24px rgba(255,34,0,0.35);
     }
-
     .identify-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.25s;
-      border: 2px solid rgba(201,168,76,0.4);
-      background: rgba(201,168,76,0.08);
-      color: #C9A84C;
+      width:100%; padding:14px; border-radius:14px;
+      font-family:'Courier New',monospace; font-size:11px; font-weight:bold;
+      letter-spacing:0.2em; text-transform:uppercase; cursor:pointer;
+      transition:all 0.25s; border:2px solid rgba(201,168,76,0.4);
+      background:rgba(201,168,76,0.08); color:#C9A84C;
     }
-    .identify-btn:active { background: rgba(201,168,76,0.18); transform: scale(0.98); }
-    .identify-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .identify-btn:active { background:rgba(201,168,76,0.18); transform:scale(0.98); }
+    .identify-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
     .report-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.25s;
-      border: 2px solid rgba(46,109,164,0.5);
-      background: rgba(46,109,164,0.1);
-      color: #2E6DA4;
+      width:100%; padding:14px; border-radius:14px;
+      font-family:'Courier New',monospace; font-size:11px; font-weight:bold;
+      letter-spacing:0.2em; text-transform:uppercase; cursor:pointer;
+      transition:all 0.25s; border:2px solid rgba(46,109,164,0.5);
+      background:rgba(46,109,164,0.1); color:#2E6DA4;
     }
-    .report-btn:active { background: rgba(46,109,164,0.2); transform: scale(0.98); }
+    .report-btn:active { background:rgba(46,109,164,0.2); transform:scale(0.98); }
 
-    .track-card  { animation: fadeIn 0.4s ease; }
-    .report-card { animation: fadeIn 0.5s ease; }
+    .track-card  { animation:fadeIn 0.4s ease; }
+    .report-card { animation:fadeIn 0.5s ease; }
 
-    /* Screen glow overlays — fixed to viewport edges */
-    .glow-top {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 40vh;
-      pointer-events: none;
-      z-index: 999;
-    }
-    .glow-bottom {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: 40vh;
-      pointer-events: none;
-      z-index: 999;
+    .pro-blur {
+      filter:blur(4px);
+      pointer-events:none;
+      user-select:none;
     }
   </style>
 </head>
@@ -134,76 +89,86 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const PROXY_BASE_URL       = "https://micdrop.emblen-scott.workers.dev";
 const RECOGNITION_INTERVAL = 45000;
-const AUDIO_SAMPLE_MS      = 10000;
+const AUDIO_SAMPLE_MS      = 7000;   // 7s recording window
 const NUM_LEDS             = 20;
-const PITCH_SMOOTH_MS      = 300;   // smoothing window for glow
-const POCKET_CENTS         = 35;    // ≤35¢ = in the pocket (Whitney standard)
-const CLOSE_CENTS          = 60;    // ≤60¢ = close
-const REPORT_INTERVAL_MS   = 500;   // log pitch data point every 500ms
+const PITCH_SMOOTH_MS      = 300;
+const POCKET_CENTS         = 25;     // tightened — earned, not gifted
+const CLOSE_CENTS          = 55;
+const REPORT_INTERVAL_MS   = 500;
+const MIN_VOX_RMS          = 0.015;  // minimum signal to count as singing
 
 // ── PITCH DETECTION (autocorrelation) ────────────────────────────────────────
 function detectPitch(buffer, sampleRate) {
-  const SIZE    = buffer.length;
-  const rms     = Math.sqrt(buffer.reduce((s, v) => s + v * v, 0) / SIZE);
-  if (rms < 0.01) return null; // silence
-
-  // Autocorrelation
+  const SIZE = buffer.length;
+  const rms  = Math.sqrt(buffer.reduce((s,v) => s+v*v, 0) / SIZE);
+  if (rms < MIN_VOX_RMS) return null;
   const corr = new Float32Array(SIZE);
   for (let lag = 0; lag < SIZE; lag++) {
     let sum = 0;
-    for (let i = 0; i < SIZE - lag; i++) sum += buffer[i] * buffer[i + lag];
+    for (let i = 0; i < SIZE - lag; i++) sum += buffer[i] * buffer[i+lag];
     corr[lag] = sum;
   }
-
-  // Find first dip then first peak
   let d = 0;
-  while (d < SIZE / 2 && corr[d] > corr[d + 1]) d++;
+  while (d < SIZE/2 && corr[d] > corr[d+1]) d++;
   let maxVal = -Infinity, maxLag = -1;
-  for (let i = d; i < SIZE / 2; i++) {
+  for (let i = d; i < SIZE/2; i++) {
     if (corr[i] > maxVal) { maxVal = corr[i]; maxLag = i; }
   }
   if (maxLag === -1 || maxVal < corr[0] * 0.5) return null;
-
-  // Parabolic interpolation for sub-sample accuracy
-  const y0 = corr[maxLag - 1] || 0;
-  const y1 = corr[maxLag];
-  const y2 = corr[maxLag + 1] || 0;
-  const refined = maxLag + (y2 - y0) / (2 * (2 * y1 - y0 - y2) + 1e-10);
-
+  const y0 = corr[maxLag-1] || 0, y1 = corr[maxLag], y2 = corr[maxLag+1] || 0;
+  const refined = maxLag + (y2-y0) / (2*(2*y1-y0-y2) + 1e-10);
   const freq = sampleRate / refined;
-  if (freq < 60 || freq > 1200) return null; // outside vocal range
+  if (freq < 60 || freq > 1200) return null;
   return freq;
 }
 
-function freqToCents(freq, refFreq = 440) {
-  return Math.round(1200 * Math.log2(freq / refFreq));
-}
-
-// Normalise to ±100¢ relative to nearest semitone
 function freqToNearestCents(freq) {
   if (!freq) return null;
-  const midiFloat = 12 * Math.log2(freq / 440) + 69;
+  const midiFloat   = 12 * Math.log2(freq / 440) + 69;
   const midiNearest = Math.round(midiFloat);
   return Math.round((midiFloat - midiNearest) * 100);
 }
 
+// ── SCORING ──────────────────────────────────────────────────────────────────
+function calcAccuracy(samples) {
+  if (!samples || samples.length === 0) return 0;
+  const pocket = samples.filter(d => Math.abs(d.cents) <= POCKET_CENTS).length;
+  return Math.round((pocket / samples.length) * 100);
+}
+
+function gradeFromAccuracy(pct) {
+  if (pct >= 95) return { label:"👑 DIVA",        color:"#C9A84C", tier:"gold"   };
+  if (pct >= 90) return { label:"💫 LEGENDARY",   color:"#C9A84C", tier:"gold"   };
+  if (pct >= 85) return { label:"🌟 HEADLINER",   color:"#00cc55", tier:"green"  };
+  if (pct >= 66) return { label:"⭐ RISING STAR", color:"#ffaa00", tier:"yellow" };
+  if (pct >= 31) return { label:"🎤 OPEN MIC",    color:"#888",    tier:"red"    };
+  return               { label:"🔪 CORONER",      color:"#ff2200", tier:"red"    };
+}
+
+function scoreColor(pct) {
+  if (pct >= 95) return "#C9A84C";
+  if (pct >= 90) return "#00cc55";
+  if (pct >= 85) return "#ffaa00";
+  return "#ff2200";
+}
+
 // ── LED METER ─────────────────────────────────────────────────────────────────
 function LEDMeter({ level, peakHold, label, icon }) {
-  const active = Math.round((level / 100) * NUM_LEDS);
-  const peak   = Math.round((peakHold / 100) * NUM_LEDS) - 1;
+  const active = Math.round((level/100)*NUM_LEDS);
+  const peak   = Math.round((peakHold/100)*NUM_LEDS) - 1;
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"6px", width:"100%" }}>
       <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{icon} {label}</div>
       <div style={{ display:"flex", flexDirection:"column-reverse", gap:"3px", height:"220px" }}>
-        {Array.from({ length: NUM_LEDS }).map((_, i) => {
-          const on    = i < active;
-          const isPk  = i === peak && peakHold > 0;
-          const color = i >= NUM_LEDS - 2 ? "#ff2200" : i >= NUM_LEDS - 6 ? "#ffaa00" : "#00ff66";
+        {Array.from({ length:NUM_LEDS }).map((_,i) => {
+          const on   = i < active;
+          const isPk = i === peak && peakHold > 0;
+          const col  = i >= NUM_LEDS-2 ? "#ff2200" : i >= NUM_LEDS-6 ? "#ffaa00" : "#00ff66";
           return (
             <div key={i} style={{
               width:"30px", height:"8px", borderRadius:"2px",
-              backgroundColor: on || isPk ? color : "rgba(255,255,255,0.05)",
-              boxShadow: on || isPk ? `0 0 7px ${color}99` : "none",
+              backgroundColor: on||isPk ? col : "rgba(255,255,255,0.05)",
+              boxShadow: on||isPk ? `0 0 7px ${col}99` : "none",
               transition:"background-color 0.04s",
             }}/>
           );
@@ -219,7 +184,7 @@ function Fader({ value, onChange, label, color }) {
   const drag     = useRef(false);
   const calc = (y) => {
     const r = trackRef.current.getBoundingClientRect();
-    return Math.round((1 - Math.max(0, Math.min(1, (y - r.top) / r.height))) * 100);
+    return Math.round((1 - Math.max(0, Math.min(1, (y-r.top)/r.height))) * 100);
   };
   useEffect(() => {
     const onMM = (e) => { if (drag.current) onChange(calc(e.clientY)); };
@@ -228,7 +193,7 @@ function Fader({ value, onChange, label, color }) {
     const onTE = ()  => { drag.current = false; };
     window.addEventListener("mousemove", onMM);
     window.addEventListener("mouseup",   onMU);
-    window.addEventListener("touchmove", onTM, { passive: false });
+    window.addEventListener("touchmove", onTM, { passive:false });
     window.addEventListener("touchend",  onTE);
     return () => {
       window.removeEventListener("mousemove", onMM);
@@ -237,14 +202,14 @@ function Fader({ value, onChange, label, color }) {
       window.removeEventListener("touchend",  onTE);
     };
   }, []);
-  const thumbTop = (1 - value / 100) * 200;
-  const dbLabel  = value === 0 ? "-∞" : value === 100 ? "0 dB" : `${Math.round(-24 + (value/100)*24)} dB`;
+  const thumbTop = (1 - value/100) * 200;
+  const dbLabel  = value === 0 ? "-∞" : value === 100 ? "0 dB" : `${Math.round(-24+(value/100)*24)} dB`;
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"10px", userSelect:"none" }}>
       <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{label}</div>
       <div ref={trackRef}
-        onMouseDown={(e) => { drag.current = true; onChange(calc(e.clientY)); }}
-        onTouchStart={(e) => { drag.current = true; onChange(calc(e.touches[0].clientY)); }}
+        onMouseDown={(e) => { drag.current=true; onChange(calc(e.clientY)); }}
+        onTouchStart={(e) => { drag.current=true; onChange(calc(e.touches[0].clientY)); }}
         style={{ position:"relative", width:"30px", height:"220px", cursor:"pointer" }}
       >
         <div style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", top:0, width:"4px", height:"100%", background:"linear-gradient(to bottom,#2a2a2a,#111)", borderRadius:"2px", boxShadow:"inset 0 1px 4px rgba(0,0,0,0.9)" }}/>
@@ -255,8 +220,8 @@ function Fader({ value, onChange, label, color }) {
         ))}
         <div className="fader-cap"
           style={{ top:`${thumbTop}px`, boxShadow:`0 2px 10px rgba(0,0,0,0.9), 0 0 14px ${color}55`, border:`1px solid ${color}77` }}
-          onMouseDown={(e) => { e.stopPropagation(); drag.current = true; onChange(calc(e.clientY)); }}
-          onTouchStart={(e) => { e.stopPropagation(); drag.current = true; onChange(calc(e.touches[0].clientY)); }}
+          onMouseDown={(e) => { e.stopPropagation(); drag.current=true; onChange(calc(e.clientY)); }}
+          onTouchStart={(e) => { e.stopPropagation(); drag.current=true; onChange(calc(e.touches[0].clientY)); }}
         >
           {[-3,0,3].map(o=>(
             <div key={o} style={{ position:"absolute", top:`calc(50% + ${o}px)`, left:"18%", right:"18%", height:"1px", background:"rgba(0,0,0,0.35)" }}/>
@@ -296,126 +261,103 @@ const MESSAGES = {
 
 // ── SCREEN GLOW ───────────────────────────────────────────────────────────────
 function ScreenGlow({ cents }) {
-  // Hysteresis — track confirmed zone (must hold 200ms before switching)
-  const zoneRef      = useRef(null);   // current confirmed zone
-  const zoneCandRef  = useRef(null);   // candidate zone
+  const zoneRef      = useRef(null);
+  const zoneCandRef  = useRef(null);
   const zoneTimerRef = useRef(null);
   const [zone, setZone] = useState(null);
-
-  // Decay — opacity lingers after signal drops
   const opacityRef   = useRef(0);
   const [opacity, setOpacity] = useState(0);
   const decayTimer   = useRef(null);
-
-  // Message system
-  const [msg, setMsg]       = useState(null);
-  const msgKey              = useRef(0);
-  const lastMsgZone         = useRef(null);
-  const lastMsgText         = useRef(null);
-  const msgTimer            = useRef(null);
+  const [msg, setMsg]     = useState(null);
+  const msgKey            = useRef(0);
+  const lastMsgText       = useRef(null);
+  const msgTimer          = useRef(null);
 
   const fireMessage = useCallback((z) => {
-    const pool = MESSAGES[z];
+    const pool     = MESSAGES[z];
     const filtered = pool.filter(m => m !== lastMsgText.current);
-    const text = filtered[Math.floor(Math.random() * filtered.length)];
+    const text     = filtered[Math.floor(Math.random() * filtered.length)];
     lastMsgText.current = text;
-    lastMsgZone.current = z;
     msgKey.current += 1;
-    setMsg({ text, key: msgKey.current, zone: z });
+    setMsg({ text, key:msgKey.current, zone:z });
     clearTimeout(msgTimer.current);
-    const duration = z === "pocket" ? 4000 : 3000;
-    msgTimer.current = setTimeout(() => setMsg(null), duration);
+    msgTimer.current = setTimeout(() => setMsg(null), z === "pocket" ? 4000 : 3000);
   }, []);
 
   useEffect(() => {
-    const newZoneCandidate = cents === null ? null
+    const candidate = cents === null ? null
       : Math.abs(cents) <= POCKET_CENTS ? "pocket"
       : cents > POCKET_CENTS ? "sharp" : "flat";
 
-    // Hysteresis — only commit to new zone after 200ms of consistency
-    if (newZoneCandidate !== zoneCandRef.current) {
-      zoneCandRef.current = newZoneCandidate;
+    if (candidate !== zoneCandRef.current) {
+      zoneCandRef.current = candidate;
       clearTimeout(zoneTimerRef.current);
       zoneTimerRef.current = setTimeout(() => {
         if (zoneCandRef.current !== zoneRef.current) {
           zoneRef.current = zoneCandRef.current;
           setZone(zoneCandRef.current);
-          // Fire message on zone entry
           if (zoneCandRef.current) fireMessage(zoneCandRef.current);
         }
       }, 200);
     }
 
-    // Opacity — instant to full on signal, slow decay on silence
     if (cents !== null) {
       clearTimeout(decayTimer.current);
-      const a = Math.abs(cents);
+      const a         = Math.abs(cents);
       const intensity = Math.min(1, Math.max(0.4, (a - POCKET_CENTS) / (100 - POCKET_CENTS)));
-      const target = zone === "pocket" ? 0.9 : 0.18 + intensity * 0.55;
+      const target    = zone === "pocket" ? 0.9 : 0.18 + intensity * 0.55;
       opacityRef.current = target;
       setOpacity(target);
     } else {
-      // Decay over 800ms
       clearTimeout(decayTimer.current);
       decayTimer.current = setTimeout(() => { opacityRef.current = 0; setOpacity(0); }, 800);
     }
-
     return () => { clearTimeout(zoneTimerRef.current); clearTimeout(decayTimer.current); };
   }, [cents, zone, fireMessage]);
 
   const intensity = cents !== null
-    ? Math.min(1, Math.max(0, (Math.abs(cents) - POCKET_CENTS) / (100 - POCKET_CENTS)))
-    : 0;
+    ? Math.min(1, Math.max(0, (Math.abs(cents) - POCKET_CENTS) / (100 - POCKET_CENTS))) : 0;
 
   return (
     <>
-      {/* TOP glow — sharp or pocket */}
-      <div className={`glow-top${zone === "pocket" ? " glow-pulse" : ""}`} style={{
-        background: zone === "pocket"
+      <div className={`glow-top${zone==="pocket"?" glow-pulse":""}`} style={{
+        background: zone==="pocket"
           ? "linear-gradient(to bottom, rgba(201,168,76,0.30) 0%, transparent 100%)"
-          : zone === "sharp"
-            ? `linear-gradient(to bottom, rgba(255,34,0,${0.2 + intensity * 0.55}) 0%, transparent 100%)`
+          : zone==="sharp"
+            ? `linear-gradient(to bottom, rgba(255,34,0,${0.2+intensity*0.55}) 0%, transparent 100%)`
             : "transparent",
-        opacity: zone === "pocket" ? opacity : zone === "sharp" ? opacity : 0,
+        opacity: zone==="pocket" ? opacity : zone==="sharp" ? opacity : 0,
       }}/>
-
-      {/* BOTTOM glow — flat or pocket */}
-      <div className={`glow-bottom${zone === "pocket" ? " glow-pulse" : ""}`} style={{
-        background: zone === "pocket"
+      <div className={`glow-bottom${zone==="pocket"?" glow-pulse":""}`} style={{
+        background: zone==="pocket"
           ? "linear-gradient(to top, rgba(201,168,76,0.30) 0%, transparent 100%)"
-          : zone === "flat"
-            ? `linear-gradient(to top, rgba(255,34,0,${0.2 + intensity * 0.55}) 0%, transparent 100%)`
+          : zone==="flat"
+            ? `linear-gradient(to top, rgba(255,34,0,${0.2+intensity*0.55}) 0%, transparent 100%)`
             : "transparent",
-        opacity: zone === "pocket" ? opacity : zone === "flat" ? opacity : 0,
+        opacity: zone==="pocket" ? opacity : zone==="flat" ? opacity : 0,
       }}/>
-
-      {/* IMMERSIVE MESSAGE */}
       {msg && (
         <div key={msg.key} style={{
-          position: "fixed",
-          // Sharp → top third, Flat → bottom third, Pocket → centre
-          top: msg.zone === "sharp" ? "8vh"
-             : msg.zone === "flat"  ? "auto" : "50%",
-          bottom: msg.zone === "flat" ? "8vh" : msg.zone === "pocket" ? "auto" : "auto",
-          transform: msg.zone === "pocket" ? "translateY(-50%)" : "none",
-          left: 0, right: 0,
-          textAlign: "center",
-          pointerEvents: "none",
-          zIndex: 1000,
-          animation: `msgPop ${msg.zone === "pocket" ? 4 : 3}s ease forwards`,
-          padding: "0 20px",
+          position:"fixed",
+          top:    msg.zone==="sharp"  ? "8vh"  : msg.zone==="pocket" ? "50%" : "auto",
+          bottom: msg.zone==="flat"   ? "8vh"  : "auto",
+          transform: msg.zone==="pocket" ? "translateY(-50%)" : "none",
+          left:0, right:0, textAlign:"center",
+          pointerEvents:"none", zIndex:1000,
+          animation:`msgPop ${msg.zone==="pocket"?4:3}s ease forwards`,
+          padding:"0 20px",
         }}>
           <div style={{
-            display: "inline-block",
-            fontSize: msg.zone === "pocket" ? "36px" : "24px",
-            fontWeight: "900",
-            fontFamily: "Georgia, serif",
-            letterSpacing: msg.zone === "pocket" ? "0.08em" : "0.05em",
-            color: msg.zone === "pocket" ? "#C9A84C" : "#ffffff",
-            textShadow: msg.zone === "pocket"
+            display:"inline-block",
+            fontSize:    msg.zone==="pocket" ? "36px" : "24px",
+            fontWeight:  "900",
+            fontFamily:  "Georgia, serif",
+            letterSpacing: msg.zone==="pocket" ? "0.08em" : "0.05em",
+            color:       msg.zone==="pocket" ? "#C9A84C" : "#ffffff",
+            textShadow:  msg.zone==="pocket"
               ? "0 0 30px rgba(201,168,76,0.9), 0 0 60px rgba(201,168,76,0.5), 0 2px 4px rgba(0,0,0,0.9)"
               : "0 0 20px rgba(255,34,0,0.8), 0 0 40px rgba(255,34,0,0.4), 0 2px 4px rgba(0,0,0,0.9)",
-            textTransform: msg.zone === "pocket" ? "uppercase" : "none",
+            textTransform: msg.zone==="pocket" ? "uppercase" : "none",
           }}>
             {msg.text}
           </div>
@@ -425,103 +367,140 @@ function ScreenGlow({ cents }) {
   );
 }
 
-// ── PERFORMANCE REPORT ────────────────────────────────────────────────────────
-function PerformanceReport({ data, trackInfo, onClose }) {
-  if (!data || data.length === 0) return null;
+// ── COUNTDOWN DISPLAY ────────────────────────────────────────────────────────
+function CountdownDisplay({ phase, countdown }) {
+  // phase: "capturing" | "counting" | "sending" | "enriching"
+  const phaseLabel = {
+    capturing: "CAPTURING AUDIO SAMPLE",
+    counting:  "IDENTIFYING SONG",
+    sending:   "IDENTIFYING SONG",
+    enriching: "GETTING MUSICAL DETAILS",
+  }[phase] || "IDENTIFYING SONG";
 
-  const total     = data.length;
-  const pocket    = data.filter(d => Math.abs(d.cents) <= POCKET_CENTS).length;
-  const close     = data.filter(d => Math.abs(d.cents) > POCKET_CENTS && Math.abs(d.cents) <= CLOSE_CENTS).length;
-  const off       = data.filter(d => Math.abs(d.cents) > CLOSE_CENTS).length;
-  const accuracy  = Math.round((pocket / total) * 100);
+  return (
+    <div style={{ borderRadius:"12px", background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.15)", padding:"18px 12px", textAlign:"center" }}>
+      <div style={{ fontSize:"9px", letterSpacing:"0.28em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>
+        {phaseLabel}
+      </div>
+      {phase === "counting" && countdown !== null ? (
+        <>
+          <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"14px" }}>
+            Pitch monitoring starts in
+          </div>
+          <div key={countdown} className="count-pop" style={{ fontSize:"64px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1, textShadow:"0 0 30px rgba(201,168,76,0.4)" }}>
+            {countdown}
+          </div>
+          <div style={{ marginTop:"10px", fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+            HOLD PHONE NEAR SPEAKER
+          </div>
+        </>
+      ) : (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"10px", padding:"10px 0" }}>
+          <span className="spin" style={{ display:"inline-block", fontSize:"18px", color:"#C9A84C" }}>◈</span>
+          <span style={{ fontSize:"11px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
+            {phase === "capturing" ? "Hold phone near speaker..." : "One moment..."}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
-  const grade = (() => {
-    if (accuracy >= 90) return { label:"👑 DIVA",        color:"#C9A84C" };
-    if (accuracy >= 80) return { label:"💫 LEGENDARY",   color:"#C9A84C" };
-    if (accuracy >= 66) return { label:"🌟 HEADLINER",   color:"#ffaa00" };
-    if (accuracy >= 51) return { label:"⭐ RISING STAR", color:"#ffaa00" };
-    if (accuracy >= 31) return { label:"🎤 OPEN MIC",    color:"#888" };
-    return                     { label:"🔪 CORONER",     color:"#ff2200" };
-  })();
-
-  // Mini pitch graph — 60 points max, scaled to container
-  const graphPoints = data.slice(-60);
-  const W = 340, H = 80;
-  const midY = H / 2;
-  const scaleY = (cents) => midY - (cents / 100) * (H * 0.45);
-  const ptPath = graphPoints.map((d, i) => {
-    const x = (i / Math.max(graphPoints.length - 1, 1)) * W;
-    const y = scaleY(Math.max(-100, Math.min(100, d.cents)));
-    return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-
-  // Colour each segment
-  const segments = graphPoints.map((d, i) => {
-    if (i === 0) return null;
-    const x1 = ((i-1) / Math.max(graphPoints.length-1,1)) * W;
-    const x2 = (i     / Math.max(graphPoints.length-1,1)) * W;
-    const y1 = scaleY(Math.max(-100,Math.min(100,graphPoints[i-1].cents)));
-    const y2 = scaleY(Math.max(-100,Math.min(100,d.cents)));
-    const c  = Math.abs(d.cents) <= POCKET_CENTS ? "#C9A84C" : Math.abs(d.cents) <= CLOSE_CENTS ? "#ffaa00" : "#ff2200";
-    return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={c} strokeWidth="2" strokeLinecap="round"/>;
-  });
+// ── SESSION REPORT ────────────────────────────────────────────────────────────
+function SessionReport({ songs, onClose }) {
+  const isPro = false; // token system coming in next build
 
   return (
     <div className="report-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 16px" }}>
-      <div style={{ background:"rgba(20,20,20,0.95)", border:"1px solid #222", borderRadius:"16px", padding:"18px 16px", position:"relative" }}>
-
-        {/* Close */}
-        <button onClick={onClose} style={{ position:"absolute", top:"12px", right:"12px", background:"none", border:"none", color:"#444", fontSize:"18px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>✕</button>
+      <div style={{ background:"rgba(14,14,14,0.98)", border:"1px solid #1e1e1e", borderRadius:"16px", overflow:"hidden" }}>
 
         {/* Header */}
-        <div style={{ textAlign:"center", marginBottom:"14px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"6px" }}>PERFORMANCE REPORT</div>
-          {trackInfo && (
-            <div style={{ fontSize:"11px", color:"#666", fontFamily:"'Courier New',monospace" }}>
-              {trackInfo.title} — {trackInfo.artist}
+        <div style={{ padding:"16px 16px 12px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #1a1a1a" }}>
+          <div>
+            <div style={{ fontSize:"9px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>SESSION REPORT</div>
+            <div style={{ fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"3px" }}>{songs.length} song{songs.length!==1?"s":""} this session</div>
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#333", fontSize:"18px", cursor:"pointer" }}>✕</button>
+        </div>
+
+        {/* Song list — free tier */}
+        <div style={{ padding:"10px 0" }}>
+          {songs.length === 0 ? (
+            <div style={{ padding:"20px", textAlign:"center", fontSize:"9px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+              NO SONGS LOGGED YET
             </div>
-          )}
+          ) : songs.map((song, i) => {
+            const col = scoreColor(song.accuracy);
+            const grade = gradeFromAccuracy(song.accuracy);
+            return (
+              <div key={i} style={{ padding:"10px 16px", borderBottom:"1px solid #111", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div style={{ flex:1, minWidth:0, marginRight:"12px" }}>
+                  <div style={{ fontSize:"11px", color:"#ccc", fontFamily:"'Courier New',monospace", fontWeight:"bold", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{song.title}</div>
+                  <div style={{ fontSize:"9px", color:"#444", fontFamily:"'Courier New',monospace", marginTop:"2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{song.artist}</div>
+                </div>
+                <div style={{ textAlign:"right", flexShrink:0 }}>
+                  <div style={{ fontSize:"20px", fontWeight:"900", color:col, fontFamily:"Georgia,serif", lineHeight:1, textShadow:`0 0 12px ${col}66` }}>{song.accuracy}%</div>
+                  <div style={{ fontSize:"7px", color:col, fontFamily:"'Courier New',monospace", marginTop:"2px", opacity:0.7 }}>{grade.label}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Score */}
-        <div style={{ textAlign:"center", marginBottom:"16px" }}>
-          <div style={{ fontSize:"48px", fontWeight:"900", color: grade.color, fontFamily:"Georgia,serif", lineHeight:1 }}>{accuracy}%</div>
-          <div style={{ fontSize:"13px", letterSpacing:"0.2em", color: grade.color, fontFamily:"'Courier New',monospace", marginTop:"4px" }}>{grade.label}</div>
-        </div>
+        {/* PRO UPSELL — blurred preview of what's locked */}
+        <div style={{ position:"relative", margin:"0", borderTop:"1px solid #1a1a1a" }}>
 
-        {/* Graph */}
-        <div style={{ background:"rgba(0,0,0,0.4)", borderRadius:"8px", padding:"8px", marginBottom:"14px", border:"1px solid #1a1a1a" }}>
-          <div style={{ fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", marginBottom:"4px" }}>PITCH TIMELINE</div>
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:"block" }}>
-            {/* Centre line */}
-            <line x1="0" y1={midY} x2={W} y2={midY} stroke="#1a1a1a" strokeWidth="1"/>
-            {/* Pocket zone band */}
-            <rect x="0" y={scaleY(POCKET_CENTS)} width={W} height={scaleY(-POCKET_CENTS)-scaleY(POCKET_CENTS)} fill="rgba(201,168,76,0.06)" rx="2"/>
-            {/* Segments */}
-            {segments}
-          </svg>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:"7px", color:"#333", fontFamily:"'Courier New',monospace", marginTop:"2px" }}>
-            <span>START</span><span>— pocket zone —</span><span>NOW</span>
+          {/* Blurred content behind */}
+          <div className="pro-blur" style={{ padding:"14px 16px" }}>
+            <div style={{ fontSize:"9px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.2em", marginBottom:"10px" }}>PITCH TIMELINE</div>
+            <div style={{ height:"60px", background:"rgba(0,0,0,0.3)", borderRadius:"8px", position:"relative", overflow:"hidden" }}>
+              {/* Fake graph lines */}
+              <svg width="100%" height="60" style={{ display:"block" }}>
+                <path d="M0,30 C40,20 60,40 100,25 S160,35 200,22 S260,38 300,28 S340,20 380,30" stroke="#C9A84C" strokeWidth="2" fill="none" opacity="0.6"/>
+                <path d="M0,35 C30,45 70,25 110,38 S170,22 210,35 S270,28 310,40 S350,30 380,35" stroke="#ff2200" strokeWidth="2" fill="none" opacity="0.4"/>
+              </svg>
+            </div>
+            <div style={{ marginTop:"10px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
+              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+                SECTION BREAKDOWN<br/>
+                <span style={{ color:"#1a1a1a" }}>Verse 78% · Chorus 91%</span>
+              </div>
+              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+                CLAUDE COACHING<br/>
+                <span style={{ color:"#1a1a1a" }}>Support your chest voice...</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Overlay */}
+          <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(10,10,10,0.65)", backdropFilter:"blur(1px)", padding:"16px" }}>
+            <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"6px", textAlign:"center" }}>
+              PITCH TIMELINE · SECTION BREAKDOWN · CLAUDE COACHING
+            </div>
+            <div style={{ fontSize:"10px", color:"#C9A84C", fontFamily:"'Courier New',monospace", marginBottom:"14px", textAlign:"center", letterSpacing:"0.1em" }}>
+              Unlock Session Insights
+            </div>
+            <button style={{
+              padding:"12px 24px", borderRadius:"10px",
+              background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+              border:"none", color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+              fontSize:"11px", fontWeight:"bold", letterSpacing:"0.2em",
+              cursor:"pointer", textTransform:"uppercase",
+              boxShadow:"0 0 20px rgba(201,168,76,0.3)",
+            }}>
+              Go Pro — $2.99 / month
+            </button>
+            <div style={{ fontSize:"7px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"8px", letterSpacing:"0.12em" }}>
+              NO APP STORE · CANCEL ANYTIME
+            </div>
           </div>
         </div>
 
-        {/* Breakdown */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px", marginBottom:"10px" }}>
-          {[
-            { label:"IN POCKET", val: pocket, color:"#C9A84C" },
-            { label:"CLOSE",     val: close,  color:"#ffaa00" },
-            { label:"OFF",       val: off,    color:"#ff2200" },
-          ].map(({ label, val, color }) => (
-            <div key={label} style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px 4px", textAlign:"center", border:`1px solid ${color}22` }}>
-              <div style={{ fontSize:"18px", fontWeight:"bold", color, fontFamily:"'Courier New',monospace" }}>{val}</div>
-              <div style={{ fontSize:"7px", color:"#444", letterSpacing:"0.1em", fontFamily:"'Courier New',monospace", marginTop:"2px" }}>{label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Simon Cowell line */}
-        <div style={{ textAlign:"center", fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
-          Simon Cowell standard: 90% · Whitney Houston: unreachable
+        {/* Footer */}
+        <div style={{ padding:"10px 16px", textAlign:"center", borderTop:"1px solid #111" }}>
+          <div style={{ fontSize:"7px", color:"#1c1c1c", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+            Simon Cowell standard: 90% · Whitney Houston: unreachable
+          </div>
         </div>
 
       </div>
@@ -530,15 +509,16 @@ function PerformanceReport({ data, trackInfo, onClose }) {
 }
 
 // ── TRACK BANNER ──────────────────────────────────────────────────────────────
-function TrackBanner({ trackInfo, isIdentifying }) {
-  const text = isIdentifying
+function TrackBanner({ trackInfo, phase }) {
+  const identifying = phase && phase !== "idle";
+  const text = identifying
     ? "◈  Identifying track — hold phone near speaker..."
     : trackInfo
       ? `♪  ${trackInfo.artist}  —  ${trackInfo.title}  •  Key of ${trackInfo.key}  •  ${trackInfo.bpm} BPM  •  ${trackInfo.genre}  •  ${trackInfo.tip}  ♪`
-      : "♪  Arm mic then tap IDENTIFY to detect track  ♪";
+      : "♪  Arm mic to begin — song identification starts automatically  ♪";
   return (
     <div style={{ width:"100%", overflow:"hidden", height:"26px", background:"rgba(0,0,0,0.4)", borderTop:"1px solid #1a1a1a", borderBottom:"1px solid #1a1a1a", display:"flex", alignItems:"center" }}>
-      <div className="banner-track" style={{ fontSize:"10px", color: trackInfo || isIdentifying ? "#C9A84C" : "#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", lineHeight:"26px", paddingLeft:"20px" }}>
+      <div className="banner-track" style={{ fontSize:"10px", color:trackInfo||identifying?"#C9A84C":"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", lineHeight:"26px", paddingLeft:"20px" }}>
         {text}
       </div>
     </div>
@@ -547,67 +527,83 @@ function TrackBanner({ trackInfo, isIdentifying }) {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function MicDrop() {
-  const [roomLevel,     setRoomLevel]     = useState(65);
-  const [voxLevel,      setVoxLevel]      = useState(70);
-  const [armed,         setArmed]         = useState(false);
-  const [roomMeter,     setRoomMeter]     = useState(0);
-  const [voxMeter,      setVoxMeter]      = useState(0);
-  const [roomPeak,      setRoomPeak]      = useState(0);
-  const [voxPeak,       setVoxPeak]       = useState(0);
-  const [pitchCents,    setPitchCents]    = useState(null);
-  const [smoothCents,   setSmoothCents]   = useState(null); // smoothed for glow
-  const [clipping,      setClipping]      = useState(false);
-  const [trackInfo,     setTrackInfo]     = useState(null);
-  const [isIdentifying, setIsIdentifying] = useState(false);
-  const [statusMsg,     setStatusMsg]     = useState("");
-  const [lastTrackKey,  setLastTrackKey]  = useState(null);
-  const [reportData,    setReportData]    = useState([]);
-  const [showReport,    setShowReport]    = useState(false);
-  const [countdown,     setCountdown]     = useState(null); // 10→1 during recording
-  const countdownTimer = useRef(null);
+  const [roomLevel,   setRoomLevel]   = useState(65);
+  const [voxLevel,    setVoxLevel]    = useState(70);
+  const [armed,       setArmed]       = useState(false);
+  const [roomMeter,   setRoomMeter]   = useState(0);
+  const [voxMeter,    setVoxMeter]    = useState(0);
+  const [roomPeak,    setRoomPeak]    = useState(0);
+  const [voxPeak,     setVoxPeak]     = useState(0);
+  const [pitchCents,  setPitchCents]  = useState(null);
+  const [smoothCents, setSmoothCents] = useState(null);
+  const [clipping,    setClipping]    = useState(false);
+  const [trackInfo,   setTrackInfo]   = useState(null);
+  const [lastTrackKey,setLastTrackKey]= useState(null);
+  const [statusMsg,   setStatusMsg]   = useState("");
+  // Identification phase: null | "capturing" | "counting" | "sending" | "enriching"
+  const [idPhase,     setIdPhase]     = useState(null);
+  const [countdown,   setCountdown]   = useState(null);
+  // Session log — array of { title, artist, accuracy, samples }
+  const [sessionLog,  setSessionLog]  = useState([]);
+  const [currentSamples, setCurrentSamples] = useState([]);
+  const [showReport,  setShowReport]  = useState(false);
 
   const roomPeakTimer  = useRef(null);
   const voxPeakTimer   = useRef(null);
   const animFrame      = useRef(null);
-  const tick           = useRef(0);
   const mediaStream    = useRef(null);
   const audioCtx       = useRef(null);
   const analyser       = useRef(null);
   const pitchBuffer    = useRef(new Float32Array(2048));
   const autoTimer      = useRef(null);
   const reportTimer    = useRef(null);
+  const countdownTimer = useRef(null);
   const identifying    = useRef(false);
-  const smoothRef      = useRef(null); // running smooth value
-  const pitchHistory   = useRef([]);   // { time, cents } for smoothing window
+  const smoothRef      = useRef(null);
+  const pitchHistory   = useRef([]);
+  const trackInfoRef   = useRef(null); // ref mirror for use inside intervals
 
-  // ── PITCH SMOOTHING ────────────────────────────────────────────────────────
+  // Keep ref in sync
+  useEffect(() => { trackInfoRef.current = trackInfo; }, [trackInfo]);
+
+  // ── PITCH SMOOTHING ──────────────────────────────────────────────────────
   const addPitchSample = useCallback((cents) => {
     const now = Date.now();
-    pitchHistory.current.push({ time: now, cents });
-    // Trim to smoothing window
-    pitchHistory.current = pitchHistory.current.filter(p => now - p.time < PITCH_SMOOTH_MS);
-    // Median of window
-    const vals = pitchHistory.current.map(p => p.cents).sort((a,b) => a-b);
-    const med  = vals[Math.floor(vals.length / 2)];
+    pitchHistory.current.push({ time:now, cents });
+    pitchHistory.current = pitchHistory.current.filter(p => now-p.time < PITCH_SMOOTH_MS);
+    const vals = [...pitchHistory.current.map(p=>p.cents)].sort((a,b)=>a-b);
+    const med  = vals[Math.floor(vals.length/2)];
     smoothRef.current = med;
     setSmoothCents(med);
   }, []);
 
-  // ── CORE RECOGNITION ───────────────────────────────────────────────────────
+  // ── COMMIT CURRENT SONG TO SESSION LOG ──────────────────────────────────
+  const commitSongToLog = useCallback((info, samples) => {
+    if (!info || samples.length < 5) return;
+    const accuracy = calcAccuracy(samples);
+    setSessionLog(prev => {
+      // Update existing entry or add new one
+      const idx = prev.findIndex(s => s.title === info.title && s.artist === info.artist);
+      if (idx >= 0) {
+        const updated = [...prev];
+        // Merge samples for running accuracy
+        updated[idx] = { ...updated[idx], accuracy, samples:[...updated[idx].samples, ...samples] };
+        updated[idx].accuracy = calcAccuracy(updated[idx].samples);
+        return updated;
+      }
+      return [...prev, { title:info.title, artist:info.artist, accuracy, samples }];
+    });
+  }, []);
+
+  // ── CORE RECOGNITION ────────────────────────────────────────────────────
   const recognizeTrack = useCallback(async () => {
     if (!mediaStream.current || identifying.current) return;
     identifying.current = true;
-    setIsIdentifying(true);
-    setStatusMsg("");
-    // Countdown — 10 seconds matches AUDIO_SAMPLE_MS
-    setCountdown(10);
-    let cd = 10;
-    clearInterval(countdownTimer.current);
-    countdownTimer.current = setInterval(() => {
-      cd -= 1;
-      if (cd <= 0) { clearInterval(countdownTimer.current); setCountdown(null); }
-      else setCountdown(cd);
-    }, 1000);
+
+    // Phase 1 — capturing (6 seconds, no countdown)
+    setIdPhase("capturing");
+    setCountdown(null);
+
     try {
       const chunks   = [];
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -615,155 +611,176 @@ function MicDrop() {
         : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
       const recorder = new MediaRecorder(mediaStream.current, { mimeType });
       recorder.ondataavailable = (e) => { if (e.data?.size > 0) chunks.push(e.data); };
+
       await new Promise((resolve, reject) => {
         recorder.onerror = reject;
         recorder.onstop  = resolve;
         recorder.start(500);
         setTimeout(() => { if (recorder.state !== "inactive") recorder.stop(); }, AUDIO_SAMPLE_MS);
       });
+
+      // Phase 2 — countdown 3, 2, 1 while sending
+      setIdPhase("counting");
+      let cd = 3;
+      setCountdown(cd);
+      clearInterval(countdownTimer.current);
+      countdownTimer.current = setInterval(() => {
+        cd -= 1;
+        if (cd <= 0) { clearInterval(countdownTimer.current); setCountdown(null); setIdPhase("sending"); }
+        else setCountdown(cd);
+      }, 1000);
+
+      // Wait for countdown to finish (3 seconds) while also sending
       if (!chunks.length) { setStatusMsg("No audio captured — check mic permissions"); setTimeout(()=>setStatusMsg(""),4000); return; }
-      setStatusMsg("Sending to AudD...");
-      const blob   = new Blob(chunks, { type: mimeType });
+
+      const blob   = new Blob(chunks, { type:mimeType });
       const base64 = await new Promise((res, rej) => {
         const r = new FileReader();
         r.onloadend = () => r.result?.includes(",") ? res(r.result.split(",")[1]) : rej(new Error("FileReader failed"));
-        r.onerror   = rej;
+        r.onerror = rej;
         r.readAsDataURL(blob);
       });
+
+      // Wait minimum 3s for countdown to feel right, then proceed
+      await new Promise(r => setTimeout(r, 3200));
+
+      setIdPhase("sending");
+
       const resp = await fetch(`${PROXY_BASE_URL}/recognize`, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ audio: base64, mimeType }),
+        body: JSON.stringify({ audio:base64, mimeType }),
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
-      if (data.status === "error") { setStatusMsg(`AudD: ${data.error?.error_message || "error"}`); setTimeout(()=>setStatusMsg(""),5000); return; }
+
+      if (data.status === "error") {
+        setStatusMsg(`AudD: ${data.error?.error_message || "error"}`);
+        setTimeout(()=>setStatusMsg(""), 5000);
+        return;
+      }
+
       if (data.result) {
         const { title, artist } = data.result;
         const key = `${title}||${artist}`;
+
         if (key !== lastTrackKey) {
-          setStatusMsg("Getting musical details...");
+          // Commit previous song before switching
+          if (trackInfoRef.current) {
+            setCurrentSamples(prev => {
+              commitSongToLog(trackInfoRef.current, prev);
+              return [];
+            });
+          }
+          setIdPhase("enriching");
           try {
             const er = await fetch(`${PROXY_BASE_URL}/enrich`, {
               method:"POST", headers:{"Content-Type":"application/json"},
               body: JSON.stringify({ title, artist }),
             });
             const ed = await er.json();
-            setTrackInfo({ title, artist, key: ed.key||"Unknown", bpm: ed.bpm||"—", genre: ed.genre||"", tip: ed.tip||"" });
+            setTrackInfo({ title, artist, key:ed.key||"Unknown", bpm:ed.bpm||"—", genre:ed.genre||"", tip:ed.tip||"" });
             setLastTrackKey(key);
-          } catch { setTrackInfo({ title, artist, key:"—", bpm:"—", genre:"", tip:"" }); setLastTrackKey(key); }
-          // Reset report data on new track
-          setReportData([]);
-          setShowReport(false);
+          } catch {
+            setTrackInfo({ title, artist, key:"—", bpm:"—", genre:"", tip:"" });
+            setLastTrackKey(key);
+          }
         }
         setStatusMsg("");
       } else {
         setStatusMsg("No match — try holding closer to speaker");
-        setTimeout(()=>setStatusMsg(""),5000);
+        setTimeout(()=>setStatusMsg(""), 5000);
       }
     } catch (err) {
       setStatusMsg(`Error: ${err.message}`);
-      setTimeout(()=>setStatusMsg(""),5000);
+      setTimeout(()=>setStatusMsg(""), 5000);
     } finally {
       clearInterval(countdownTimer.current);
       setCountdown(null);
+      setIdPhase(null);
       identifying.current = false;
-      setIsIdentifying(false);
     }
-  }, [lastTrackKey]);
+  }, [lastTrackKey, commitSongToLog]);
 
-  // ── ARM / DISARM ───────────────────────────────────────────────────────────
+  // ── ARM / DISARM ─────────────────────────────────────────────────────────
   const toggleArmed = async () => {
     if (armed) {
+      // Commit final song before disarming
+      if (trackInfoRef.current) {
+        setCurrentSamples(prev => { commitSongToLog(trackInfoRef.current, prev); return []; });
+      }
       setArmed(false);
       clearInterval(autoTimer.current);
       clearInterval(reportTimer.current);
       clearInterval(countdownTimer.current);
-      setCountdown(null);
+      setCountdown(null); setIdPhase(null);
       cancelAnimationFrame(animFrame.current);
-      if (analyser.current)   { analyser.current.disconnect(); analyser.current = null; }
-      if (audioCtx.current)   { audioCtx.current.close(); audioCtx.current = null; }
-      if (mediaStream.current){ mediaStream.current.getTracks().forEach(t=>t.stop()); mediaStream.current = null; }
+      if (analyser.current)    { analyser.current.disconnect(); analyser.current = null; }
+      if (audioCtx.current)    { audioCtx.current.close(); audioCtx.current = null; }
+      if (mediaStream.current) { mediaStream.current.getTracks().forEach(t=>t.stop()); mediaStream.current = null; }
       setRoomMeter(0); setVoxMeter(0); setRoomPeak(0); setVoxPeak(0);
       setPitchCents(null); setSmoothCents(null); setClipping(false); setStatusMsg("");
-      identifying.current = false; setIsIdentifying(false);
+      identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
+          audio: { echoCancellation:true, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
         mediaStream.current = stream;
-
-        // Web Audio pipeline
-        const ctx      = new (window.AudioContext || window.webkitAudioContext)();
-        const source   = ctx.createMediaStreamSource(stream);
-        const anal     = ctx.createAnalyser();
-        anal.fftSize   = 2048;
+        const ctx    = new (window.AudioContext || window.webkitAudioContext)();
+        const source = ctx.createMediaStreamSource(stream);
+        const anal   = ctx.createAnalyser();
+        anal.fftSize = 2048;
         source.connect(anal);
         audioCtx.current  = ctx;
         analyser.current  = anal;
         pitchBuffer.current = new Float32Array(anal.fftSize);
-
         setArmed(true);
-
-        // Identify immediately on arm — don't make user wait 45s
+        // Identify immediately on arm
         setTimeout(() => recognizeTrack(), 300);
-
-        // Auto recognition every 45s after that
+        // Auto re-identify every 45s
         autoTimer.current = setInterval(() => {
           if (!identifying.current) recognizeTrack();
         }, RECOGNITION_INTERVAL);
-
-        // Report data capture — every 500ms store a pitch reading
+        // Sample pitch every 500ms — only when track is known
         reportTimer.current = setInterval(() => {
-          if (smoothRef.current !== null) {
-            setReportData(prev => [...prev.slice(-300), { time: Date.now(), cents: smoothRef.current }]);
+          if (smoothRef.current !== null && trackInfoRef.current !== null) {
+            const sample = { time:Date.now(), cents:smoothRef.current };
+            setCurrentSamples(prev => [...prev.slice(-600), sample]);
           }
         }, REPORT_INTERVAL_MS);
-
       } catch {
         alert("Microphone access required.\n\nPlease tap Allow when prompted, then try again.");
       }
     }
   };
 
-  // ── METERING + REAL PITCH DETECTION ───────────────────────────────────────
+  // ── METERING + PITCH ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!armed) { cancelAnimationFrame(animFrame.current); return; }
     let localTick = 0;
-
     const animate = () => {
       localTick++;
-      tick.current = localTick;
-
-      // ── Real pitch from analyser ──
       if (analyser.current) {
         analyser.current.getFloatTimeDomainData(pitchBuffer.current);
         const sampleRate = audioCtx.current?.sampleRate || 44100;
-        const freq = detectPitch(pitchBuffer.current, sampleRate);
+        const freq  = detectPitch(pitchBuffer.current, sampleRate);
         const cents = freq ? freqToNearestCents(freq) : null;
         setPitchCents(cents);
         if (cents !== null) addPitchSample(cents);
-        else { pitchHistory.current = []; smoothRef.current = null; setSmoothCents(null); }
-
-        // Derive meter levels from analyser RMS
+        else { pitchHistory.current=[]; smoothRef.current=null; setSmoothCents(null); }
         const buf = pitchBuffer.current;
         const rms = Math.sqrt(buf.reduce((s,v)=>s+v*v,0)/buf.length);
         const db  = 20 * Math.log10(Math.max(rms, 1e-6));
-        // Map -60dB→0 to 0→100
-        const voxLvl = Math.max(0, Math.min(100, ((db + 60) / 60) * 100 * (voxLevel / 100)));
+        const voxLvl = Math.max(0, Math.min(100, ((db+60)/60)*100*(voxLevel/100)));
         setVoxMeter(voxLvl);
-        if (voxLvl > voxPeak) { setVoxPeak(voxLvl); clearTimeout(voxPeakTimer.current); voxPeakTimer.current = setTimeout(()=>setVoxPeak(0), 1600); }
-
-        // Room — simulated based on fader (no second mic available)
-        const rNew = Math.max(0, Math.min(100, roomLevel*0.75 + (Math.random()-0.5)*20 + Math.abs(Math.sin(localTick*0.08))*15));
+        if (voxLvl > voxPeak) { setVoxPeak(voxLvl); clearTimeout(voxPeakTimer.current); voxPeakTimer.current = setTimeout(()=>setVoxPeak(0),1600); }
+        const rNew = Math.max(0, Math.min(100, roomLevel*0.75+(Math.random()-0.5)*20+Math.abs(Math.sin(localTick*0.08))*15));
         setRoomMeter(rNew);
         if (rNew > roomPeak) { setRoomPeak(rNew); clearTimeout(roomPeakTimer.current); roomPeakTimer.current = setTimeout(()=>setRoomPeak(0),1600); }
-
         setClipping(voxLvl > 95 || rNew > 95);
       }
-
       animFrame.current = requestAnimationFrame(animate);
     };
     animFrame.current = requestAnimationFrame(animate);
@@ -774,15 +791,20 @@ function MicDrop() {
     return () => {
       clearInterval(autoTimer.current);
       clearInterval(reportTimer.current);
+      clearInterval(countdownTimer.current);
       if (mediaStream.current) mediaStream.current.getTracks().forEach(t=>t.stop());
     };
   }, []);
 
-  // ── RENDER ─────────────────────────────────────────────────────────────────
+  const isIdentifying = idPhase !== null;
+  const sessionAccuracy = sessionLog.length > 0
+    ? Math.round(sessionLog.reduce((s,g)=>s+g.accuracy,0)/sessionLog.length) : null;
+
+  // ── RENDER ────────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
 
-      {/* SCREEN GLOW — only active after track identified */}
+      {/* SCREEN GLOW — only after track identified */}
       {armed && trackInfo && <ScreenGlow cents={smoothCents} />}
 
       {/* HEADER */}
@@ -798,45 +820,27 @@ function MicDrop() {
       </div>
 
       {/* BANNER */}
-      <TrackBanner trackInfo={trackInfo} isIdentifying={isIdentifying} />
+      <TrackBanner trackInfo={trackInfo} phase={idPhase} />
 
-      {/* PITCH INDICATOR — hidden during countdown, shown after track identified */}
+      {/* PITCH / COUNTDOWN AREA */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"12px 20px 8px" }}>
         {trackInfo
           ? <PitchIndicator cents={pitchCents} />
-          : armed && countdown !== null
-            ? (
-              <div style={{ borderRadius:"12px", background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.15)", padding:"18px 12px", textAlign:"center" }}>
-                <div style={{ fontSize:"9px", letterSpacing:"0.28em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>
-                  IDENTIFYING SONG
-                </div>
-                <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"14px" }}>
-                  Pitch monitoring starts in
-                </div>
-                <div style={{ fontSize:"64px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1, textShadow:"0 0 30px rgba(201,168,76,0.4)" }}>
-                  {countdown}
-                </div>
-                <div style={{ marginTop:"10px", fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
-                  HOLD PHONE NEAR SPEAKER
-                </div>
-              </div>
-            )
+          : armed && isIdentifying
+            ? <CountdownDisplay phase={idPhase} countdown={countdown} />
             : armed
               ? (
                 <div style={{ borderRadius:"12px", background:"rgba(0,0,0,0)", border:"1px solid #1a1a1a", padding:"18px 12px", textAlign:"center" }}>
-                  <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>
-                    TAP IDENTIFY TO BEGIN
-                  </div>
+                  <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>TAP IDENTIFY TO BEGIN</div>
                 </div>
               )
               : <PitchIndicator cents={null} />
         }
       </div>
 
-      {/* STATUS — non-countdown messages only */}
-      {statusMsg && !countdown && (
+      {/* STATUS — non-phase messages */}
+      {statusMsg && !isIdentifying && (
         <div style={{ fontSize:"9px", color:"#C9A84C", letterSpacing:"0.12em", marginBottom:"4px", padding:"0 20px", textAlign:"center" }}>
-          {isIdentifying && <span className="spin" style={{ display:"inline-block", marginRight:"6px" }}>◈</span>}
           {statusMsg}
         </div>
       )}
@@ -859,12 +863,19 @@ function MicDrop() {
               💡 {trackInfo.tip}
             </div>
           )}
+          {/* Running accuracy for current song */}
+          {currentSamples.length > 4 && (
+            <div style={{ marginTop:"6px", display:"flex", justifyContent:"center", alignItems:"center", gap:"8px" }}>
+              <span style={{ fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>THIS SONG</span>
+              <span style={{ fontSize:"14px", fontWeight:"900", color:scoreColor(calcAccuracy(currentSamples)), fontFamily:"Georgia,serif" }}>{calcAccuracy(currentSamples)}%</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* PERFORMANCE REPORT */}
+      {/* SESSION REPORT */}
       {showReport && (
-        <PerformanceReport data={reportData} trackInfo={trackInfo} onClose={() => setShowReport(false)} />
+        <SessionReport songs={sessionLog} onClose={() => setShowReport(false)} />
       )}
 
       {/* MIXER */}
@@ -882,28 +893,24 @@ function MicDrop() {
 
       {/* BUTTONS */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"20px 20px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
-
         <button className={`arm-btn${armed?" armed":""}`} onClick={toggleArmed}>
           {armed ? "⏹  DISARM" : "⏺  ARM MIC"}
         </button>
-
         {armed && (
           <button className="identify-btn" disabled={isIdentifying} onClick={recognizeTrack}>
             {isIdentifying ? "◈  Identifying..." : "◈  Identify Track Now"}
           </button>
         )}
-
-        {armed && reportData.length > 4 && (
-          <button className="report-btn" onClick={() => setShowReport(s => !s)}>
-            {showReport ? "◁  Hide Report" : "▷  View Performance Report"}
+        {sessionLog.length > 0 && (
+          <button className="report-btn" onClick={() => setShowReport(s=>!s)}>
+            {showReport ? "◁  Hide Session Report" : `▷  Session Report${sessionAccuracy!==null?" · "+sessionAccuracy+"%":""}`}
           </button>
         )}
-
         <div style={{ display:"flex", alignItems:"center", gap:"12px", height:"16px" }}>
           {armed && <span className="live-pulse" style={{ fontSize:"9px", color:"#ff4422", letterSpacing:"0.2em" }}>● LIVE</span>}
-          {armed && reportData.length > 0 && (
+          {armed && sessionLog.length > 0 && (
             <span style={{ fontSize:"9px", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>
-              {reportData.length} samples
+              {sessionLog.length} song{sessionLog.length!==1?"s":""} logged
             </span>
           )}
         </div>
@@ -911,7 +918,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v0.6 — Powered by AudD + Claude
+        Mic Drop v0.7 — Powered by AudD + Claude
       </div>
 
     </div>
