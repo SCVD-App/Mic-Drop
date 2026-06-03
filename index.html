@@ -19,10 +19,11 @@
       100% { transform: translateX(-100%); }
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    .live-pulse { animation: pulse 1s infinite alternate; }
-    .id-pulse   { animation: pulse 0.5s infinite alternate; }
-    .clip-pulse { animation: pulse 0.3s infinite alternate; }
+    .live-pulse  { animation: pulse 1s infinite alternate; }
+    .clip-pulse  { animation: pulse 0.3s infinite alternate; }
+    .spin        { animation: spin 1s linear infinite; }
 
     .banner-track {
       display: inline-block;
@@ -65,9 +66,31 @@
       box-shadow: 0 0 24px rgba(255,34,0,0.35);
     }
 
-    .track-card {
-      animation: fadeIn 0.4s ease;
+    .identify-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s;
+      border: 2px solid rgba(201,168,76,0.4);
+      background: rgba(201,168,76,0.08);
+      color: #C9A84C;
     }
+    .identify-btn:active {
+      background: rgba(201,168,76,0.18);
+      transform: scale(0.98);
+    }
+    .identify-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .track-card { animation: fadeIn 0.4s ease; }
   </style>
 </head>
 <body>
@@ -76,17 +99,15 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const PROXY_BASE_URL        = "https://micdrop.emblen-scott.workers.dev";
-const RECOGNITION_INTERVAL  = 30000;   // ms between recognition attempts
-const AUDIO_SAMPLE_MS       = 12000;   // 12-second snapshot for AudD
-const NUM_LEDS              = 20;
+const PROXY_BASE_URL       = "https://micdrop.emblen-scott.workers.dev";
+const RECOGNITION_INTERVAL = 45000;  // 45 seconds between auto attempts
+const AUDIO_SAMPLE_MS      = 10000;  // 10 second snapshot
+const NUM_LEDS             = 20;
 
 // ── LED METER ─────────────────────────────────────────────────────────────────
 function LEDMeter({ level, peakHold, label, icon }) {
   const activeLEDs = Math.round((level / 100) * NUM_LEDS);
   const peakLED    = Math.round((peakHold / 100) * NUM_LEDS) - 1;
-
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"6px", width:"100%" }}>
       <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>
@@ -144,23 +165,17 @@ function Fader({ value, onChange, label, color }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"10px", userSelect:"none" }}>
       <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{label}</div>
-
       <div ref={trackRef}
         onMouseDown={(e) => { drag.current = true; onChange(calc(e.clientY)); }}
         onTouchStart={(e) => { drag.current = true; onChange(calc(e.touches[0].clientY)); }}
         style={{ position:"relative", width:"30px", height:"220px", cursor:"pointer" }}
       >
-        {/* groove */}
         <div style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", top:0, width:"4px", height:"100%", background:"linear-gradient(to bottom,#2a2a2a,#111)", borderRadius:"2px", boxShadow:"inset 0 1px 4px rgba(0,0,0,0.9)" }}/>
-
-        {/* dB markers */}
         {[100,75,50,25,0].map(pct => (
           <div key={pct} style={{ position:"absolute", right:"-20px", top:`${(1-pct/100)*100}%`, transform:"translateY(-50%)", fontSize:"7px", color:"#333", fontFamily:"'Courier New',monospace" }}>
             {pct===100?"∞":pct===75?"-6":pct===50?"-12":pct===25?"-24":"-∞"}
           </div>
         ))}
-
-        {/* cap */}
         <div className="fader-cap"
           style={{ top:`${thumbTop}px`, boxShadow:`0 2px 10px rgba(0,0,0,0.9), 0 0 14px ${color}55`, border:`1px solid ${color}77` }}
           onMouseDown={(e) => { e.stopPropagation(); drag.current = true; onChange(calc(e.clientY)); }}
@@ -171,7 +186,6 @@ function Fader({ value, onChange, label, color }) {
           ))}
         </div>
       </div>
-
       <div style={{ fontSize:"10px", color, fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{dbLabel}</div>
     </div>
   );
@@ -186,12 +200,9 @@ function PitchIndicator({ cents }) {
     if (a <= 50) return { bg:"rgba(255,170,0,0.10)", label:"CLOSE",          sub:`${cents>0?"+":""}${cents}¢`, accent:"#ffaa00" };
     return           { bg:"rgba(255,34,0,0.10)",  label:"OFF PITCH",       sub:`${cents>0?"+":""}${cents}¢`, accent:"#ff2200" };
   })();
-
   return (
     <div style={{ width:"100%", borderRadius:"12px", background:info.bg, border:`1px solid ${info.accent}33`, padding:"14px 12px", textAlign:"center", transition:"background 0.35s, border 0.35s", position:"relative", overflow:"hidden" }}>
-      {cents !== null && (
-        <div style={{ position:"absolute", bottom:0, left:"50%", transform:`translateX(calc(-50% + ${cents*1.1}px))`, width:"3px", height:"100%", background:info.accent, opacity:0.55, borderRadius:"2px", transition:"transform 0.12s, background 0.35s", boxShadow:`0 0 10px ${info.accent}` }}/>
-      )}
+      {cents !== null && <div style={{ position:"absolute", bottom:0, left:"50%", transform:`translateX(calc(-50% + ${cents*1.1}px))`, width:"3px", height:"100%", background:info.accent, opacity:0.55, borderRadius:"2px", transition:"transform 0.12s, background 0.35s", boxShadow:`0 0 10px ${info.accent}` }}/>}
       <div style={{ position:"absolute", bottom:0, left:"50%", width:"1px", height:"100%", background:"#282828" }}/>
       <div style={{ fontSize:"9px", letterSpacing:"0.28em", color:info.accent, fontFamily:"'Courier New',monospace", marginBottom:"3px", position:"relative" }}>{info.label}</div>
       <div style={{ fontSize:"18px", fontWeight:"bold", color:info.accent, fontFamily:"'Courier New',monospace", position:"relative" }}>{info.sub}</div>
@@ -202,11 +213,10 @@ function PitchIndicator({ cents }) {
 // ── TRACK BANNER ──────────────────────────────────────────────────────────────
 function TrackBanner({ trackInfo, isIdentifying }) {
   const text = isIdentifying
-    ? "◈  Listening for track..."
+    ? "◈  Identifying track — hold phone near speaker..."
     : trackInfo
       ? `♪  ${trackInfo.artist}  —  ${trackInfo.title}  •  Key of ${trackInfo.key}  •  ${trackInfo.bpm} BPM  •  ${trackInfo.genre}  •  ${trackInfo.tip}  ♪`
-      : "♪  Arm mic to begin track identification  ♪";
-
+      : "♪  Arm mic then tap IDENTIFY to detect track  ♪";
   return (
     <div style={{ width:"100%", overflow:"hidden", height:"26px", background:"rgba(0,0,0,0.4)", borderTop:"1px solid #1a1a1a", borderBottom:"1px solid #1a1a1a", display:"flex", alignItems:"center" }}>
       <div className="banner-track" style={{ fontSize:"10px", color: trackInfo ? "#C9A84C" : isIdentifying ? "#C9A84C" : "#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", lineHeight:"26px", paddingLeft:"20px" }}>
@@ -229,84 +239,123 @@ function MicDrop() {
   const [clipping,      setClipping]      = useState(false);
   const [trackInfo,     setTrackInfo]     = useState(null);
   const [isIdentifying, setIsIdentifying] = useState(false);
-  const [lastTrackKey,  setLastTrackKey]  = useState(null);
   const [statusMsg,     setStatusMsg]     = useState("");
+  const [lastTrackKey,  setLastTrackKey]  = useState(null);
 
-  const roomPeakTimer  = useRef(null);
-  const voxPeakTimer   = useRef(null);
-  const animFrame      = useRef(null);
-  const tick           = useRef(0);
-  const mediaStream    = useRef(null);
-  const recogTimer     = useRef(null);
+  const roomPeakTimer = useRef(null);
+  const voxPeakTimer  = useRef(null);
+  const animFrame     = useRef(null);
+  const tick          = useRef(0);
+  const mediaStream   = useRef(null);
+  const autoTimer     = useRef(null);
+  const identifying   = useRef(false); // prevent concurrent calls
 
-  // ── TRACK RECOGNITION ──────────────────────────────────────────────────────
+  // ── CORE RECOGNITION ───────────────────────────────────────────────────────
   const recognizeTrack = useCallback(async () => {
-    if (!mediaStream.current) return;
+    if (!mediaStream.current || identifying.current) return;
+    identifying.current = true;
     setIsIdentifying(true);
-    setStatusMsg("Listening...");
+    setStatusMsg("Recording 10 seconds...");
 
     try {
-      const chunks = [];
+      // Record audio
+      const chunks  = [];
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
-        : "audio/webm";
-      const recorder = new MediaRecorder(mediaStream.current, { mimeType });
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "audio/ogg";
 
-      await new Promise((resolve) => {
-        recorder.onstop = resolve;
-        recorder.start(1000);
-        setTimeout(() => recorder.stop(), AUDIO_SAMPLE_MS);
+      const recorder = new MediaRecorder(mediaStream.current, { mimeType });
+      recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+      await new Promise((resolve, reject) => {
+        recorder.onerror = reject;
+        recorder.onstop  = resolve;
+        recorder.start(500); // collect chunks every 500ms
+        setTimeout(() => {
+          if (recorder.state !== "inactive") recorder.stop();
+        }, AUDIO_SAMPLE_MS);
       });
 
+      if (chunks.length === 0) {
+        setStatusMsg("No audio captured — check mic permissions");
+        setTimeout(() => setStatusMsg(""), 4000);
+        return;
+      }
+
+      setStatusMsg("Sending to AudD...");
+
+      // Convert to base64
       const blob   = new Blob(chunks, { type: mimeType });
-      const base64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(",")[1]);
+      const base64 = await new Promise((resolve, reject) => {
+        const reader  = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result;
+          if (result && result.includes(",")) {
+            resolve(result.split(",")[1]);
+          } else {
+            reject(new Error("FileReader failed"));
+          }
+        };
+        reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
 
-      setStatusMsg("Identifying track...");
-      const recRes  = await fetch(`${PROXY_BASE_URL}/recognize`, {
-        method:"POST", headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ audio: base64 }),
+      // Hit the proxy
+      const res  = await fetch(`${PROXY_BASE_URL}/recognize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio: base64, mimeType }),
       });
-      const recData = await recRes.json();
 
-      if (recData.result) {
-        const { title, artist } = recData.result;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (data.status === "error") {
+        setStatusMsg(`AudD: ${data.error?.error_message || "error"}`);
+        setTimeout(() => setStatusMsg(""), 5000);
+        return;
+      }
+
+      if (data.result) {
+        const { title, artist } = data.result;
         const trackKey = `${title}||${artist}`;
 
-        if (trackKey === lastTrackKey) {
-          setStatusMsg(""); setIsIdentifying(false); return;
+        if (trackKey !== lastTrackKey) {
+          setStatusMsg("Getting musical details...");
+          try {
+            const enrichRes  = await fetch(`${PROXY_BASE_URL}/enrich`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title, artist }),
+            });
+            const enrichData = await enrichRes.json();
+            setTrackInfo({
+              title, artist,
+              key:   enrichData.key   || "Unknown",
+              bpm:   enrichData.bpm   || "—",
+              genre: enrichData.genre || "",
+              tip:   enrichData.tip   || "",
+            });
+            setLastTrackKey(trackKey);
+          } catch {
+            setTrackInfo({ title, artist, key:"—", bpm:"—", genre:"", tip:"" });
+            setLastTrackKey(trackKey);
+          }
         }
-
-        setStatusMsg("Enriching with AI...");
-        const enrichRes  = await fetch(`${PROXY_BASE_URL}/enrich`, {
-          method:"POST", headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ title, artist }),
-        });
-        const enrichData = await enrichRes.json();
-
-        setTrackInfo({
-          title,
-          artist,
-          key:   enrichData.key   || "Unknown",
-          bpm:   enrichData.bpm   || "—",
-          genre: enrichData.genre || "",
-          tip:   enrichData.tip   || "",
-        });
-        setLastTrackKey(trackKey);
         setStatusMsg("");
       } else {
-        setStatusMsg("No match — keep singing!");
-        setTimeout(() => setStatusMsg(""), 4000);
+        setStatusMsg("No match — try holding closer to speaker");
+        setTimeout(() => setStatusMsg(""), 5000);
       }
+
     } catch (err) {
       console.error("Recognition error:", err);
-      setStatusMsg("Recognition error — retrying soon");
-      setTimeout(() => setStatusMsg(""), 4000);
+      setStatusMsg(`Error: ${err.message}`);
+      setTimeout(() => setStatusMsg(""), 5000);
     } finally {
+      identifying.current = false;
       setIsIdentifying(false);
     }
   }, [lastTrackKey]);
@@ -315,88 +364,98 @@ function MicDrop() {
   const toggleArmed = async () => {
     if (armed) {
       setArmed(false);
-      clearInterval(recogTimer.current);
-      if (mediaStream.current) { mediaStream.current.getTracks().forEach(t=>t.stop()); mediaStream.current = null; }
+      clearInterval(autoTimer.current);
       cancelAnimationFrame(animFrame.current);
+      if (mediaStream.current) {
+        mediaStream.current.getTracks().forEach(t => t.stop());
+        mediaStream.current = null;
+      }
       setRoomMeter(0); setVoxMeter(0); setRoomPeak(0); setVoxPeak(0);
       setPitchCents(null); setClipping(false); setStatusMsg("");
+      identifying.current = false;
+      setIsIdentifying(false);
     } else {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl:  false,
+          },
+          video: false,
+        });
         mediaStream.current = stream;
         setArmed(true);
-        recognizeTrack();
-        recogTimer.current = setInterval(recognizeTrack, RECOGNITION_INTERVAL);
+        // Auto recognition every 45 seconds — but user can tap manually anytime
+        autoTimer.current = setInterval(() => {
+          if (!identifying.current) recognizeTrack();
+        }, RECOGNITION_INTERVAL);
       } catch (err) {
-        alert("Microphone access is required.\n\nPlease tap Allow when prompted, then try again.");
+        alert("Microphone access required.\n\nPlease tap Allow when prompted, then try again.");
       }
     }
   };
 
-  // ── SIMULATED METERING ─────────────────────────────────────────────────────
+  // ── METERING ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!armed) { cancelAnimationFrame(animFrame.current); return; }
     const animate = () => {
       tick.current += 1;
       const t = tick.current;
-
-      const rBase = roomLevel * 0.75;
-      const rNew  = Math.max(0, Math.min(100, rBase + (Math.random()-0.5)*20 + Math.abs(Math.sin(t*0.08))*15));
+      const rNew = Math.max(0, Math.min(100, roomLevel*0.75 + (Math.random()-0.5)*20 + Math.abs(Math.sin(t*0.08))*15));
       setRoomMeter(rNew);
       if (rNew > roomPeak) { setRoomPeak(rNew); clearTimeout(roomPeakTimer.current); roomPeakTimer.current = setTimeout(()=>setRoomPeak(0), 1600); }
-
-      const vBase = voxLevel * 0.7;
-      const vNew  = Math.max(0, Math.min(100, vBase + (Math.random()-0.5)*30 + Math.abs(Math.sin(t*0.05))*20));
+      const vNew = Math.max(0, Math.min(100, voxLevel*0.7 + (Math.random()-0.5)*30 + Math.abs(Math.sin(t*0.05))*20));
       setVoxMeter(vNew);
       if (vNew > voxPeak) { setVoxPeak(vNew); clearTimeout(voxPeakTimer.current); voxPeakTimer.current = setTimeout(()=>setVoxPeak(0), 1600); }
-
       setClipping(vNew > 95 || rNew > 95);
-
-      const pitch = Math.sin(t*0.03)*55 + (Math.random()-0.5)*12;
-      setPitchCents(Math.round(Math.max(-60, Math.min(60, pitch))));
-
+      setPitchCents(Math.round(Math.max(-60, Math.min(60, Math.sin(t*0.03)*55 + (Math.random()-0.5)*12))));
       animFrame.current = requestAnimationFrame(animate);
     };
     animFrame.current = requestAnimationFrame(animate);
     return () => { cancelAnimationFrame(animFrame.current); clearTimeout(roomPeakTimer.current); clearTimeout(voxPeakTimer.current); };
   }, [armed, roomLevel, voxLevel]);
 
-  // ── CLEANUP ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    return () => { clearInterval(recogTimer.current); if (mediaStream.current) mediaStream.current.getTracks().forEach(t=>t.stop()); };
+    return () => {
+      clearInterval(autoTimer.current);
+      if (mediaStream.current) mediaStream.current.getTracks().forEach(t=>t.stop());
+    };
   }, []);
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px" }}>
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"22px 20px 6px", textAlign:"center" }}>
         <div style={{ fontSize:"30px", fontWeight:"900", letterSpacing:"0.18em", color:"#fff", fontFamily:"Georgia,serif", textTransform:"uppercase" }}>
           🎤 MIC DROP
         </div>
-        <div style={{ fontSize:"8px", letterSpacing:"0.35em", color:"#3a3a3a", marginTop:"3px", textTransform:"uppercase" }}>
-          Vocal Blend Monitor
-        </div>
-        <div style={{ fontSize:"8px", letterSpacing:"0.12em", color:"#1a4a1a", marginTop:"5px" }}>
-          ✦ IS AND ALWAYS WILL BE AD FREE ✦
-        </div>
-
-        {/* Clip warning */}
-        <div style={{ height:"18px", display:"flex", alignItems:"center", justifyContent:"center", marginTop:"4px" }}>
+        <div style={{ fontSize:"8px", letterSpacing:"0.35em", color:"#3a3a3a", marginTop:"3px", textTransform:"uppercase" }}>Vocal Blend Monitor</div>
+        <div style={{ fontSize:"8px", letterSpacing:"0.12em", color:"#1a4a1a", marginTop:"5px" }}>✦ IS AND ALWAYS WILL BE AD FREE ✦</div>
+        <div style={{ height:"16px", display:"flex", alignItems:"center", justifyContent:"center", marginTop:"4px" }}>
           {clipping && <span className="clip-pulse" style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#ff2200", fontWeight:"bold" }}>⚠ CLIP</span>}
         </div>
       </div>
 
-      {/* ── TRACK BANNER ── */}
+      {/* BANNER */}
       <TrackBanner trackInfo={trackInfo} isIdentifying={isIdentifying} />
 
-      {/* ── PITCH INDICATOR ── */}
+      {/* PITCH */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"12px 20px 8px" }}>
         <PitchIndicator cents={pitchCents} />
       </div>
 
-      {/* ── TRACK CARD ── */}
+      {/* STATUS */}
+      {statusMsg && (
+        <div style={{ fontSize:"9px", color:"#C9A84C", letterSpacing:"0.12em", marginBottom:"4px", padding:"0 20px", textAlign:"center" }}>
+          {isIdentifying && <span className="spin" style={{ display:"inline-block", marginRight:"6px" }}>◈</span>}
+          {statusMsg}
+        </div>
+      )}
+
+      {/* TRACK CARD */}
       {trackInfo && (
         <div className="track-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 10px" }}>
           <div style={{ background:"rgba(201,168,76,0.07)", border:"1px solid rgba(201,168,76,0.22)", borderRadius:"12px", padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -417,45 +476,48 @@ function MicDrop() {
         </div>
       )}
 
-      {/* ── STATUS MESSAGE ── */}
-      {statusMsg && !trackInfo && (
-        <div style={{ fontSize:"9px", color:"#C9A84C", letterSpacing:"0.15em", marginBottom:"6px", height:"14px" }}>{statusMsg}</div>
-      )}
-
-      {/* ── MIXER STRIP ── */}
-      <div style={{ width:"100%", maxWidth:"420px", padding:"0 20px", display:"flex", flexDirection:"row", justifyContent:"space-between", alignItems:"flex-start", gap:"0" }}>
-
-        {/* Room */}
+      {/* MIXER */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"0 20px", display:"flex", flexDirection:"row", justifyContent:"space-between", alignItems:"flex-start" }}>
         <div style={{ flex:1, display:"flex", flexDirection:"row", gap:"10px", alignItems:"flex-start", justifyContent:"center", padding:"14px 10px", borderRadius:"14px", background:"rgba(255,255,255,0.02)", border:"1px solid #181818" }}>
           <LEDMeter level={roomMeter} peakHold={roomPeak} label="Room" icon="♪" />
           <Fader value={roomLevel} onChange={setRoomLevel} label="Room" color="#2E6DA4" />
         </div>
-
         <div style={{ width:"1px", height:"270px", background:"#181818", margin:"14px 6px 0", alignSelf:"flex-start" }}/>
-
-        {/* Vox */}
         <div style={{ flex:1, display:"flex", flexDirection:"row", gap:"10px", alignItems:"flex-start", justifyContent:"center", padding:"14px 10px", borderRadius:"14px", background:"rgba(255,255,255,0.02)", border:"1px solid #181818" }}>
           <LEDMeter level={voxMeter} peakHold={voxPeak} label="Vox" icon="🎤" />
           <Fader value={voxLevel} onChange={setVoxLevel} label="Vox" color="#C9A84C" />
         </div>
       </div>
 
-      {/* ── ARM BUTTON ── */}
+      {/* BUTTONS */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"20px 20px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
+
+        {/* ARM */}
         <button className={`arm-btn${armed?" armed":""}`} onClick={toggleArmed}>
           {armed ? "⏹  DISARM" : "⏺  ARM MIC"}
         </button>
 
+        {/* IDENTIFY NOW — manual trigger */}
+        {armed && (
+          <button
+            className="identify-btn"
+            disabled={isIdentifying}
+            onClick={recognizeTrack}
+          >
+            {isIdentifying ? "◈  Identifying..." : "◈  Identify Track Now"}
+          </button>
+        )}
+
         <div style={{ display:"flex", alignItems:"center", gap:"12px", height:"16px" }}>
           {armed && <span className="live-pulse" style={{ fontSize:"9px", color:"#ff4422", letterSpacing:"0.2em" }}>● LIVE</span>}
-          {isIdentifying && <span className="id-pulse" style={{ fontSize:"9px", color:"#C9A84C", letterSpacing:"0.15em" }}>◈ IDENTIFYING</span>}
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
-      <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"8px" }}>
-        Mic Drop v0.2 — Powered by AudD + Claude
+      {/* FOOTER */}
+      <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
+        Mic Drop v0.3 — Powered by AudD + Claude
       </div>
+
     </div>
   );
 }
