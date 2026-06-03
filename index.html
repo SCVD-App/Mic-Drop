@@ -799,7 +799,7 @@ function MicDrop() {
         setTimeout(() => { if (recorder.state !== "inactive") recorder.stop(); }, AUDIO_SAMPLE_MS);
       });
 
-      // Phase 2 — countdown 3, 2, 1 while sending
+      // Phase 2 — countdown 3, 2, 1 runs visually while we prepare and send
       setIdPhase("counting");
       let cd = 3;
       setCountdown(cd);
@@ -810,7 +810,6 @@ function MicDrop() {
         else setCountdown(cd);
       }, 1000);
 
-      // Wait for countdown to finish (3 seconds) while also sending
       if (!chunks.length) { setStatusMsg("No audio captured — check mic permissions"); setTimeout(()=>setStatusMsg(""),4000); return; }
 
       const blob   = new Blob(chunks, { type:mimeType });
@@ -821,9 +820,7 @@ function MicDrop() {
         r.readAsDataURL(blob);
       });
 
-      // Wait minimum 3s for countdown to feel right, then proceed
-      await new Promise(r => setTimeout(r, 3200));
-
+      // Countdown and fetch run in parallel — no artificial wait
       setIdPhase("sending");
 
       const resp = await fetch(`${PROXY_BASE_URL}/recognize`, {
@@ -904,7 +901,7 @@ function MicDrop() {
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation:true, noiseSuppression:false, autoGainControl:false },
+          audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
         mediaStream.current = stream;
@@ -1101,7 +1098,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v0.9 — Powered by AudD + Claude
+        Mic Drop v1.0 — Powered by AudD + Claude
       </div>
 
     </div>
