@@ -409,12 +409,16 @@ function CountdownDisplay({ phase, countdown }) {
 // ── PRO SPLASH PAGE ───────────────────────────────────────────────────────────
 function ProSplash({ onClose }) {
   const [selected, setSelected] = useState("annual");
+  const [fontScale, setFontScale] = useState(1); // 1 = normal, 1.25 = large, 1.55 = XL
+
+  // All font sizes run through scale so the toggle actually works
+  const fs = (base) => Math.round(base * fontScale) + "px";
 
   const plans = [
-    { id:"monthly", label:"1 Month",  price:"$2.99",  total:"$2.99",  saving:null },
-    { id:"quarter", label:"3 Months", price:"$7.99",  total:"$7.99",  saving:"11% off" },
-    { id:"biannual",label:"6 Months", price:"$14.99", total:"$14.99", saving:"16% off" },
-    { id:"annual",  label:"1 Year",   price:"$24.99", total:"$24.99", saving:"30% off — best value" },
+    { id:"monthly", label:"1 Month",  price:"$2.99",  saving:null },
+    { id:"quarter", label:"3 Months", price:"$7.99",  saving:"11% off" },
+    { id:"biannual",label:"6 Months", price:"$14.99", saving:"16% off" },
+    { id:"annual",  label:"1 Year",   price:"$24.99", saving:"30% off — best value" },
   ];
 
   // Animated pitch graph — gold reference line, red singer line
@@ -440,11 +444,11 @@ function ProSplash({ onClose }) {
 
       {/* Hero */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 24px", textAlign:"center" }}>
-        <div style={{ fontSize:"11px", letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"16px" }}>MIC DROP PRO</div>
-        <div style={{ fontSize:"22px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", lineHeight:1.3, marginBottom:"12px" }}>
+        <div style={{ fontSize:fs(11), letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"16px" }}>MIC DROP PRO</div>
+        <div style={{ fontSize:fs(22), fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", lineHeight:1.3, marginBottom:"12px" }}>
           Improve your singing<br/>on the way to work.
         </div>
-        <div style={{ fontSize:"12px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, marginBottom:"8px" }}>
+        <div style={{ fontSize:fs(12), color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, marginBottom:"8px" }}>
           No app store. No ads. No algorithms. No nonsense.
         </div>
       </div>
@@ -452,7 +456,7 @@ function ProSplash({ onClose }) {
       {/* Pitch graph preview */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
         <div style={{ background:"rgba(0,0,0,0.6)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"14px 16px" }}>
-          <div style={{ fontSize:"8px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>PITCH TIMELINE — LIVE SESSION DATA</div>
+          <div style={{ fontSize:fs(8), letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>PITCH TIMELINE — LIVE SESSION DATA</div>
           <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:"block", borderRadius:"6px", background:"rgba(0,0,0,0.3)" }}>
             {/* Pocket zone */}
             <rect x="0" y={mid-14} width={W} height="28" fill="rgba(201,168,76,0.06)" rx="2"/>
@@ -473,7 +477,7 @@ function ProSplash({ onClose }) {
             {[["#C9A84C","Reference pitch"],["#00cc55","In pocket"],["#ffaa00","Close"],["#ff2200","Off pitch"]].map(([col,lbl])=>(
               <div key={lbl} style={{ display:"flex", alignItems:"center", gap:"4px" }}>
                 <div style={{ width:"16px", height:"2px", background:col, borderRadius:"1px" }}/>
-                <span style={{ fontSize:"7px", color:"#333", fontFamily:"'Courier New',monospace" }}>{lbl}</span>
+                <span style={{ fontSize:fs(7), color:"#333", fontFamily:"'Courier New',monospace" }}>{lbl}</span>
               </div>
             ))}
           </div>
@@ -492,7 +496,7 @@ function ProSplash({ onClose }) {
           ].map(([icon,text],i,arr)=>(
             <div key={i} style={{ padding:"12px 16px", borderBottom:i<arr.length-1?"1px solid #111":"none", display:"flex", alignItems:"flex-start", gap:"12px" }}>
               <span style={{ fontSize:"16px", flexShrink:0 }}>{icon}</span>
-              <span style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.5 }}>{text}</span>
+              <span style={{ fontSize:fs(12), color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.5 }}>{text}</span>
             </div>
           ))}
         </div>
@@ -500,7 +504,7 @@ function ProSplash({ onClose }) {
 
       {/* Pricing */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
-        <div style={{ fontSize:"10px", letterSpacing:"0.2em", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", marginBottom:"12px" }}>CHOOSE YOUR PLAN — OPT IN, NO AUTO-RENEWAL</div>
+        <div style={{ fontSize:fs(10), letterSpacing:"0.2em", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", marginBottom:"12px" }}>CHOOSE YOUR PLAN — OPT IN, NO AUTO-RENEWAL</div>
         <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
           {plans.map(plan => (
             <div key={plan.id}
@@ -515,10 +519,10 @@ function ProSplash({ onClose }) {
             >
               <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                 <div style={{ width:"18px", height:"18px", borderRadius:"50%", border:`2px solid ${selected===plan.id?"#C9A84C":"#555"}`, background:selected===plan.id?"#C9A84C":"transparent", flexShrink:0 }}/>
-                <span style={{ fontSize:"13px", color:selected===plan.id?"#C9A84C":"#aaa", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{plan.label}</span>
-                {plan.saving && <span style={{ fontSize:"9px", color:"#C9A84C", fontFamily:"'Courier New',monospace", opacity:0.8 }}>{plan.saving}</span>}
+                <span style={{ fontSize:fs(13), color:selected===plan.id?"#C9A84C":"#aaa", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{plan.label}</span>
+                {plan.saving && <span style={{ fontSize:fs(9), color:"#C9A84C", fontFamily:"'Courier New',monospace", opacity:0.8 }}>{plan.saving}</span>}
               </div>
-              <span style={{ fontSize:"16px", fontWeight:"900", color:selected===plan.id?"#C9A84C":"#777", fontFamily:"Georgia,serif" }}>{plan.price}</span>
+              <span style={{ fontSize:fs(16), fontWeight:"900", color:selected===plan.id?"#C9A84C":"#777", fontFamily:"Georgia,serif" }}>{plan.price}</span>
             </div>
           ))}
         </div>
@@ -527,10 +531,10 @@ function ProSplash({ onClose }) {
       {/* The manifesto */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 24px" }}>
         <div style={{ background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:"14px", padding:"20px" }}>
-          <div style={{ fontSize:"16px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1.5, marginBottom:"16px", textAlign:"center" }}>
+          <div style={{ fontSize:fs(16), fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1.5, marginBottom:"16px", textAlign:"center" }}>
             For less than your monthly gym fees for that membership you don't even use — enjoy a whole year of Pro.
           </div>
-          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:2.0, textAlign:"center" }}>
+          <div style={{ fontSize:fs(12), color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:2.0, textAlign:"center" }}>
             Supporting Mic Drop is a good old fashioned F You to Google, Apple and Microsoft.<br/><br/>
             <span style={{ color:"#666", fontStyle:"italic" }}>(Disclaimer: Bill Gates doesn't even own Microsoft anymore but F that guy too.)</span><br/><br/>
             Bezos gets nothing out of this either. Just sayin'.<br/><br/>
@@ -544,25 +548,24 @@ function ProSplash({ onClose }) {
       {/* Font size toggle — for Lorna */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px", display:"flex", alignItems:"center", justifyContent:"center", gap:"12px" }}>
         <span style={{ fontSize:"10px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>TEXT SIZE</span>
-        {["A","A","A"].map((a,i) => {
-          const sizes = [11,14,18];
-          const labels = ["S","M","L"];
-          return (
-            <button key={i}
-              onClick={() => {
-                document.documentElement.style.setProperty("--splash-font", sizes[i]+"px");
-                // Force re-render hint stored in sessionStorage
-                sessionStorage.setItem("splashFont", sizes[i]);
-              }}
-              style={{
-                width:"36px", height:"36px", borderRadius:"8px", cursor:"pointer",
-                border:"1px solid #2a2a2a", background:"rgba(255,255,255,0.03)",
-                color:"#666", fontFamily:"Georgia,serif", fontSize:sizes[i]+"px",
-                fontWeight:"bold", display:"flex", alignItems:"center", justifyContent:"center",
-              }}
-            >{labels[i]}</button>
-          );
-        })}
+        {[
+          { label:"A", scale:1,    size:"11px" },
+          { label:"A", scale:1.25, size:"14px" },
+          { label:"A", scale:1.55, size:"18px" },
+        ].map(({ label, scale, size }) => (
+          <button key={scale}
+            onClick={() => setFontScale(scale)}
+            style={{
+              width:"40px", height:"40px", borderRadius:"8px", cursor:"pointer",
+              border:`2px solid ${fontScale===scale?"#C9A84C":"#2a2a2a"}`,
+              background: fontScale===scale?"rgba(201,168,76,0.1)":"rgba(255,255,255,0.03)",
+              color: fontScale===scale?"#C9A84C":"#555",
+              fontFamily:"Georgia,serif", fontSize:size,
+              fontWeight:"bold", display:"flex", alignItems:"center", justifyContent:"center",
+              transition:"all 0.2s",
+            }}
+          >{label}</button>
+        ))}
       </div>
 
       {/* CTA */}
@@ -574,14 +577,14 @@ function ProSplash({ onClose }) {
             borderRadius:"14px", border:"none", cursor:"pointer",
             background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
             color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-            fontSize:"14px", fontWeight:"900", letterSpacing:"0.2em",
+            fontSize:fs(14), fontWeight:"900", letterSpacing:"0.2em",
             textTransform:"uppercase",
             boxShadow:"0 0 30px rgba(201,168,76,0.4)",
           }}
         >
           Unlock Pro — {plans.find(p=>p.id===selected)?.price}
         </button>
-        <div style={{ textAlign:"center", marginTop:"12px", fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
+        <div style={{ textAlign:"center", marginTop:"12px", fontSize:fs(10), color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
           NO APP STORE · OPT-IN ONLY · NO AUTO-RENEWAL
         </div>
       </div>
@@ -1099,13 +1102,3 @@ function MicDrop() {
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
         Mic Drop v0.9 — Powered by AudD + Claude
-      </div>
-
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<MicDrop />);
-</script>
-</body>
-</html>
