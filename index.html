@@ -1396,7 +1396,7 @@ function MicDrop() {
       // On mobile, the gesture context expires after any await call.
       let audioCtxTemp;
       try {
-        audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+        audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100, latencyHint: 'playback' });
         if (audioCtxTemp.state === 'suspended') await audioCtxTemp.resume();
       } catch(e) {
         setStatusMsg(`Audio engine failed: ${e.message}`);
