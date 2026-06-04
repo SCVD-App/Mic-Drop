@@ -1161,6 +1161,7 @@ function MicDrop() {
   const pingTimer    = useRef(null);
   const sessionId    = useRef(`${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
   const voxPeakTimer   = useRef(null);
+  const roomPeakTimer  = useRef(null);
   const animFrame      = useRef(null);
   const mediaStream    = useRef(null);
   const audioCtx       = useRef(null);
