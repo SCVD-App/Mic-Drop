@@ -1113,9 +1113,6 @@ function MicDrop() {
   const [trackInfo,   setTrackInfo]   = useState(null);
   const [lastTrackKey,setLastTrackKey]= useState(null);
   const [statusMsg,   setStatusMsg]   = useState("");
-  const [debugLog,    setDebugLog]    = useState(() => {
-    try { return JSON.parse(localStorage.getItem("mdDebugLog") || "[]"); } catch(e) { return []; }
-  });
   // Identification phase: null | "capturing" | "counting" | "sending" | "enriching"
   const [idPhase,     setIdPhase]     = useState(null);
   const [countdown,   setCountdown]   = useState(null);
@@ -1363,31 +1360,8 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
-      // DEBUG: log every step visibly on screen
-      const dbg = (msg) => {
-        console.log("[MicDrop]", msg);
-        const line = `${new Date().toISOString().slice(11,19)} ${msg}`;
-        setDebugLog(prev => [...prev.slice(-20), line]);
-        // Persist to localStorage so log survives blank screen crash
-        try {
-          const existing = JSON.parse(localStorage.getItem("mdDebugLog") || "[]");
-          existing.push(line);
-          localStorage.setItem("mdDebugLog", JSON.stringify(existing.slice(-20)));
-        } catch(e) {}
-      };
-
-      dbg(`UA: ${navigator.userAgent.slice(0,60)}`);
-      dbg(`mediaDevices: ${!!navigator.mediaDevices}`);
-      dbg(`getUserMedia: ${!!navigator.mediaDevices?.getUserMedia}`);
-
-      const isARM = /Android/i.test(navigator.userAgent);
-      dbg(`isARM: ${isARM}`);
-
-      const audioConstraints = isARM
-        ? true
-        : { echoCancellation:false, noiseSuppression:false, autoGainControl:false };
-      dbg(`constraints: ${JSON.stringify(audioConstraints)}`);
-
+      // getUserMedia with 8 second timeout — prevents 30s freeze on Android
+      // when mic is held by another app or permission is slow
       const getUserMediaWithTimeout = (constraints, timeoutMs = 8000) => {
         return Promise.race([
           navigator.mediaDevices.getUserMedia(constraints),
@@ -1398,30 +1372,10 @@ function MicDrop() {
       };
 
       try {
-        dbg("calling getUserMedia...");
-
-        // Enumerate devices first — on Android 10 with multiple audio inputs,
-        // passing audio:true causes a HAL deadlock. Fix: explicitly request default deviceId.
-        let resolvedConstraints = audioConstraints;
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const mics = devices.filter(d => d.kind === "audioinput");
-          dbg(`mics found: ${mics.length} — ${mics.map(m=>m.label||"unlabelled").join(", ").slice(0,60)}`);
-          if (isARM && mics.length > 0) {
-            // Find default device, fall back to first mic
-            const defaultMic = mics.find(m => m.label.toLowerCase().includes("default")) || mics[0];
-            dbg(`using: ${defaultMic.label} (${defaultMic.deviceId.slice(0,12)})`);
-            resolvedConstraints = { deviceId: { exact: defaultMic.deviceId } };
-          }
-        } catch(enumErr) {
-          dbg(`enumerate failed: ${enumErr.message}`);
-        }
-
         const stream = await getUserMediaWithTimeout({
-          audio: resolvedConstraints,
+          audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
-        dbg(`stream OK — tracks: ${stream.getAudioTracks().length}`);
 
         mediaStream.current    = stream;
         cleanStreamRef.current = null;
@@ -1449,8 +1403,6 @@ function MicDrop() {
             pitchBuffer.current = new Float32Array(anal.fftSize);
           } catch (audioErr) {
             console.warn("AudioContext deferred init failed:", audioErr.message);
-            setStatusMsg(`Audio engine error: ${audioErr.message}`);
-            setTimeout(() => setStatusMsg(""), 6000);
           }
         }, 500);
 
@@ -1471,9 +1423,8 @@ function MicDrop() {
             ? "Microphone access denied — check Chrome permissions in Android Settings."
             : err.name === "NotFoundError"
               ? "No microphone found — check your device settings."
-              : `Mic error: ${err.name} — ${err.message}`;
-        setStatusMsg(msg);
-        setTimeout(() => setStatusMsg(""), 8000);
+              : `Mic error: ${err.message}`;
+        alert(msg);
       }
     }
   };
@@ -1728,19 +1679,6 @@ function MicDrop() {
 
       {/* BUTTONS */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"20px 20px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
-        {debugLog.length > 0 && (
-          <div style={{
-            background:"#1a1a0a", border:"1px solid #C9A84C", borderRadius:"8px",
-            padding:"10px 12px", marginBottom:"10px", fontFamily:"monospace",
-            fontSize:"10px", color:"#C9A84C", lineHeight:"1.6",
-          }}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
-              <span style={{color:"#fff",fontWeight:"bold"}}>🔍 DEBUG LOG</span>
-              <span style={{color:"#888",cursor:"pointer",fontSize:"11px"}} onClick={()=>{setDebugLog([]);try{localStorage.removeItem("mdDebugLog")}catch(e){}}}>✕ clear</span>
-            </div>
-            {debugLog.map((line, i) => <div key={i} style={{wordBreak:"break-all"}}>{line}</div>)}
-          </div>
-        )}
         <button className={`arm-btn${armed?" armed":""}`} onClick={toggleArmed}>
           {armed ? "⏹  DISARM" : "⏺  ARM MIC"}
         </button>
@@ -1811,7 +1749,7 @@ function MicDrop() {
 
         {/* Version */}
         <div style={{ fontSize:"10px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v1.8 — Powered by AudD + Claude
+          Mic Drop v1.7 — Powered by AudD + Claude
         </div>
 
       </div>
