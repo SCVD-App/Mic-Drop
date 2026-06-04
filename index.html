@@ -1390,6 +1390,16 @@ function MicDrop() {
 
       try {
         dbg("calling getUserMedia...");
+
+        // Android 10 workaround — enumerateDevices first to unlock permission state
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const mics = devices.filter(d => d.kind === "audioinput");
+          dbg(`mics found: ${mics.length} — ${mics.map(m=>m.label||"unlabelled").join(", ").slice(0,40)}`);
+        } catch(enumErr) {
+          dbg(`enumerate failed: ${enumErr.message}`);
+        }
+
         const stream = await getUserMediaWithTimeout({
           audio: audioConstraints,
           video: false,
