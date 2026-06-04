@@ -1113,6 +1113,7 @@ function MicDrop() {
   const [trackInfo,   setTrackInfo]   = useState(null);
   const [lastTrackKey,setLastTrackKey]= useState(null);
   const [statusMsg,   setStatusMsg]   = useState("");
+
   // Identification phase: null | "capturing" | "counting" | "sending" | "enriching"
   const [idPhase,     setIdPhase]     = useState(null);
   const [countdown,   setCountdown]   = useState(null);
@@ -1360,8 +1361,6 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
-      // getUserMedia with 8 second timeout — prevents 30s freeze on Android
-      // when mic is held by another app or permission is slow
       const getUserMediaWithTimeout = (constraints, timeoutMs = 8000) => {
         return Promise.race([
           navigator.mediaDevices.getUserMedia(constraints),
@@ -1376,7 +1375,6 @@ function MicDrop() {
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
-
         mediaStream.current    = stream;
         cleanStreamRef.current = null;
         audioCtx.current       = null;
@@ -1403,6 +1401,8 @@ function MicDrop() {
             pitchBuffer.current = new Float32Array(anal.fftSize);
           } catch (audioErr) {
             console.warn("AudioContext deferred init failed:", audioErr.message);
+            setStatusMsg(`Audio engine error: ${audioErr.message}`);
+            setTimeout(() => setStatusMsg(""), 6000);
           }
         }, 500);
 
@@ -1423,8 +1423,9 @@ function MicDrop() {
             ? "Microphone access denied — check Chrome permissions in Android Settings."
             : err.name === "NotFoundError"
               ? "No microphone found — check your device settings."
-              : `Mic error: ${err.message}`;
-        alert(msg);
+              : `Mic error: ${err.name} — ${err.message}`;
+        setStatusMsg(msg);
+        setTimeout(() => setStatusMsg(""), 8000);
       }
     }
   };
@@ -1749,7 +1750,7 @@ function MicDrop() {
 
         {/* Version */}
         <div style={{ fontSize:"10px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v1.7 — Powered by AudD + Claude
+          Mic Drop v1.8 — Powered by AudD + Claude
         </div>
 
       </div>
