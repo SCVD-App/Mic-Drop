@@ -1166,6 +1166,8 @@ function MicDrop() {
   const mediaStream    = useRef(null);
   const audioCtx       = useRef(null);
   const analyser       = useRef(null);
+  const roomAnalyser   = useRef(null);
+  const roomBuffer     = useRef(null);
   const pitchBuffer    = useRef(new Float32Array(2048));
   const autoTimer      = useRef(null);
   const reportTimer    = useRef(null);
@@ -1380,6 +1382,8 @@ function MicDrop() {
       setCountdown(null); setIdPhase(null);
       cancelAnimationFrame(animFrame.current);
       if (analyser.current)      { analyser.current.disconnect(); analyser.current = null; }
+      if (roomAnalyser.current)  { roomAnalyser.current.disconnect(); roomAnalyser.current = null; }
+      roomBuffer.current = null;
       if (audioCtx.current)      { audioCtx.current.close(); audioCtx.current = null; }
       if (mediaStream.current)   { mediaStream.current.getTracks().forEach(t=>t.stop()); mediaStream.current = null; }
       if (cleanStreamRef.current){ cleanStreamRef.current.getTracks().forEach(t=>t.stop()); cleanStreamRef.current = null; }
@@ -1392,7 +1396,7 @@ function MicDrop() {
       // On mobile, the gesture context expires after any await call.
       let audioCtxTemp;
       try {
-        audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
         if (audioCtxTemp.state === 'suspended') await audioCtxTemp.resume();
       } catch(e) {
         setStatusMsg(`Audio engine failed: ${e.message}`);
@@ -1409,17 +1413,29 @@ function MicDrop() {
         cleanStreamRef.current = null;
 
         const source   = audioCtxTemp.createMediaStreamSource(stream);
+
+        // VOX — highpass filtered for pitch detection
         const hpFilter = audioCtxTemp.createBiquadFilter();
         hpFilter.type            = "highpass";
         hpFilter.frequency.value = 200;
         hpFilter.Q.value         = 0.7;
         const anal     = audioCtxTemp.createAnalyser();
         anal.fftSize   = 2048;
+        anal.smoothingTimeConstant = 0.8;
         source.connect(hpFilter);
         hpFilter.connect(anal);
-        audioCtx.current    = audioCtxTemp;
-        analyser.current    = anal;
-        pitchBuffer.current = new Float32Array(anal.fftSize);
+
+        // ROOM — unfiltered raw signal for ambient metering
+        const roomAnal = audioCtxTemp.createAnalyser();
+        roomAnal.fftSize = 1024;
+        roomAnal.smoothingTimeConstant = 0.85;
+        source.connect(roomAnal);
+
+        audioCtx.current     = audioCtxTemp;
+        analyser.current     = anal;
+        roomAnalyser.current = roomAnal;
+        pitchBuffer.current  = new Float32Array(anal.fftSize);
+        roomBuffer.current   = new Float32Array(roomAnal.fftSize);
 
         // Arm after everything is ready
         setArmed(true);
@@ -1462,16 +1478,24 @@ function MicDrop() {
         setPitchCents(cents);
         if (cents !== null) addPitchSample(cents);
         else { pitchHistory.current=[]; smoothRef.current=null; setSmoothCents(null); }
-        const buf = pitchBuffer.current;
-        const rms = Math.sqrt(buf.reduce((s,v)=>s+v*v,0)/buf.length);
-        const db  = 20 * Math.log10(Math.max(rms, 1e-6));
-        const voxLvl = Math.max(0, Math.min(100, ((db+60)/60)*100*(voxLevel/100)));
+        // VOX — real signal from highpass filtered analyser
+        const voxBuf = pitchBuffer.current;
+        const voxRms = Math.sqrt(voxBuf.reduce((s,v)=>s+v*v,0)/voxBuf.length);
+        const voxDb  = 20 * Math.log10(Math.max(voxRms, 1e-6));
+        const voxLvl = Math.max(0, Math.min(100, ((voxDb+60)/60)*100*(voxLevel/100)));
         setVoxMeter(voxLvl);
         if (voxLvl > voxPeak) { setVoxPeak(voxLvl); clearTimeout(voxPeakTimer.current); voxPeakTimer.current = setTimeout(()=>setVoxPeak(0),1600); }
-        const rNew = Math.max(0, Math.min(100, roomLevel*0.75+(Math.random()-0.5)*20+Math.abs(Math.sin(localTick*0.08))*15));
-        setRoomMeter(rNew);
-        if (rNew > roomPeak) { setRoomPeak(rNew); clearTimeout(roomPeakTimer.current); roomPeakTimer.current = setTimeout(()=>setRoomPeak(0),1600); }
-        setClipping(voxLvl > 95 || rNew > 95);
+
+        // ROOM — real signal from unfiltered analyser
+        if (roomAnalyser.current && roomBuffer.current) {
+          roomAnalyser.current.getFloatTimeDomainData(roomBuffer.current);
+          const roomRms = Math.sqrt(roomBuffer.current.reduce((s,v)=>s+v*v,0)/roomBuffer.current.length);
+          const roomDb  = 20 * Math.log10(Math.max(roomRms, 1e-6));
+          const rNew    = Math.max(0, Math.min(100, ((roomDb+60)/60)*100*(roomLevel/100)));
+          setRoomMeter(rNew);
+          if (rNew > roomPeak) { setRoomPeak(rNew); clearTimeout(roomPeakTimer.current); roomPeakTimer.current = setTimeout(()=>setRoomPeak(0),1600); }
+          setClipping(voxLvl > 95 || rNew > 95);
+        }
       }
       animFrame.current = requestAnimationFrame(animate);
     };
