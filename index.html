@@ -594,8 +594,7 @@ function ProSplash({ onClose }) {
 }
 
 // ── SESSION REPORT ────────────────────────────────────────────────────────────
-function SessionReport({ songs, onClose, onUnlock }) {
-  const isPro = false; // token system coming next build
+function SessionReport({ songs, onClose, onUnlock, isPro }) {
 
   return (
     <div className="report-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 16px" }}>
@@ -634,7 +633,8 @@ function SessionReport({ songs, onClose, onUnlock }) {
           })}
         </div>
 
-        {/* PRO UPSELL */}
+        {/* PRO UPSELL — only shown after trial expires */}
+        {!isPro && (
         <div style={{ position:"relative", borderTop:"1px solid #1a1a1a" }}>
           {/* Blurred content */}
           <div className="pro-blur" style={{ padding:"14px 16px" }}>
@@ -674,6 +674,7 @@ function SessionReport({ songs, onClose, onUnlock }) {
             </div>
           </div>
         </div>
+        )} {/* end !isPro */}
 
         {/* Footer */}
         <div style={{ padding:"10px 16px", textAlign:"center", borderTop:"1px solid #111" }}>
@@ -739,6 +740,7 @@ function MicDrop() {
   const reportTimer    = useRef(null);
   const countdownTimer = useRef(null);
   const identifying    = useRef(false);
+  const cleanStreamRef = useRef(null); // clean stream for pitch detection
   const smoothRef      = useRef(null);
   const pitchHistory   = useRef([]);
   const trackInfoRef   = useRef(null); // ref mirror for use inside intervals
@@ -891,28 +893,39 @@ function MicDrop() {
       clearInterval(countdownTimer.current);
       setCountdown(null); setIdPhase(null);
       cancelAnimationFrame(animFrame.current);
-      if (analyser.current)    { analyser.current.disconnect(); analyser.current = null; }
-      if (audioCtx.current)    { audioCtx.current.close(); audioCtx.current = null; }
-      if (mediaStream.current) { mediaStream.current.getTracks().forEach(t=>t.stop()); mediaStream.current = null; }
+      if (analyser.current)      { analyser.current.disconnect(); analyser.current = null; }
+      if (audioCtx.current)      { audioCtx.current.close(); audioCtx.current = null; }
+      if (mediaStream.current)   { mediaStream.current.getTracks().forEach(t=>t.stop()); mediaStream.current = null; }
+      if (cleanStreamRef.current){ cleanStreamRef.current.getTracks().forEach(t=>t.stop()); cleanStreamRef.current = null; }
       setRoomMeter(0); setVoxMeter(0); setRoomPeak(0); setVoxPeak(0);
       setPitchCents(null); setSmoothCents(null); setClipping(false); setStatusMsg("");
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // ── DUAL STREAM ──────────────────────────────────────────────────
+        // Stream A — raw, no processing → MediaRecorder → AudD
+        // Stream B — AEC on → AnalyserNode → pitch detection
+        const rawStream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
-        mediaStream.current = stream;
+        const cleanStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation:true, noiseSuppression:false, autoGainControl:false },
+          video: false,
+        });
+
+        mediaStream.current = rawStream; // AudD uses raw stream
         const ctx    = new (window.AudioContext || window.webkitAudioContext)();
-        const source = ctx.createMediaStreamSource(stream);
+        const source = ctx.createMediaStreamSource(cleanStream); // pitch uses clean stream
         const anal   = ctx.createAnalyser();
         anal.fftSize = 2048;
         source.connect(anal);
-        audioCtx.current  = ctx;
-        analyser.current  = anal;
+        audioCtx.current    = ctx;
+        analyser.current    = anal;
         pitchBuffer.current = new Float32Array(anal.fftSize);
+        // Keep clean stream ref for cleanup
+        cleanStreamRef.current = cleanStream;
         setArmed(true);
         // Identify immediately on arm
         setTimeout(() => recognizeTrack(), 300);
@@ -969,11 +982,32 @@ function MicDrop() {
       clearInterval(autoTimer.current);
       clearInterval(reportTimer.current);
       clearInterval(countdownTimer.current);
-      if (mediaStream.current) mediaStream.current.getTracks().forEach(t=>t.stop());
+      if (mediaStream.current)    mediaStream.current.getTracks().forEach(t=>t.stop());
+      if (cleanStreamRef.current) cleanStreamRef.current.getTracks().forEach(t=>t.stop());
     };
   }, []);
 
-  const isIdentifying = idPhase !== null;
+  const TRIAL_DAYS = 7;
+  const TRIAL_MS   = TRIAL_DAYS * 24 * 60 * 60 * 1000;
+
+  // ── TRIAL SYSTEM ─────────────────────────────────────────────────────────
+  const getTrialState = () => {
+    try {
+      const start = localStorage.getItem("micDrop_trialStart");
+      if (!start) {
+        // First launch — start trial now
+        localStorage.setItem("micDrop_trialStart", Date.now().toString());
+        return { active:true, daysLeft:TRIAL_DAYS, expired:false };
+      }
+      const elapsed  = Date.now() - parseInt(start);
+      const daysLeft = Math.max(0, Math.ceil((TRIAL_MS - elapsed) / (1000 * 60 * 60 * 24)));
+      const expired  = elapsed >= TRIAL_MS;
+      return { active:!expired, daysLeft, expired };
+    } catch { return { active:true, daysLeft:TRIAL_DAYS, expired:false }; }
+  };
+
+  const [trial] = useState(() => getTrialState());
+  const isPro   = trial.active; // Pro features available during trial
   const sessionAccuracy = sessionLog.length > 0
     ? Math.round(sessionLog.reduce((s,g)=>s+g.accuracy,0)/sessionLog.length) : null;
 
@@ -998,6 +1032,53 @@ function MicDrop() {
           {clipping && <span className="clip-pulse" style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#ff2200", fontWeight:"bold" }}>⚠ CLIP</span>}
         </div>
       </div>
+
+      {/* TRIAL BANNER */}
+      {trial.active && !trial.expired && (
+        <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
+          <div style={{
+            borderRadius:"10px", padding:"10px 14px",
+            background:"rgba(201,168,76,0.07)",
+            border:"1px solid rgba(201,168,76,0.18)",
+            display:"flex", flexDirection:"column", alignItems:"center", gap:"4px",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+              <span style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>
+                ✦ PRO TRIAL — {trial.daysLeft} DAY{trial.daysLeft!==1?"S":""} REMAINING ✦
+              </span>
+            </div>
+            <div style={{ fontSize:"8px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", fontStyle:"italic", letterSpacing:"0.08em" }}>
+              We want your money — but we want to make sure we're earning it first.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TRIAL EXPIRED BANNER */}
+      {trial.expired && (
+        <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
+          <div
+            onClick={() => setShowSplash(true)}
+            style={{
+              borderRadius:"10px", padding:"10px 14px",
+              background:"rgba(201,168,76,0.1)",
+              border:"1px solid rgba(201,168,76,0.35)",
+              display:"flex", flexDirection:"column", alignItems:"center", gap:"4px",
+              cursor:"pointer",
+            }}
+          >
+            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>
+              ✦ YOUR TRIAL HAS ENDED ✦
+            </div>
+            <div style={{ fontSize:"10px", color:"#C9A84C", fontFamily:"Georgia,serif", textAlign:"center", fontWeight:"bold" }}>
+              Did we earn your $2.99?
+            </div>
+            <div style={{ fontSize:"8px", color:"#666", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.08em" }}>
+              Tap to unlock Pro
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* BANNER */}
       <TrackBanner trackInfo={trackInfo} phase={idPhase} />
@@ -1055,7 +1136,7 @@ function MicDrop() {
 
       {/* SESSION REPORT */}
       {showReport && (
-        <SessionReport songs={sessionLog} onClose={() => setShowReport(false)} onUnlock={() => { setShowReport(false); setShowSplash(true); }} />
+        <SessionReport songs={sessionLog} onClose={() => setShowReport(false)} onUnlock={() => { setShowReport(false); setShowSplash(true); }} isPro={isPro} />
       )}
 
       {/* MIXER */}
@@ -1098,7 +1179,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v1.0 — Powered by AudD + Claude
+        Mic Drop v1.1 — Powered by AudD + Claude
       </div>
 
     </div>
