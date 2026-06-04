@@ -1509,6 +1509,7 @@ function MicDrop() {
 
   const [trial] = useState(() => getTrialState());
   const isPro   = trial.active; // Pro features available during trial
+  const isIdentifying = idPhase !== null;
   const sessionAccuracy = sessionLog.length > 0
     ? Math.round(sessionLog.reduce((s,g)=>s+g.accuracy,0)/sessionLog.length) : null;
 
