@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Mic Drop</title>
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Mic Drop"/>
+  <meta name="theme-color" content="#0a0a0a"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -422,8 +432,6 @@ function ProfileSetup({ profile, onSave, onClose }) {
   const [photo,     setPhoto]     = useState(profile.photo     || null);
   const [cardStyle, setCardStyle] = useState(profile.cardStyle || "circle");
   const [preset,    setPreset]    = useState(profile.preset    || "gold");
-  const fileRef = useRef(null);
-
   const handlePhoto = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -449,29 +457,34 @@ function ProfileSetup({ profile, onSave, onClose }) {
       <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 0", textAlign:"center" }}>
         <div style={{ fontSize:"9px", letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"20px" }}>ARTIST PROFILE</div>
 
-        {/* Photo picker */}
+        {/* Photo picker — use label for reliable Android support */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"12px", marginBottom:"24px" }}>
-          <div
-            onClick={() => fileRef.current?.click()}
-            style={{
+          <label htmlFor="photoInput" style={{ cursor:"pointer" }}>
+            <div style={{
               width:"100px", height:"100px", borderRadius:"50%",
               border:`2px solid ${photo?"#C9A84C":"#2a2a2a"}`,
               background: photo ? "transparent" : "rgba(255,255,255,0.03)",
               display:"flex", alignItems:"center", justifyContent:"center",
-              cursor:"pointer", overflow:"hidden", position:"relative",
+              overflow:"hidden", position:"relative",
               boxShadow: photo ? "0 0 20px rgba(201,168,76,0.3)" : "none",
               transition:"all 0.3s",
-            }}
-          >
-            {photo
-              ? <img src={photo} alt="profile" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
-              : <div style={{ textAlign:"center" }}>
-                  <div style={{ fontSize:"24px", marginBottom:"4px" }}>📸</div>
-                  <div style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>ADD PHOTO</div>
-                </div>
-            }
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" capture="user" onChange={handlePhoto} style={{ display:"none" }}/>
+            }}>
+              {photo
+                ? <img src={photo} alt="profile" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                : <div style={{ textAlign:"center" }}>
+                    <div style={{ fontSize:"24px", marginBottom:"4px" }}>📸</div>
+                    <div style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>TAP TO ADD</div>
+                  </div>
+              }
+            </div>
+          </label>
+          <input
+            id="photoInput"
+            type="file"
+            accept="image/*"
+            onChange={handlePhoto}
+            style={{ display:"none" }}
+          />
           {photo && (
             <button onClick={() => setPhoto(null)} style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em" }}>
               REMOVE PHOTO
@@ -1290,6 +1303,16 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
+      // Create AudioContext IMMEDIATELY — before any await
+      // Android requires AudioContext inside the synchronous user gesture handler
+      // If we create it after await getUserMedia, the gesture context has expired
+      let ctx = null;
+      try {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        console.warn("AudioContext pre-create failed:", e.message);
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
@@ -1298,19 +1321,36 @@ function MicDrop() {
         mediaStream.current    = stream;
         cleanStreamRef.current = null;
 
-        const ctx      = new (window.AudioContext || window.webkitAudioContext)();
-        const source   = ctx.createMediaStreamSource(stream);
-        const hpFilter = ctx.createBiquadFilter();
-        hpFilter.type            = "highpass";
-        hpFilter.frequency.value = 200;
-        hpFilter.Q.value         = 0.7;
-        const anal     = ctx.createAnalyser();
-        anal.fftSize   = 2048;
-        source.connect(hpFilter);
-        hpFilter.connect(anal);
-        audioCtx.current    = ctx;
-        analyser.current    = anal;
-        pitchBuffer.current = new Float32Array(anal.fftSize);
+        // Resume context if suspended (Android sometimes suspends immediately)
+        if (ctx && ctx.state === "suspended") {
+          try { await ctx.resume(); } catch {}
+        }
+
+        // If pre-create failed, try again now (some devices allow it post-await)
+        if (!ctx) {
+          try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+        }
+
+        if (ctx) {
+          const source   = ctx.createMediaStreamSource(stream);
+          const hpFilter = ctx.createBiquadFilter();
+          hpFilter.type            = "highpass";
+          hpFilter.frequency.value = 200;
+          hpFilter.Q.value         = 0.7;
+          const anal     = ctx.createAnalyser();
+          anal.fftSize   = 2048;
+          source.connect(hpFilter);
+          hpFilter.connect(anal);
+          audioCtx.current    = ctx;
+          analyser.current    = anal;
+          pitchBuffer.current = new Float32Array(anal.fftSize);
+        } else {
+          // No AudioContext — arm anyway, AudD identification still works
+          // Pitch detection will be inactive
+          audioCtx.current  = null;
+          analyser.current  = null;
+        }
+
         setArmed(true);
         setTimeout(() => recognizeTrack(), 300);
         autoTimer.current = setInterval(() => {
@@ -1473,24 +1513,32 @@ function MicDrop() {
       {/* TRIAL EXPIRED BANNER */}
       {trial.expired && (
         <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
-          <div
-            onClick={() => setShowSplash(true)}
-            style={{
-              borderRadius:"10px", padding:"10px 14px",
-              background:"rgba(201,168,76,0.1)",
-              border:"1px solid rgba(201,168,76,0.35)",
-              display:"flex", flexDirection:"column", alignItems:"center", gap:"4px",
-              cursor:"pointer",
-            }}
-          >
-            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>
-              ✦ YOUR TRIAL HAS ENDED ✦
+          <div style={{
+            borderRadius:"10px", padding:"12px 14px",
+            background:"rgba(0,0,0,0.4)",
+            border:"1px solid #1e1e1e",
+            display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
+          }}>
+            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
+              ✦ YOUR PRO TRIAL HAS ENDED ✦
             </div>
-            <div style={{ fontSize:"10px", color:"#C9A84C", fontFamily:"Georgia,serif", textAlign:"center", fontWeight:"bold" }}>
-              Did we earn your $2.99?
+            <div style={{ fontSize:"10px", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
+              The core app is <span style={{ color:"#C9A84C" }}>always free</span> — arm, sing, score and share forever.
             </div>
-            <div style={{ fontSize:"8px", color:"#666", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.08em" }}>
-              Tap to unlock Pro
+            <div style={{ fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
+              Pro features are pay as you go, when and if you want them.
+            </div>
+            <div
+              onClick={() => setShowSplash(true)}
+              style={{
+                marginTop:"4px", padding:"8px 20px", borderRadius:"8px",
+                background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+                color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+                fontSize:"10px", fontWeight:"900", letterSpacing:"0.15em",
+                cursor:"pointer", textTransform:"uppercase",
+              }}
+            >
+              Did we earn your $2.99 USD?
             </div>
           </div>
         </div>
@@ -1630,7 +1678,7 @@ function MicDrop() {
 
         {/* Version */}
         <div style={{ fontSize:"7px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v1.3 — Powered by AudD + Claude
+          Mic Drop v1.5 — Powered by AudD + Claude
         </div>
 
       </div>
