@@ -903,42 +903,38 @@ function MicDrop() {
       pitchHistory.current = []; smoothRef.current = null;
     } else {
       try {
-        // ── SINGLE STREAM, DUAL PURPOSE ───────────────────────────────────
-        // Android blocks two simultaneous mic streams.
-        // One raw stream feeds both MediaRecorder (AudD) and AnalyserNode (pitch).
-        // Raw is correct for AudD — music heard clearly.
-        // Pitch detection uses the RMS gate (MIN_VOX_RMS) to filter silence,
-        // and the autocorrelation algorithm naturally favours the strongest
-        // periodic signal — which when singing is your voice, not the music.
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
         mediaStream.current    = stream;
-        cleanStreamRef.current = null; // not used in single stream mode
-        const ctx    = new (window.AudioContext || window.webkitAudioContext)();
-        const source = ctx.createMediaStreamSource(stream);
-        const anal   = ctx.createAnalyser();
-        anal.fftSize = 2048;
-        source.connect(anal);
+        cleanStreamRef.current = null;
+
+        const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+        const source   = ctx.createMediaStreamSource(stream);
+        const hpFilter = ctx.createBiquadFilter();
+        hpFilter.type            = "highpass";
+        hpFilter.frequency.value = 200;
+        hpFilter.Q.value         = 0.7;
+        const anal     = ctx.createAnalyser();
+        anal.fftSize   = 2048;
+        source.connect(hpFilter);
+        hpFilter.connect(anal);
         audioCtx.current    = ctx;
         analyser.current    = anal;
         pitchBuffer.current = new Float32Array(anal.fftSize);
         setArmed(true);
-        // Identify immediately on arm
         setTimeout(() => recognizeTrack(), 300);
-        // Auto re-identify every 45s
         autoTimer.current = setInterval(() => {
           if (!identifying.current) recognizeTrack();
         }, RECOGNITION_INTERVAL);
-        // Sample pitch every 500ms — only when track is known
         reportTimer.current = setInterval(() => {
           if (smoothRef.current !== null && trackInfoRef.current !== null) {
             const sample = { time:Date.now(), cents:smoothRef.current };
             setCurrentSamples(prev => [...prev.slice(-600), sample]);
           }
         }, REPORT_INTERVAL_MS);
-      } catch {
+      } catch (err) {
         alert("Microphone access required.\n\nPlease tap Allow when prompted, then try again.");
       }
     }
@@ -1177,7 +1173,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v1.2 — Powered by AudD + Claude
+        Mic Drop v1.3 — Powered by AudD + Claude
       </div>
 
     </div>
