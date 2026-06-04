@@ -1391,17 +1391,25 @@ function MicDrop() {
       try {
         dbg("calling getUserMedia...");
 
-        // Android 10 workaround — enumerateDevices first to unlock permission state
+        // Enumerate devices first — on Android 10 with multiple audio inputs,
+        // passing audio:true causes a HAL deadlock. Fix: explicitly request default deviceId.
+        let resolvedConstraints = audioConstraints;
         try {
           const devices = await navigator.mediaDevices.enumerateDevices();
           const mics = devices.filter(d => d.kind === "audioinput");
-          dbg(`mics found: ${mics.length} — ${mics.map(m=>m.label||"unlabelled").join(", ").slice(0,40)}`);
+          dbg(`mics found: ${mics.length} — ${mics.map(m=>m.label||"unlabelled").join(", ").slice(0,60)}`);
+          if (isARM && mics.length > 0) {
+            // Find default device, fall back to first mic
+            const defaultMic = mics.find(m => m.label.toLowerCase().includes("default")) || mics[0];
+            dbg(`using: ${defaultMic.label} (${defaultMic.deviceId.slice(0,12)})`);
+            resolvedConstraints = { deviceId: { exact: defaultMic.deviceId } };
+          }
         } catch(enumErr) {
           dbg(`enumerate failed: ${enumErr.message}`);
         }
 
         const stream = await getUserMediaWithTimeout({
-          audio: audioConstraints,
+          audio: resolvedConstraints,
           video: false,
         });
         dbg(`stream OK — tracks: ${stream.getAudioTracks().length}`);
