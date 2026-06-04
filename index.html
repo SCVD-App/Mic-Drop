@@ -1360,60 +1360,45 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
-      // Create AudioContext IMMEDIATELY — before any await
-      // Android requires AudioContext inside the synchronous user gesture handler
-      // If we create it after await getUserMedia, the gesture context has expired
-      let ctx = null;
       try {
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (e) {
-        console.warn("AudioContext pre-create failed:", e.message);
-      }
-
-      try {
+        // Get mic stream first — no AudioContext pre-creation
+        // AudioContext created lazily after stream is confirmed working
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
+
         mediaStream.current    = stream;
         cleanStreamRef.current = null;
+        audioCtx.current       = null;
+        analyser.current       = null;
 
-        // Resume context if suspended (Android sometimes suspends immediately)
-        if (ctx && ctx.state === "suspended") {
-          try { await ctx.resume(); } catch {}
-        }
+        // Arm the app immediately — identification works without AudioContext
+        setArmed(true);
 
-        // If pre-create failed, try again now (some devices allow it post-await)
-        if (!ctx) {
-          try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
-        }
+        // Defer AudioContext setup 500ms — well after the gesture context
+        // and after React has re-rendered the armed state safely
+        setTimeout(() => {
+          try {
+            const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+            const source   = ctx.createMediaStreamSource(stream);
+            const hpFilter = ctx.createBiquadFilter();
+            hpFilter.type            = "highpass";
+            hpFilter.frequency.value = 200;
+            hpFilter.Q.value         = 0.7;
+            const anal     = ctx.createAnalyser();
+            anal.fftSize   = 2048;
+            source.connect(hpFilter);
+            hpFilter.connect(anal);
+            audioCtx.current    = ctx;
+            analyser.current    = anal;
+            pitchBuffer.current = new Float32Array(anal.fftSize);
+          } catch (audioErr) {
+            // AudioContext failed — identification still works, pitch inactive
+            console.warn("AudioContext deferred init failed:", audioErr.message);
+          }
+        }, 500);
 
-        if (ctx) {
-          const source   = ctx.createMediaStreamSource(stream);
-          const hpFilter = ctx.createBiquadFilter();
-          hpFilter.type            = "highpass";
-          hpFilter.frequency.value = 200;
-          hpFilter.Q.value         = 0.7;
-          const anal     = ctx.createAnalyser();
-          anal.fftSize   = 2048;
-          source.connect(hpFilter);
-          hpFilter.connect(anal);
-          audioCtx.current    = ctx;
-          analyser.current    = anal;
-          pitchBuffer.current = new Float32Array(anal.fftSize);
-        } else {
-          // No AudioContext — arm anyway, AudD identification still works
-          // Pitch detection will be inactive
-          audioCtx.current  = null;
-          analyser.current  = null;
-        }
-
-        // Safety — if anything above failed silently, still arm the app
-        try {
-          setArmed(true);
-        } catch (stateErr) {
-          console.error("setArmed failed:", stateErr);
-        }
         setTimeout(() => recognizeTrack(), 300);
         autoTimer.current = setInterval(() => {
           if (!identifying.current) recognizeTrack();
@@ -1750,7 +1735,7 @@ function MicDrop() {
 
         {/* Version */}
         <div style={{ fontSize:"10px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v1.6 — Powered by AudD + Claude
+          Mic Drop v1.7 — Powered by AudD + Claude
         </div>
 
       </div>
