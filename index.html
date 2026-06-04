@@ -907,13 +907,13 @@ function AboutModal({ onClose }) {
         {/* Who we are */}
         <div style={{ background:"rgba(201,168,76,0.05)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
           <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#C9A84C", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>WHO WE ARE</div>
-          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
+          <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
             Mic Drop is built by a very small team based in Queensland, Australia.
             We are not a faceless corporation. We are dedicated developers who believe
             great software should be accessible to everyone — no app store tax,
             no advertising, no nonsense.
           </div>
-          <div style={{ marginTop:"12px", fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
+          <div style={{ marginTop:"12px", fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
             When something goes wrong, a real person will email you back — probably
             while drinking a flat white and watching the sun come up over the
             Glasshouse Mountains.
@@ -923,7 +923,7 @@ function AboutModal({ onClose }) {
         {/* Maintenance window */}
         <div style={{ background:"rgba(46,109,164,0.06)", border:"1px solid rgba(46,109,164,0.2)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
           <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#2E6DA4", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SCHEDULED MAINTENANCE</div>
-          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"12px" }}>
+          <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"12px" }}>
             Any upgrades, bug fixes, or improvements to Mic Drop will be performed
             during our scheduled maintenance window only:
           </div>
@@ -946,7 +946,7 @@ function AboutModal({ onClose }) {
               </div>
             ))}
           </div>
-          <div style={{ fontSize:"11px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, fontStyle:"italic" }}>
+          <div style={{ fontSize:"13px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, fontStyle:"italic" }}>
             Maintenance is not always required — this window is reserved so updates
             never interrupt your morning or evening commute. Most days nothing happens
             at all and we like it that way.
@@ -956,7 +956,7 @@ function AboutModal({ onClose }) {
         {/* Support */}
         <div style={{ background:"rgba(0,0,0,0.3)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
           <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SUPPORT</div>
-          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"14px" }}>
+          <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"14px" }}>
             Found a bug? Something not working? We genuinely want to know.
             Early users are our most important users — your feedback shapes
             everything we build next.
@@ -977,12 +977,12 @@ function AboutModal({ onClose }) {
 
         {/* Integrity model reminder */}
         <div style={{ textAlign:"center", padding:"0 8px" }}>
-          <div style={{ fontSize:"11px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, fontStyle:"italic" }}>
+          <div style={{ fontSize:"13px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, fontStyle:"italic" }}>
             Mic Drop operates on an integrity model.<br/>
             We want your money — but we want to earn it first.<br/>
             If we ever fall short of that, email us.
           </div>
-          <div style={{ marginTop:"12px", fontSize:"8px", color:"#222", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+          <div style={{ marginTop:"12px", fontSize:"12px", color:"#222", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
             🇦🇺 Proudly built in Queensland, Australia
           </div>
         </div>
@@ -1130,7 +1130,9 @@ function MicDrop() {
     } catch { return { name:"", photo:null, cardStyle:"circle", preset:"gold" }; }
   });
 
-  const roomPeakTimer  = useRef(null);
+  const [activeUsers, setActiveUsers] = useState(null);
+  const pingTimer    = useRef(null);
+  const sessionId    = useRef(`${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
   const voxPeakTimer   = useRef(null);
   const animFrame      = useRef(null);
   const mediaStream    = useRef(null);
@@ -1148,6 +1150,61 @@ function MicDrop() {
 
   // Keep ref in sync
   useEffect(() => { trackInfoRef.current = trackInfo; }, [trackInfo]);
+
+  // ── ANALYTICS PING — fires once on load ──────────────────────────────────
+  useEffect(() => {
+    try {
+      fetch(`${PROXY_BASE_URL}/ping`, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          v:"1.6", ts:Date.now(),
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
+      }).catch(()=>{});
+    } catch {}
+  }, []);
+
+  // ── ACTIVE USER COUNTER ───────────────────────────────────────────────────
+  const sendPing = useCallback(async () => {
+    try {
+      await fetch(`${PROXY_BASE_URL}/ping`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          sessionId: sessionId.current,
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          v: "1.5",
+        }),
+      });
+    } catch {}
+  }, []);
+
+  const fetchActive = useCallback(async () => {
+    try {
+      const res  = await fetch(`${PROXY_BASE_URL}/active`);
+      const data = await res.json();
+      // Add 1 to include this user, minimum 1
+      setActiveUsers(Math.max(1, (data.count || 0) + 1));
+    } catch {}
+  }, []);
+
+  // Fetch active count on mount
+  useEffect(() => {
+    fetchActive();
+    const t = setInterval(fetchActive, 5 * 60 * 1000); // refresh every 5min
+    return () => clearInterval(t);
+  }, [fetchActive]);
+
+  // Ping while armed — every 5 minutes
+  useEffect(() => {
+    if (armed) {
+      sendPing(); // immediate ping on arm
+      pingTimer.current = setInterval(sendPing, 5 * 60 * 1000);
+    } else {
+      clearInterval(pingTimer.current);
+    }
+    return () => clearInterval(pingTimer.current);
+  }, [armed, sendPing]);
 
   // ── PITCH SMOOTHING ──────────────────────────────────────────────────────
   const addPitchSample = useCallback((cents) => {
@@ -1351,7 +1408,12 @@ function MicDrop() {
           analyser.current  = null;
         }
 
-        setArmed(true);
+        // Safety — if anything above failed silently, still arm the app
+        try {
+          setArmed(true);
+        } catch (stateErr) {
+          console.error("setArmed failed:", stateErr);
+        }
         setTimeout(() => recognizeTrack(), 300);
         autoTimer.current = setInterval(() => {
           if (!identifying.current) recognizeTrack();
@@ -1657,28 +1719,38 @@ function MicDrop() {
           alert(`✦ Token activated — ${days} days of Pro access added. Thank you for your patience!`);
         }}/>
 
+        {/* Active users counter */}
+        {activeUsers !== null && (
+          <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
+            <span className="live-pulse" style={{ fontSize:"8px", color:"#00cc55" }}>●</span>
+            <span style={{ fontSize:"9px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+              {activeUsers} singer{activeUsers !== 1 ? "s" : ""} online
+            </span>
+          </div>
+        )}
+
         {/* Support + About links */}
         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
           <a
-            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v1.3%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
-            style={{ fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #222" }}
+            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v1.6%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
+            style={{ fontSize:"13px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #333" }}
           >
             ✉ Support
           </a>
-          <span style={{ color:"#1a1a1a", fontSize:"8px" }}>·</span>
+          <span style={{ color:"#333", fontSize:"13px" }}>·</span>
           <button
             onClick={() => setShowAbout(true)}
-            style={{ fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #222", cursor:"pointer", padding:0 }}
+            style={{ fontSize:"13px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #333", cursor:"pointer", padding:0 }}
           >
             About
           </button>
-          <span style={{ color:"#1a1a1a", fontSize:"8px" }}>·</span>
-          <span style={{ fontSize:"8px", color:"#1a1a1a", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>🇦🇺 QLD</span>
+          <span style={{ color:"#333", fontSize:"13px" }}>·</span>
+          <span style={{ fontSize:"13px", color:"#333", fontFamily:"'Courier New',monospace" }}>🇦🇺 QLD</span>
         </div>
 
         {/* Version */}
-        <div style={{ fontSize:"7px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v1.5 — Powered by AudD + Claude
+        <div style={{ fontSize:"10px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
+          Mic Drop v1.6 — Powered by AudD + Claude
         </div>
 
       </div>
