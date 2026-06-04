@@ -1403,6 +1403,8 @@ function MicDrop() {
             pitchBuffer.current = new Float32Array(anal.fftSize);
           } catch (audioErr) {
             console.warn("AudioContext deferred init failed:", audioErr.message);
+            setStatusMsg(`Audio engine error: ${audioErr.message}`);
+            setTimeout(() => setStatusMsg(""), 6000);
           }
         }, 500);
 
@@ -1423,8 +1425,9 @@ function MicDrop() {
             ? "Microphone access denied — check Chrome permissions in Android Settings."
             : err.name === "NotFoundError"
               ? "No microphone found — check your device settings."
-              : `Mic error: ${err.message}`;
-        alert(msg);
+              : `Mic error: ${err.name} — ${err.message}`;
+        setStatusMsg(msg);
+        setTimeout(() => setStatusMsg(""), 8000);
       }
     }
   };
@@ -1749,7 +1752,7 @@ function MicDrop() {
 
         {/* Version */}
         <div style={{ fontSize:"10px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v1.7 — Powered by AudD + Claude
+          Mic Drop v1.8 — Powered by AudD + Claude
         </div>
 
       </div>
