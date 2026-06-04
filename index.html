@@ -1371,9 +1371,15 @@ function MicDrop() {
         ]);
       };
 
+      // Detect ARM Android — use default constraints (raw audio stalls on ARM HAL)
+      const isARM = /Android/i.test(navigator.userAgent);
+      const audioConstraints = isARM
+        ? true  // let browser use defaults on ARM — avoids silent HAL stall
+        : { echoCancellation:false, noiseSuppression:false, autoGainControl:false };
+
       try {
         const stream = await getUserMediaWithTimeout({
-          audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
+          audio: audioConstraints,
           video: false,
         });
 
