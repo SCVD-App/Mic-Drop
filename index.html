@@ -1113,7 +1113,9 @@ function MicDrop() {
   const [trackInfo,   setTrackInfo]   = useState(null);
   const [lastTrackKey,setLastTrackKey]= useState(null);
   const [statusMsg,   setStatusMsg]   = useState("");
-
+  const [debugLog,    setDebugLog]    = useState(() => {
+    try { return JSON.parse(localStorage.getItem("mdDebugLog") || "[]"); } catch(e) { return []; }
+  });
   // Identification phase: null | "capturing" | "counting" | "sending" | "enriching"
   const [idPhase,     setIdPhase]     = useState(null);
   const [countdown,   setCountdown]   = useState(null);
@@ -1361,6 +1363,23 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
+      // DEBUG: log every step visibly on screen
+      const dbg = (msg) => {
+        console.log("[MicDrop]", msg);
+        const line = `${new Date().toISOString().slice(11,19)} ${msg}`;
+        setDebugLog(prev => [...prev.slice(-20), line]);
+        // Persist to localStorage so log survives blank screen crash
+        try {
+          const existing = JSON.parse(localStorage.getItem("mdDebugLog") || "[]");
+          existing.push(line);
+          localStorage.setItem("mdDebugLog", JSON.stringify(existing.slice(-20)));
+        } catch(e) {}
+      };
+
+      dbg(`UA: ${navigator.userAgent.slice(0,60)}`);
+      dbg(`mediaDevices: ${!!navigator.mediaDevices}`);
+      dbg(`getUserMedia: ${!!navigator.mediaDevices?.getUserMedia}`);
+
       const getUserMediaWithTimeout = (constraints, timeoutMs = 8000) => {
         return Promise.race([
           navigator.mediaDevices.getUserMedia(constraints),
@@ -1371,10 +1390,13 @@ function MicDrop() {
       };
 
       try {
+        dbg("calling getUserMedia...");
         const stream = await getUserMediaWithTimeout({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
+        dbg(`stream OK — tracks: ${stream.getAudioTracks().length}`);
+
         mediaStream.current    = stream;
         cleanStreamRef.current = null;
         audioCtx.current       = null;
@@ -1680,6 +1702,19 @@ function MicDrop() {
 
       {/* BUTTONS */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"20px 20px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
+        {debugLog.length > 0 && (
+          <div style={{
+            background:"#1a1a0a", border:"1px solid #C9A84C", borderRadius:"8px",
+            padding:"10px 12px", marginBottom:"10px", fontFamily:"monospace",
+            fontSize:"10px", color:"#C9A84C", lineHeight:"1.6",
+          }}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
+              <span style={{color:"#fff",fontWeight:"bold"}}>🔍 DEBUG LOG</span>
+              <span style={{color:"#888",cursor:"pointer",fontSize:"11px"}} onClick={()=>{setDebugLog([]);try{localStorage.removeItem("mdDebugLog")}catch(e){}}}>✕ clear</span>
+            </div>
+            {debugLog.map((line, i) => <div key={i} style={{wordBreak:"break-all"}}>{line}</div>)}
+          </div>
+        )}
         <button className={`arm-btn${armed?" armed":""}`} onClick={toggleArmed}>
           {armed ? "⏹  DISARM" : "⏺  ARM MIC"}
         </button>
