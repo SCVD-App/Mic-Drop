@@ -1098,6 +1098,32 @@ function TrackBanner({ trackInfo, phase }) {
   );
 }
 
+// ── ERROR BOUNDARY ───────────────────────────────────────────────────────────
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) {
+    try {
+      localStorage.setItem("mdCrashLog", JSON.stringify({
+        msg: error.message, stack: error.stack?.slice(0,500), ts: new Date().toISOString()
+      }));
+    } catch(e) {}
+  }
+  render() {
+    if (this.state.error) {
+      return React.createElement("div", {
+        style: { background:"#0a0a0a", minHeight:"100vh", padding:"30px 20px", fontFamily:"monospace", color:"#C9A84C" }
+      },
+        React.createElement("div", { style:{ fontSize:"14px", fontWeight:"bold", marginBottom:"16px" }}, "🔴 APP CRASH — ERROR DETAILS:"),
+        React.createElement("div", { style:{ fontSize:"11px", color:"#ff4444", wordBreak:"break-all", lineHeight:"1.6", background:"#1a0000", padding:"12px", borderRadius:"8px", marginBottom:"12px" }}, this.state.error.message),
+        React.createElement("div", { style:{ fontSize:"9px", color:"#555", wordBreak:"break-all", lineHeight:"1.6" }}, this.state.error.stack?.slice(0,300)),
+        React.createElement("div", { style:{ marginTop:"16px", fontSize:"9px", color:"#333" }}, "Screenshot this and send to support.")
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function MicDrop() {
   const [roomLevel,   setRoomLevel]   = useState(65);
@@ -1113,9 +1139,7 @@ function MicDrop() {
   const [trackInfo,   setTrackInfo]   = useState(null);
   const [lastTrackKey,setLastTrackKey]= useState(null);
   const [statusMsg,   setStatusMsg]   = useState("");
-  const [debugLog,    setDebugLog]    = useState(() => {
-    try { return JSON.parse(localStorage.getItem("mdDebugLog") || "[]"); } catch(e) { return []; }
-  });
+
   // Identification phase: null | "capturing" | "counting" | "sending" | "enriching"
   const [idPhase,     setIdPhase]     = useState(null);
   const [countdown,   setCountdown]   = useState(null);
@@ -1363,70 +1387,41 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
-      // DEBUG: log every step visibly on screen
-      const dbg = (msg) => {
-        console.log("[MicDrop]", msg);
-        const line = `${new Date().toISOString().slice(11,19)} ${msg}`;
-        setDebugLog(prev => [...prev.slice(-20), line]);
-        // Persist to localStorage so log survives blank screen crash
-        try {
-          const existing = JSON.parse(localStorage.getItem("mdDebugLog") || "[]");
-          existing.push(line);
-          localStorage.setItem("mdDebugLog", JSON.stringify(existing.slice(-20)));
-        } catch(e) {}
-      };
-
-      dbg(`UA: ${navigator.userAgent.slice(0,60)}`);
-      dbg(`mediaDevices: ${!!navigator.mediaDevices}`);
-      dbg(`getUserMedia: ${!!navigator.mediaDevices?.getUserMedia}`);
-
-      const getUserMediaWithTimeout = (constraints, timeoutMs = 8000) => {
-        return Promise.race([
-          navigator.mediaDevices.getUserMedia(constraints),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Mic timeout — is another app using the microphone?")), timeoutMs)
-          )
-        ]);
-      };
+      // Create AudioContext FIRST — must be within direct user gesture.
+      // On mobile, the gesture context expires after any await call.
+      let audioCtxTemp;
+      try {
+        audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtxTemp.state === 'suspended') await audioCtxTemp.resume();
+      } catch(e) {
+        setStatusMsg(`Audio engine failed: ${e.message}`);
+        setTimeout(() => setStatusMsg(''), 6000);
+        return;
+      }
 
       try {
-        dbg("calling getUserMedia...");
-        const stream = await getUserMediaWithTimeout({
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
-        dbg(`stream OK — tracks: ${stream.getAudioTracks().length}`);
-
         mediaStream.current    = stream;
         cleanStreamRef.current = null;
-        audioCtx.current       = null;
-        analyser.current       = null;
 
-        // Arm immediately — identification works without AudioContext
+        const source   = audioCtxTemp.createMediaStreamSource(stream);
+        const hpFilter = audioCtxTemp.createBiquadFilter();
+        hpFilter.type            = "highpass";
+        hpFilter.frequency.value = 200;
+        hpFilter.Q.value         = 0.7;
+        const anal     = audioCtxTemp.createAnalyser();
+        anal.fftSize   = 2048;
+        source.connect(hpFilter);
+        hpFilter.connect(anal);
+        audioCtx.current    = audioCtxTemp;
+        analyser.current    = anal;
+        pitchBuffer.current = new Float32Array(anal.fftSize);
+
+        // Arm after everything is ready
         setArmed(true);
-
-        // Defer AudioContext 500ms — after React re-render
-        setTimeout(() => {
-          try {
-            const ctx      = new (window.AudioContext || window.webkitAudioContext)();
-            const source   = ctx.createMediaStreamSource(stream);
-            const hpFilter = ctx.createBiquadFilter();
-            hpFilter.type            = "highpass";
-            hpFilter.frequency.value = 200;
-            hpFilter.Q.value         = 0.7;
-            const anal     = ctx.createAnalyser();
-            anal.fftSize   = 2048;
-            source.connect(hpFilter);
-            hpFilter.connect(anal);
-            audioCtx.current    = ctx;
-            analyser.current    = anal;
-            pitchBuffer.current = new Float32Array(anal.fftSize);
-          } catch (audioErr) {
-            console.warn("AudioContext deferred init failed:", audioErr.message);
-            setStatusMsg(`Audio engine error: ${audioErr.message}`);
-            setTimeout(() => setStatusMsg(""), 6000);
-          }
-        }, 500);
 
         setTimeout(() => recognizeTrack(), 300);
         autoTimer.current = setInterval(() => {
@@ -1702,19 +1697,6 @@ function MicDrop() {
 
       {/* BUTTONS */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"20px 20px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
-        {debugLog.length > 0 && (
-          <div style={{
-            background:"#1a1a0a", border:"1px solid #C9A84C", borderRadius:"8px",
-            padding:"10px 12px", marginBottom:"10px", fontFamily:"monospace",
-            fontSize:"10px", color:"#C9A84C", lineHeight:"1.6",
-          }}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
-              <span style={{color:"#fff",fontWeight:"bold"}}>🔍 DEBUG LOG</span>
-              <span style={{color:"#888",cursor:"pointer",fontSize:"11px"}} onClick={()=>{setDebugLog([]);try{localStorage.removeItem("mdDebugLog")}catch(e){}}}>✕ clear</span>
-            </div>
-            {debugLog.map((line, i) => <div key={i} style={{wordBreak:"break-all"}}>{line}</div>)}
-          </div>
-        )}
         <button className={`arm-btn${armed?" armed":""}`} onClick={toggleArmed}>
           {armed ? "⏹  DISARM" : "⏺  ARM MIC"}
         </button>
@@ -1794,7 +1776,7 @@ function MicDrop() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<MicDrop />);
+ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary><MicDrop /></ErrorBoundary>);
 </script>
 </body>
 </html>
