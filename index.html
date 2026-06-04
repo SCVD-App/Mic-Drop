@@ -903,29 +903,27 @@ function MicDrop() {
       pitchHistory.current = []; smoothRef.current = null;
     } else {
       try {
-        // ── DUAL STREAM ──────────────────────────────────────────────────
-        // Stream A — raw, no processing → MediaRecorder → AudD
-        // Stream B — AEC on → AnalyserNode → pitch detection
-        const rawStream = await navigator.mediaDevices.getUserMedia({
+        // ── SINGLE STREAM, DUAL PURPOSE ───────────────────────────────────
+        // Android blocks two simultaneous mic streams.
+        // One raw stream feeds both MediaRecorder (AudD) and AnalyserNode (pitch).
+        // Raw is correct for AudD — music heard clearly.
+        // Pitch detection uses the RMS gate (MIN_VOX_RMS) to filter silence,
+        // and the autocorrelation algorithm naturally favours the strongest
+        // periodic signal — which when singing is your voice, not the music.
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
-        const cleanStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation:true, noiseSuppression:false, autoGainControl:false },
-          video: false,
-        });
-
-        mediaStream.current = rawStream; // AudD uses raw stream
+        mediaStream.current    = stream;
+        cleanStreamRef.current = null; // not used in single stream mode
         const ctx    = new (window.AudioContext || window.webkitAudioContext)();
-        const source = ctx.createMediaStreamSource(cleanStream); // pitch uses clean stream
+        const source = ctx.createMediaStreamSource(stream);
         const anal   = ctx.createAnalyser();
         anal.fftSize = 2048;
         source.connect(anal);
         audioCtx.current    = ctx;
         analyser.current    = anal;
         pitchBuffer.current = new Float32Array(anal.fftSize);
-        // Keep clean stream ref for cleanup
-        cleanStreamRef.current = cleanStream;
         setArmed(true);
         // Identify immediately on arm
         setTimeout(() => recognizeTrack(), 300);
@@ -1179,7 +1177,7 @@ function MicDrop() {
 
       {/* FOOTER */}
       <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v1.1 — Powered by AudD + Claude
+        Mic Drop v1.2 — Powered by AudD + Claude
       </div>
 
     </div>
