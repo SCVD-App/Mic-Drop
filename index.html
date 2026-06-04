@@ -406,6 +406,188 @@ function CountdownDisplay({ phase, countdown }) {
   );
 }
 
+// ── TEXT PRESETS ─────────────────────────────────────────────────────────────
+const TEXT_PRESETS = [
+  { id:"gold",    label:"Classic Gold",  color:"#C9A84C", shadow:"0 2px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.8)", pill:"rgba(0,0,0,0.45)" },
+  { id:"white",   label:"Studio White",  color:"#FFFFFF",  shadow:"0 2px 8px rgba(0,0,0,0.95), 0 0 20px rgba(0,0,0,0.9)", pill:"rgba(0,0,0,0.55)" },
+  { id:"black",   label:"Midnight Black",color:"#111111",  shadow:"0 2px 6px rgba(255,255,255,0.6)", pill:"rgba(255,255,255,0.6)" },
+  { id:"pink",    label:"Neon Pink",     color:"#FF2D78",  shadow:"0 2px 8px rgba(0,0,0,0.9), 0 0 12px rgba(255,45,120,0.6)", pill:"rgba(0,0,0,0.5)" },
+  { id:"ice",     label:"Ice Blue",      color:"#4FC3F7",  shadow:"0 2px 8px rgba(0,0,0,0.9), 0 0 12px rgba(79,195,247,0.5)", pill:"rgba(0,0,0,0.5)" },
+  { id:"red",     label:"Coroner Red",   color:"#FF2200",  shadow:"0 2px 8px rgba(0,0,0,0.9), 0 0 12px rgba(255,34,0,0.6)", pill:"rgba(0,0,0,0.5)" },
+];
+
+// ── PROFILE SETUP ─────────────────────────────────────────────────────────────
+function ProfileSetup({ profile, onSave, onClose }) {
+  const [name,      setName]      = useState(profile.name      || "");
+  const [photo,     setPhoto]     = useState(profile.photo     || null);
+  const [cardStyle, setCardStyle] = useState(profile.cardStyle || "circle");
+  const [preset,    setPreset]    = useState(profile.preset    || "gold");
+  const fileRef = useRef(null);
+
+  const handlePhoto = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setPhoto(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    try {
+      localStorage.setItem("micDrop_profile", JSON.stringify({ name, photo, cardStyle, preset }));
+    } catch {}
+    onSave({ name, photo, cardStyle, preset });
+    onClose();
+  };
+
+  const selectedPreset = TEXT_PRESETS.find(p => p.id === preset) || TEXT_PRESETS[0];
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:3000, background:"rgba(0,0,0,0.97)", display:"flex", flexDirection:"column", alignItems:"center", overflowY:"auto", padding:"0 0 40px", animation:"fadeIn 0.3s ease" }}>
+      <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#444", fontSize:"24px", cursor:"pointer", zIndex:3001 }}>✕</button>
+
+      <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 0", textAlign:"center" }}>
+        <div style={{ fontSize:"9px", letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"20px" }}>ARTIST PROFILE</div>
+
+        {/* Photo picker */}
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"12px", marginBottom:"24px" }}>
+          <div
+            onClick={() => fileRef.current?.click()}
+            style={{
+              width:"100px", height:"100px", borderRadius:"50%",
+              border:`2px solid ${photo?"#C9A84C":"#2a2a2a"}`,
+              background: photo ? "transparent" : "rgba(255,255,255,0.03)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", overflow:"hidden", position:"relative",
+              boxShadow: photo ? "0 0 20px rgba(201,168,76,0.3)" : "none",
+              transition:"all 0.3s",
+            }}
+          >
+            {photo
+              ? <img src={photo} alt="profile" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+              : <div style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:"24px", marginBottom:"4px" }}>📸</div>
+                  <div style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>ADD PHOTO</div>
+                </div>
+            }
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" capture="user" onChange={handlePhoto} style={{ display:"none" }}/>
+          {photo && (
+            <button onClick={() => setPhoto(null)} style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em" }}>
+              REMOVE PHOTO
+            </button>
+          )}
+        </div>
+
+        {/* Name field */}
+        <div style={{ marginBottom:"24px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"left" }}>ARTIST NAME</div>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Your name..."
+            maxLength={30}
+            style={{
+              width:"100%", padding:"12px 14px", borderRadius:"10px",
+              background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a",
+              color:"#ccc", fontFamily:"'Courier New',monospace", fontSize:"13px",
+              outline:"none", letterSpacing:"0.05em",
+            }}
+          />
+        </div>
+
+        {/* Card style */}
+        <div style={{ marginBottom:"24px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>SCORECARD STYLE</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
+            {[
+              { id:"circle", label:"Circle Avatar", desc:"Clean & universal", icon:"⭕" },
+              { id:"full",   label:"Full Background", desc:"Bold & flamboyant", icon:"🌟" },
+            ].map(style => (
+              <div key={style.id}
+                onClick={() => setCardStyle(style.id)}
+                style={{
+                  padding:"14px 12px", borderRadius:"12px", cursor:"pointer",
+                  border:`2px solid ${cardStyle===style.id?"#C9A84C":"#1e1e1e"}`,
+                  background: cardStyle===style.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.02)",
+                  textAlign:"center", transition:"all 0.2s",
+                }}
+              >
+                <div style={{ fontSize:"20px", marginBottom:"6px" }}>{style.icon}</div>
+                <div style={{ fontSize:"10px", color:cardStyle===style.id?"#C9A84C":"#777", fontFamily:"'Courier New',monospace", fontWeight:"bold", marginBottom:"3px" }}>{style.label}</div>
+                <div style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace" }}>{style.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Text colour presets */}
+        <div style={{ marginBottom:"28px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>TEXT COLOUR</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px" }}>
+            {TEXT_PRESETS.map(p => (
+              <div key={p.id}
+                onClick={() => setPreset(p.id)}
+                style={{
+                  padding:"10px 8px", borderRadius:"10px", cursor:"pointer",
+                  border:`2px solid ${preset===p.id?p.color:"#1e1e1e"}`,
+                  background: preset===p.id?`${p.pill}`:"rgba(255,255,255,0.02)",
+                  textAlign:"center", transition:"all 0.2s",
+                }}
+              >
+                <div style={{ fontSize:"16px", fontWeight:"900", color:p.color, fontFamily:"Georgia,serif", textShadow:p.shadow, marginBottom:"4px" }}>Aa</div>
+                <div style={{ fontSize:"7px", color:preset===p.id?"#aaa":"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.05em" }}>{p.label}</div>
+              </div>
+            ))}
+          </div>
+          {/* Readability guarantee note */}
+          <div style={{ marginTop:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", textAlign:"center", fontStyle:"italic" }}>
+            All presets include shadow treatment for guaranteed readability over any photo
+          </div>
+        </div>
+
+        {/* Preview */}
+        {(photo || name) && (
+          <div style={{ marginBottom:"24px" }}>
+            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>PREVIEW</div>
+            <div style={{ borderRadius:"12px", overflow:"hidden", position:"relative", height:"80px", background:"rgba(0,0,0,0.4)", border:"1px solid #1e1e1e", display:"flex", alignItems:"center", padding:"12px 16px", gap:"12px" }}>
+              {photo && cardStyle === "full" && <img src={photo} alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", opacity:0.4 }}/>}
+              {photo && (
+                <div style={{ width:"44px", height:"44px", borderRadius:"50%", overflow:"hidden", flexShrink:0, border:`2px solid ${selectedPreset.color}`, position:"relative", zIndex:1 }}>
+                  <img src={photo} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                </div>
+              )}
+              <div style={{ position:"relative", zIndex:1 }}>
+                <div style={{ fontSize:"13px", fontWeight:"900", color:selectedPreset.color, fontFamily:"Georgia,serif", textShadow:selectedPreset.shadow }}>{name || "Your Name"}</div>
+                <div style={{ fontSize:"9px", color:selectedPreset.color, fontFamily:"'Courier New',monospace", opacity:0.7, textShadow:selectedPreset.shadow }}>Session Report</div>
+              </div>
+              <div style={{ marginLeft:"auto", position:"relative", zIndex:1 }}>
+                <div style={{ fontSize:"28px", fontWeight:"900", color:selectedPreset.color, fontFamily:"Georgia,serif", textShadow:selectedPreset.shadow }}>74%</div>
+                <div style={{ fontSize:"7px", color:selectedPreset.color, fontFamily:"'Courier New',monospace", textShadow:selectedPreset.shadow }}>🌟 HEADLINER</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          style={{
+            width:"100%", padding:"18px", borderRadius:"14px", border:"none", cursor:"pointer",
+            background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+            color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+            fontSize:"13px", fontWeight:"900", letterSpacing:"0.2em", textTransform:"uppercase",
+            boxShadow:"0 0 25px rgba(201,168,76,0.3)",
+          }}
+        >
+          Save Profile ✦
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── PRO SPLASH PAGE ───────────────────────────────────────────────────────────
 function ProSplash({ onClose }) {
   const [selected, setSelected] = useState("annual");
@@ -688,6 +870,204 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
   );
 }
 
+// ── ABOUT / SUPPORT MODAL ────────────────────────────────────────────────────
+function AboutModal({ onClose }) {
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:3000,
+      background:"rgba(0,0,0,0.97)",
+      display:"flex", flexDirection:"column", alignItems:"center",
+      overflowY:"auto", padding:"0 0 40px",
+      animation:"fadeIn 0.3s ease",
+    }}>
+      <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#444", fontSize:"24px", cursor:"pointer", zIndex:3001 }}>✕</button>
+
+      <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 0" }}>
+
+        {/* Header */}
+        <div style={{ textAlign:"center", marginBottom:"28px" }}>
+          <div style={{ fontSize:"32px", marginBottom:"8px" }}>🎤</div>
+          <div style={{ fontSize:"20px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", letterSpacing:"0.1em", marginBottom:"6px" }}>MIC DROP</div>
+          <div style={{ fontSize:"9px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>ABOUT & SUPPORT</div>
+        </div>
+
+        {/* Who we are */}
+        <div style={{ background:"rgba(201,168,76,0.05)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#C9A84C", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>WHO WE ARE</div>
+          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
+            Mic Drop is built by a very small team based in Queensland, Australia.
+            We are not a faceless corporation. We are dedicated developers who believe
+            great software should be accessible to everyone — no app store tax,
+            no advertising, no nonsense.
+          </div>
+          <div style={{ marginTop:"12px", fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
+            When something goes wrong, a real person will email you back — probably
+            while drinking a flat white and watching the sun come up over the
+            Glasshouse Mountains.
+          </div>
+        </div>
+
+        {/* Maintenance window */}
+        <div style={{ background:"rgba(46,109,164,0.06)", border:"1px solid rgba(46,109,164,0.2)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#2E6DA4", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SCHEDULED MAINTENANCE</div>
+          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"12px" }}>
+            Any upgrades, bug fixes, or improvements to Mic Drop will be performed
+            during our scheduled maintenance window only:
+          </div>
+          <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"10px", padding:"14px", textAlign:"center", marginBottom:"12px" }}>
+            <div style={{ fontSize:"20px", fontWeight:"900", color:"#2E6DA4", fontFamily:"Georgia,serif", letterSpacing:"0.05em" }}>10:30 — 11:00 UTC</div>
+            <div style={{ fontSize:"9px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", marginTop:"4px" }}>DAILY — WHEN REQUIRED</div>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px", marginBottom:"12px" }}>
+            {[
+              ["🇦🇺","Brisbane","20:30 — 21:00"],
+              ["🇯🇵","Tokyo","19:30 — 20:00"],
+              ["🇬🇧","London","10:30 — 11:00"],
+              ["🇺🇸","New York","05:30 — 06:00"],
+              ["🇺🇸","Los Angeles","02:30 — 03:00"],
+              ["🇩🇪","Berlin","11:30 — 12:00"],
+            ].map(([flag, city, time]) => (
+              <div key={city} style={{ background:"rgba(0,0,0,0.2)", borderRadius:"8px", padding:"8px 10px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div style={{ fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace" }}>{flag} {city}</div>
+                <div style={{ fontSize:"9px", color:"#2E6DA4", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{time}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize:"11px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, fontStyle:"italic" }}>
+            Maintenance is not always required — this window is reserved so updates
+            never interrupt your morning or evening commute. Most days nothing happens
+            at all and we like it that way.
+          </div>
+        </div>
+
+        {/* Support */}
+        <div style={{ background:"rgba(0,0,0,0.3)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SUPPORT</div>
+          <div style={{ fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"14px" }}>
+            Found a bug? Something not working? We genuinely want to know.
+            Early users are our most important users — your feedback shapes
+            everything we build next.
+          </div>
+          <a
+            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v1.3%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
+            style={{
+              display:"block", width:"100%", padding:"14px",
+              borderRadius:"10px", textAlign:"center", textDecoration:"none",
+              border:"1px solid #2a2a2a", background:"rgba(255,255,255,0.03)",
+              color:"#C9A84C", fontFamily:"'Courier New',monospace",
+              fontSize:"11px", letterSpacing:"0.15em",
+            }}
+          >
+            ✉ scvdappcreator@gmail.com
+          </a>
+        </div>
+
+        {/* Integrity model reminder */}
+        <div style={{ textAlign:"center", padding:"0 8px" }}>
+          <div style={{ fontSize:"11px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, fontStyle:"italic" }}>
+            Mic Drop operates on an integrity model.<br/>
+            We want your money — but we want to earn it first.<br/>
+            If we ever fall short of that, email us.
+          </div>
+          <div style={{ marginTop:"12px", fontSize:"8px", color:"#222", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+            🇦🇺 Proudly built in Queensland, Australia
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ── TOKEN ENTRY ───────────────────────────────────────────────────────────────
+function TokenEntry({ onActivate }) {
+  const [open,    setOpen]    = useState(false);
+  const [token,   setToken]   = useState("");
+  const [status,  setStatus]  = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!token.trim()) return;
+    setLoading(true);
+    setStatus("");
+    try {
+      // Token validation will hit the Worker once Stripe is wired
+      // For now — validate format and extract days
+      // Format: micdrop_[type]_[days]_[hmac]
+      const parts = token.trim().split("_");
+      if (parts.length === 4 && parts[0] === "micdrop") {
+        const days = parseInt(parts[2]);
+        if (!isNaN(days) && days > 0) {
+          setStatus("✦ Token valid!");
+          setTimeout(() => {
+            setOpen(false);
+            setToken("");
+            setStatus("");
+            onActivate(days);
+          }, 1000);
+        } else {
+          setStatus("Invalid token — please check and try again");
+        }
+      } else {
+        setStatus("Invalid token — please check and try again");
+      }
+    } catch {
+      setStatus("Something went wrong — email us at scvdappcreator@gmail.com");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) return (
+    <button
+      onClick={() => setOpen(true)}
+      style={{ fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", background:"none", border:"none", cursor:"pointer", textDecoration:"underline", textDecorationColor:"#1a1a1a" }}
+    >
+      Have a token? Enter it here
+    </button>
+  );
+
+  return (
+    <div style={{ width:"100%", background:"rgba(201,168,76,0.05)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:"12px", padding:"14px 16px" }}>
+      <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"center" }}>ENTER ACCESS TOKEN</div>
+      <div style={{ display:"flex", gap:"8px" }}>
+        <input
+          type="text"
+          value={token}
+          onChange={e => setToken(e.target.value)}
+          placeholder="micdrop_pro_..."
+          style={{
+            flex:1, padding:"10px 12px", borderRadius:"8px",
+            background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a",
+            color:"#aaa", fontFamily:"'Courier New',monospace", fontSize:"11px",
+            outline:"none",
+          }}
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !token.trim()}
+          style={{
+            padding:"10px 16px", borderRadius:"8px", border:"none", cursor:"pointer",
+            background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+            color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+            fontSize:"11px", fontWeight:"900", opacity: loading||!token.trim() ? 0.5 : 1,
+          }}
+        >
+          {loading ? "..." : "✦"}
+        </button>
+      </div>
+      {status && (
+        <div style={{ marginTop:"8px", fontSize:"9px", color: status.includes("valid!") ? "#C9A84C" : "#ff4422", fontFamily:"'Courier New',monospace", textAlign:"center" }}>
+          {status}
+        </div>
+      )}
+      <button onClick={() => { setOpen(false); setToken(""); setStatus(""); }} style={{ width:"100%", marginTop:"8px", fontSize:"8px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>
+        cancel
+      </button>
+    </div>
+  );
+}
+
 // ── TRACK BANNER ──────────────────────────────────────────────────────────────
 function TrackBanner({ trackInfo, phase }) {
   const identifying = phase && phase !== "idle";
@@ -728,6 +1108,14 @@ function MicDrop() {
   const [currentSamples, setCurrentSamples] = useState([]);
   const [showReport,  setShowReport]  = useState(false);
   const [showSplash,  setShowSplash]  = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showAbout,   setShowAbout]   = useState(false);
+  const [profile,     setProfile]     = useState(() => {
+    try {
+      const saved = localStorage.getItem("micDrop_profile");
+      return saved ? JSON.parse(saved) : { name:"", photo:null, cardStyle:"circle", preset:"gold" };
+    } catch { return { name:"", photo:null, cardStyle:"circle", preset:"gold" }; }
+  });
 
   const roomPeakTimer  = useRef(null);
   const voxPeakTimer   = useRef(null);
@@ -1009,6 +1397,12 @@ function MicDrop() {
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
 
+      {/* ABOUT MODAL */}
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+
+      {/* PROFILE SETUP */}
+      {showProfile && <ProfileSetup profile={profile} onSave={setProfile} onClose={() => setShowProfile(false)} />}
+
       {/* PRO SPLASH */}
       {showSplash && <ProSplash onClose={() => setShowSplash(false)} />}
 
@@ -1016,12 +1410,40 @@ function MicDrop() {
       {armed && trackInfo && <ScreenGlow cents={smoothCents} />}
 
       {/* HEADER */}
-      <div style={{ width:"100%", maxWidth:"420px", padding:"22px 20px 6px", textAlign:"center" }}>
-        <div style={{ fontSize:"30px", fontWeight:"900", letterSpacing:"0.18em", color:"#fff", fontFamily:"Georgia,serif", textTransform:"uppercase" }}>
-          🎤 MIC DROP
+      <div style={{ width:"100%", maxWidth:"420px", padding:"22px 20px 6px" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+
+          {/* Avatar — tappable */}
+          <div
+            onClick={() => setShowProfile(true)}
+            style={{ cursor:"pointer", flexShrink:0 }}
+          >
+            {profile.photo
+              ? <div style={{ width:"44px", height:"44px", borderRadius:"50%", overflow:"hidden", border:"2px solid #C9A84C", boxShadow:"0 0 12px rgba(201,168,76,0.3)" }}>
+                  <img src={profile.photo} alt="profile" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                </div>
+              : <div style={{ width:"44px", height:"44px", borderRadius:"50%", border:"2px dashed #2a2a2a", background:"rgba(255,255,255,0.02)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <span style={{ fontSize:"18px" }}>📸</span>
+                </div>
+            }
+            {profile.name
+              ? <div style={{ fontSize:"8px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", marginTop:"3px", letterSpacing:"0.05em", maxWidth:"44px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{profile.name}</div>
+              : <div style={{ fontSize:"7px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", textAlign:"center", marginTop:"3px", letterSpacing:"0.08em" }}>PROFILE</div>
+            }
+          </div>
+
+          {/* Title — centred */}
+          <div style={{ textAlign:"center", flex:1 }}>
+            <div style={{ fontSize:"26px", fontWeight:"900", letterSpacing:"0.18em", color:"#fff", fontFamily:"Georgia,serif", textTransform:"uppercase" }}>
+              🎤 MIC DROP
+            </div>
+            <div style={{ fontSize:"7px", letterSpacing:"0.35em", color:"#3a3a3a", marginTop:"2px", textTransform:"uppercase" }}>Vocal Blend Monitor</div>
+            <div style={{ fontSize:"7px", letterSpacing:"0.12em", color:"#1a4a1a", marginTop:"4px" }}>✦ IS AND ALWAYS WILL BE AD FREE ✦</div>
+          </div>
+
+          {/* Spacer to balance avatar */}
+          <div style={{ width:"44px", flexShrink:0 }}/>
         </div>
-        <div style={{ fontSize:"8px", letterSpacing:"0.35em", color:"#3a3a3a", marginTop:"3px", textTransform:"uppercase" }}>Vocal Blend Monitor</div>
-        <div style={{ fontSize:"8px", letterSpacing:"0.12em", color:"#1a4a1a", marginTop:"5px" }}>✦ IS AND ALWAYS WILL BE AD FREE ✦</div>
         <div style={{ height:"16px", display:"flex", alignItems:"center", justifyContent:"center", marginTop:"4px" }}>
           {clipping && <span className="clip-pulse" style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#ff2200", fontWeight:"bold" }}>⚠ CLIP</span>}
         </div>
@@ -1172,8 +1594,45 @@ function MicDrop() {
       </div>
 
       {/* FOOTER */}
-      <div style={{ fontSize:"8px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase", marginTop:"4px" }}>
-        Mic Drop v1.3 — Powered by AudD + Claude
+      <div style={{ width:"100%", maxWidth:"420px", padding:"16px 20px 0", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
+
+        {/* Token entry — for comp tokens and Pro unlock */}
+        <TokenEntry onActivate={(days) => {
+          try {
+            // Store trial extension in localStorage
+            const current = localStorage.getItem("micDrop_trialStart");
+            if (current) {
+              const extended = parseInt(current) + (days * 24 * 60 * 60 * 1000);
+              localStorage.setItem("micDrop_trialStart", (Date.now() - (extended - Date.now())).toString());
+            }
+          } catch {}
+          alert(`✦ Token activated — ${days} days of Pro access added. Thank you for your patience!`);
+        }}/>
+
+        {/* Support + About links */}
+        <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+          <a
+            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v1.3%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
+            style={{ fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #222" }}
+          >
+            ✉ Support
+          </a>
+          <span style={{ color:"#1a1a1a", fontSize:"8px" }}>·</span>
+          <button
+            onClick={() => setShowAbout(true)}
+            style={{ fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #222", cursor:"pointer", padding:0 }}
+          >
+            About
+          </button>
+          <span style={{ color:"#1a1a1a", fontSize:"8px" }}>·</span>
+          <span style={{ fontSize:"8px", color:"#1a1a1a", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>🇦🇺 QLD</span>
+        </div>
+
+        {/* Version */}
+        <div style={{ fontSize:"7px", color:"#1c1c1c", letterSpacing:"0.2em", textTransform:"uppercase" }}>
+          Mic Drop v1.3 — Powered by AudD + Claude
+        </div>
+
       </div>
 
     </div>
