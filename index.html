@@ -1406,7 +1406,13 @@ function MicDrop() {
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl:  false,
+            channelCount:     1,        // mono — prevents Bluetooth stereo mode switching
+            googHighpassFilter: false,  // Chrome hint: disable internal HP filter (we do our own)
+          },
           video: false,
         });
         mediaStream.current    = stream;
@@ -1430,6 +1436,12 @@ function MicDrop() {
         roomAnal.fftSize = 1024;
         roomAnal.smoothingTimeConstant = 0.85;
         source.connect(roomAnal);
+
+        // Explicitly silence output — Android routes AudioContext to speaker
+        // even without connecting to destination. This mutes that path.
+        const silencer = audioCtxTemp.createGain();
+        silencer.gain.value = 0;
+        silencer.connect(audioCtxTemp.destination);
 
         audioCtx.current     = audioCtxTemp;
         analyser.current     = anal;
