@@ -1360,10 +1360,19 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
+      // getUserMedia with 8 second timeout — prevents 30s freeze on Android
+      // when mic is held by another app or permission is slow
+      const getUserMediaWithTimeout = (constraints, timeoutMs = 8000) => {
+        return Promise.race([
+          navigator.mediaDevices.getUserMedia(constraints),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Mic timeout — is another app using the microphone?")), timeoutMs)
+          )
+        ]);
+      };
+
       try {
-        // Get mic stream first — no AudioContext pre-creation
-        // AudioContext created lazily after stream is confirmed working
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await getUserMediaWithTimeout({
           audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
           video: false,
         });
@@ -1373,11 +1382,10 @@ function MicDrop() {
         audioCtx.current       = null;
         analyser.current       = null;
 
-        // Arm the app immediately — identification works without AudioContext
+        // Arm immediately — identification works without AudioContext
         setArmed(true);
 
-        // Defer AudioContext setup 500ms — well after the gesture context
-        // and after React has re-rendered the armed state safely
+        // Defer AudioContext 500ms — after React re-render
         setTimeout(() => {
           try {
             const ctx      = new (window.AudioContext || window.webkitAudioContext)();
@@ -1394,7 +1402,6 @@ function MicDrop() {
             analyser.current    = anal;
             pitchBuffer.current = new Float32Array(anal.fftSize);
           } catch (audioErr) {
-            // AudioContext failed — identification still works, pitch inactive
             console.warn("AudioContext deferred init failed:", audioErr.message);
           }
         }, 500);
@@ -1410,7 +1417,14 @@ function MicDrop() {
           }
         }, REPORT_INTERVAL_MS);
       } catch (err) {
-        alert("Microphone access required.\n\nPlease tap Allow when prompted, then try again.");
+        const msg = err.message.includes("timeout")
+          ? "Mic timeout — close Facebook, Messenger and other apps then try again."
+          : err.name === "NotAllowedError"
+            ? "Microphone access denied — check Chrome permissions in Android Settings."
+            : err.name === "NotFoundError"
+              ? "No microphone found — check your device settings."
+              : `Mic error: ${err.message}`;
+        alert(msg);
       }
     }
   };
