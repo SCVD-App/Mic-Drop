@@ -603,11 +603,39 @@ function ProfileSetup({ profile, onSave, onClose }) {
 
 // ── PRO SPLASH PAGE ───────────────────────────────────────────────────────────
 function ProSplash({ onClose }) {
-  const [selected, setSelected] = useState("annual");
-  const [fontScale, setFontScale] = useState(1); // 1 = normal, 1.25 = large, 1.55 = XL
+  const [selected,    setSelected]    = useState("annual");
+  const [fontScale,   setFontScale]   = useState(1); // 1 = normal, 1.25 = large, 1.55 = XL
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutErr, setCheckoutErr] = useState("");
 
   // All font sizes run through scale so the toggle actually works
   const fs = (base) => Math.round(base * fontScale) + "px";
+
+  const handleCheckout = async () => {
+    setCheckingOut(true);
+    setCheckoutErr("");
+    try {
+      const res = await fetch(`${PROXY_BASE_URL}/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId:     selected,
+          successUrl: `${window.location.origin}${window.location.pathname}?payment=success`,
+          cancelUrl:  `${window.location.origin}${window.location.pathname}?payment=cancelled`,
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setCheckoutErr("Payment unavailable — please try again or email us.");
+        setCheckingOut(false);
+      }
+    } catch {
+      setCheckoutErr("Connection error — check your internet and try again.");
+      setCheckingOut(false);
+    }
+  };
 
   const plans = [
     { id:"monthly", label:"1 Month",  price:"$2.99",  saving:null },
@@ -766,19 +794,28 @@ function ProSplash({ onClose }) {
       {/* CTA */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px" }}>
         <button
-          onClick={() => alert("Stripe integration coming next build — token system and payment flow.")}
+          onClick={handleCheckout}
+          disabled={checkingOut}
           style={{
             width:"100%", padding:"20px",
-            borderRadius:"14px", border:"none", cursor:"pointer",
-            background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+            borderRadius:"14px", border:"none", cursor: checkingOut ? "not-allowed" : "pointer",
+            background: checkingOut
+              ? "linear-gradient(135deg, #888 0%, #666 100%)"
+              : "linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
             color:"#0a0a0a", fontFamily:"'Courier New',monospace",
             fontSize:fs(14), fontWeight:"900", letterSpacing:"0.2em",
             textTransform:"uppercase",
-            boxShadow:"0 0 30px rgba(201,168,76,0.4)",
+            boxShadow: checkingOut ? "none" : "0 0 30px rgba(201,168,76,0.4)",
+            transition:"all 0.2s",
           }}
         >
-          Unlock Pro — {plans.find(p=>p.id===selected)?.price}
+          {checkingOut ? "◈  Opening Checkout..." : `Unlock Pro — ${plans.find(p=>p.id===selected)?.price}`}
         </button>
+        {checkoutErr && (
+          <div style={{ marginTop:"10px", fontSize:fs(10), color:"#ff4422", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.08em" }}>
+            {checkoutErr}
+          </div>
+        )}
         <div style={{ textAlign:"center", marginTop:"12px", fontSize:fs(10), color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
           NO APP STORE · OPT-IN ONLY · NO AUTO-RENEWAL
         </div>
@@ -962,7 +999,7 @@ function AboutModal({ onClose }) {
             everything we build next.
           </div>
           <a
-            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v1.3%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
+            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.0%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
             style={{
               display:"block", width:"100%", padding:"14px",
               borderRadius:"10px", textAlign:"center", textDecoration:"none",
@@ -1004,23 +1041,20 @@ function TokenEntry({ onActivate }) {
     setLoading(true);
     setStatus("");
     try {
-      // Token validation will hit the Worker once Stripe is wired
-      // For now — validate format and extract days
-      // Format: micdrop_[type]_[days]_[hmac]
-      const parts = token.trim().split("_");
-      if (parts.length === 4 && parts[0] === "micdrop") {
-        const days = parseInt(parts[2]);
-        if (!isNaN(days) && days > 0) {
-          setStatus("✦ Token valid!");
-          setTimeout(() => {
-            setOpen(false);
-            setToken("");
-            setStatus("");
-            onActivate(days);
-          }, 1000);
-        } else {
-          setStatus("Invalid token — please check and try again");
-        }
+      const res = await fetch(`${PROXY_BASE_URL}/verify-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token.trim() }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setStatus("✦ Token valid!");
+        setTimeout(() => {
+          setOpen(false);
+          setToken("");
+          setStatus("");
+          onActivate(data.days);
+        }, 1000);
       } else {
         setStatus("Invalid token — please check and try again");
       }
@@ -1550,7 +1584,18 @@ function MicDrop() {
   const sessionAccuracy = sessionLog.length > 0
     ? Math.round(sessionLog.reduce((s,g)=>s+g.accuracy,0)/sessionLog.length) : null;
 
-  // ── RENDER ────────────────────────────────────────────────────────────────
+  // ── PAYMENT RETURN DETECTION ──────────────────────────────────────────────
+  const [paymentReturn, setPaymentReturn] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("payment"); // "success" | "cancelled" | null
+  });
+
+  useEffect(() => {
+    if (paymentReturn) {
+      // Clean the URL without reloading
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [paymentReturn]);
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
 
@@ -1657,6 +1702,52 @@ function MicDrop() {
             >
               Did we earn your $2.99 USD?
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAYMENT SUCCESS BANNER */}
+      {paymentReturn === "success" && (
+        <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
+          <div style={{
+            borderRadius:"10px", padding:"14px 16px",
+            background:"rgba(0,180,80,0.08)", border:"1px solid rgba(0,180,80,0.3)",
+            display:"flex", flexDirection:"column", alignItems:"center", gap:"8px",
+          }}>
+            <div style={{ fontSize:"13px", letterSpacing:"0.15em", color:"#00cc55", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
+              ✦ PAYMENT RECEIVED — THANK YOU ✦
+            </div>
+            <div style={{ fontSize:"12px", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
+              Your access token is on its way to your email.<br/>
+              Enter it below to unlock Pro features.
+            </div>
+            <button
+              onClick={() => setPaymentReturn(null)}
+              style={{ fontSize:"10px", color:"#444", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace", marginTop:"4px" }}
+            >
+              dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PAYMENT CANCELLED BANNER */}
+      {paymentReturn === "cancelled" && (
+        <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
+          <div style={{
+            borderRadius:"10px", padding:"12px 14px",
+            background:"rgba(255,34,0,0.05)", border:"1px solid rgba(255,34,0,0.2)",
+            display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
+          }}>
+            <div style={{ fontSize:"12px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.1em" }}>
+              No worries — the core app is always free.
+            </div>
+            <button
+              onClick={() => setPaymentReturn(null)}
+              style={{ fontSize:"10px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}
+            >
+              dismiss
+            </button>
           </div>
         </div>
       )}
@@ -1787,7 +1878,7 @@ function MicDrop() {
         {/* Support + About links */}
         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
           <a
-            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v1.6%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
+            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.0%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
             style={{ fontSize:"13px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #333" }}
           >
             ✉ Support
@@ -1805,7 +1896,7 @@ function MicDrop() {
 
         {/* Version */}
         <div style={{ fontSize:"10px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v1.8 — Powered by AudD + Claude
+          Mic Drop v2.0 — Powered by AudD + Claude
         </div>
 
       </div>
