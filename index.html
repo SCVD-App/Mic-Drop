@@ -53,7 +53,7 @@
 
     .arm-btn {
       width:100%; padding:18px; border-radius:14px;
-      font-family:'Courier New',monospace; font-size:13px; font-weight:bold;
+      font-family:'Courier New',monospace; font-size:16px; font-weight:bold;
       letter-spacing:0.3em; text-transform:uppercase; cursor:pointer;
       transition:all 0.25s; border:2px solid #333;
       background:linear-gradient(180deg,#1a1a1a 0%,#111 100%); color:#555;
@@ -64,7 +64,7 @@
     }
     .identify-btn {
       width:100%; padding:14px; border-radius:14px;
-      font-family:'Courier New',monospace; font-size:11px; font-weight:bold;
+      font-family:'Courier New',monospace; font-size:14px; font-weight:bold;
       letter-spacing:0.2em; text-transform:uppercase; cursor:pointer;
       transition:all 0.25s; border:2px solid rgba(201,168,76,0.4);
       background:rgba(201,168,76,0.08); color:#C9A84C;
@@ -74,7 +74,7 @@
 
     .report-btn {
       width:100%; padding:14px; border-radius:14px;
-      font-family:'Courier New',monospace; font-size:11px; font-weight:bold;
+      font-family:'Courier New',monospace; font-size:14px; font-weight:bold;
       letter-spacing:0.2em; text-transform:uppercase; cursor:pointer;
       transition:all 0.25s; border:2px solid rgba(46,109,164,0.5);
       background:rgba(46,109,164,0.1); color:#2E6DA4;
@@ -168,7 +168,7 @@ function LEDMeter({ level, peakHold, label, icon }) {
   const peak   = Math.round((peakHold/100)*NUM_LEDS) - 1;
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"6px", width:"100%" }}>
-      <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{icon} {label}</div>
+      <div style={{ fontSize:"14px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{icon} {label}</div>
       <div style={{ display:"flex", flexDirection:"column-reverse", gap:"3px", height:"220px" }}>
         {Array.from({ length:NUM_LEDS }).map((_,i) => {
           const on   = i < active;
@@ -216,7 +216,7 @@ function Fader({ value, onChange, label, color }) {
   const dbLabel  = value === 0 ? "-∞" : value === 100 ? "0 dB" : `${Math.round(-24+(value/100)*24)} dB`;
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"10px", userSelect:"none" }}>
-      <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{label}</div>
+      <div style={{ fontSize:"14px", letterSpacing:"0.18em", color:"#666", fontFamily:"'Courier New',monospace", textTransform:"uppercase" }}>{label}</div>
       <div ref={trackRef}
         onMouseDown={(e) => { drag.current=true; onChange(calc(e.clientY)); }}
         onTouchStart={(e) => { drag.current=true; onChange(calc(e.touches[0].clientY)); }}
@@ -224,7 +224,7 @@ function Fader({ value, onChange, label, color }) {
       >
         <div style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", top:0, width:"4px", height:"100%", background:"linear-gradient(to bottom,#2a2a2a,#111)", borderRadius:"2px", boxShadow:"inset 0 1px 4px rgba(0,0,0,0.9)" }}/>
         {[100,75,50,25,0].map(pct => (
-          <div key={pct} style={{ position:"absolute", right:"-20px", top:`${(1-pct/100)*100}%`, transform:"translateY(-50%)", fontSize:"7px", color:"#333", fontFamily:"'Courier New',monospace" }}>
+          <div key={pct} style={{ position:"absolute", right:"-20px", top:`${(1-pct/100)*100}%`, transform:"translateY(-50%)", fontSize:"17px", color:"#333", fontFamily:"'Courier New',monospace" }}>
             {pct===100?"∞":pct===75?"-6":pct===50?"-12":pct===25?"-24":"-∞"}
           </div>
         ))}
@@ -238,7 +238,7 @@ function Fader({ value, onChange, label, color }) {
           ))}
         </div>
       </div>
-      <div style={{ fontSize:"10px", color, fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{dbLabel}</div>
+      <div style={{ fontSize:"15px", color, fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{dbLabel}</div>
     </div>
   );
 }
@@ -256,7 +256,7 @@ function PitchIndicator({ cents }) {
     <div style={{ width:"100%", borderRadius:"12px", background:info.bg, border:`1px solid ${info.accent}33`, padding:"14px 12px", textAlign:"center", transition:"background 0.35s, border 0.35s", position:"relative", overflow:"hidden" }}>
       {cents !== null && <div style={{ position:"absolute", bottom:0, left:"50%", transform:`translateX(calc(-50% + ${Math.max(-80,Math.min(80,cents*1.1))}px))`, width:"3px", height:"100%", background:info.accent, opacity:0.55, borderRadius:"2px", transition:"transform 0.12s, background 0.35s", boxShadow:`0 0 10px ${info.accent}` }}/>}
       <div style={{ position:"absolute", bottom:0, left:"50%", width:"1px", height:"100%", background:"#282828" }}/>
-      <div style={{ fontSize:"13px", letterSpacing:"0.18em", color:info.accent, fontFamily:"'Courier New',monospace", marginBottom:"3px", position:"relative", fontWeight:"bold" }}>{info.label}</div>
+      <div style={{ fontSize:"20px", letterSpacing:"0.18em", color:info.accent, fontFamily:"'Courier New',monospace", marginBottom:"3px", position:"relative", fontWeight:"bold" }}>{info.label}</div>
       <div style={{ fontSize:"28px", fontWeight:"bold", color:info.accent, fontFamily:"'Courier New',monospace", position:"relative" }}>{info.sub}</div>
     </div>
   );
@@ -389,25 +389,25 @@ function CountdownDisplay({ phase, countdown }) {
 
   return (
     <div style={{ borderRadius:"12px", background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.15)", padding:"18px 12px", textAlign:"center" }}>
-      <div style={{ fontSize:"11px", letterSpacing:"0.15em", color:"#777", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>
+      <div style={{ fontSize:"17px", letterSpacing:"0.15em", color:"#777", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>
         {phaseLabel}
       </div>
       {phase === "counting" && countdown !== null ? (
         <>
-          <div style={{ fontSize:"9px", letterSpacing:"0.18em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"14px" }}>
+          <div style={{ fontSize:"14px", letterSpacing:"0.18em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"14px" }}>
             Pitch monitoring starts in
           </div>
           <div key={countdown} className="count-pop" style={{ fontSize:"64px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1, textShadow:"0 0 30px rgba(201,168,76,0.4)" }}>
             {countdown}
           </div>
-          <div style={{ marginTop:"10px", fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+          <div style={{ marginTop:"10px", fontSize:"18px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
             HOLD PHONE NEAR SPEAKER
           </div>
         </>
       ) : (
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"10px", padding:"10px 0" }}>
           <span className="spin" style={{ display:"inline-block", fontSize:"18px", color:"#C9A84C" }}>◈</span>
-          <span style={{ fontSize:"11px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
+          <span style={{ fontSize:"17px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em" }}>
             {phase === "capturing" ? "Hold phone near speaker..." : "One moment..."}
           </span>
         </div>
@@ -455,7 +455,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
       <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#444", fontSize:"24px", cursor:"pointer", zIndex:3001 }}>✕</button>
 
       <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 0", textAlign:"center" }}>
-        <div style={{ fontSize:"9px", letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"20px" }}>ARTIST PROFILE</div>
+        <div style={{ fontSize:"14px", letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"20px" }}>ARTIST PROFILE</div>
 
         {/* Photo picker — use label for reliable Android support */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"12px", marginBottom:"24px" }}>
@@ -473,7 +473,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
                 ? <img src={photo} alt="profile" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
                 : <div style={{ textAlign:"center" }}>
                     <div style={{ fontSize:"24px", marginBottom:"4px" }}>📸</div>
-                    <div style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>TAP TO ADD</div>
+                    <div style={{ fontSize:"18px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>TAP TO ADD</div>
                   </div>
               }
             </div>
@@ -486,7 +486,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
             style={{ display:"none" }}
           />
           {photo && (
-            <button onClick={() => setPhoto(null)} style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em" }}>
+            <button onClick={() => setPhoto(null)} style={{ fontSize:"18px", color:"#444", fontFamily:"'Courier New',monospace", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em" }}>
               REMOVE PHOTO
             </button>
           )}
@@ -494,7 +494,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
 
         {/* Name field */}
         <div style={{ marginBottom:"24px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"left" }}>ARTIST NAME</div>
+          <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"left" }}>ARTIST NAME</div>
           <input
             type="text"
             value={name}
@@ -504,7 +504,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
             style={{
               width:"100%", padding:"12px 14px", borderRadius:"10px",
               background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a",
-              color:"#ccc", fontFamily:"'Courier New',monospace", fontSize:"13px",
+              color:"#ccc", fontFamily:"'Courier New',monospace", fontSize:"20px",
               outline:"none", letterSpacing:"0.05em",
             }}
           />
@@ -512,7 +512,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
 
         {/* Card style */}
         <div style={{ marginBottom:"24px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>SCORECARD STYLE</div>
+          <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>SCORECARD STYLE</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
             {[
               { id:"circle", label:"Circle Avatar", desc:"Clean & universal", icon:"⭕" },
@@ -528,8 +528,8 @@ function ProfileSetup({ profile, onSave, onClose }) {
                 }}
               >
                 <div style={{ fontSize:"20px", marginBottom:"6px" }}>{style.icon}</div>
-                <div style={{ fontSize:"10px", color:cardStyle===style.id?"#C9A84C":"#777", fontFamily:"'Courier New',monospace", fontWeight:"bold", marginBottom:"3px" }}>{style.label}</div>
-                <div style={{ fontSize:"8px", color:"#444", fontFamily:"'Courier New',monospace" }}>{style.desc}</div>
+                <div style={{ fontSize:"15px", color:cardStyle===style.id?"#C9A84C":"#777", fontFamily:"'Courier New',monospace", fontWeight:"bold", marginBottom:"3px" }}>{style.label}</div>
+                <div style={{ fontSize:"18px", color:"#444", fontFamily:"'Courier New',monospace" }}>{style.desc}</div>
               </div>
             ))}
           </div>
@@ -537,7 +537,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
 
         {/* Text colour presets */}
         <div style={{ marginBottom:"28px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>TEXT COLOUR</div>
+          <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>TEXT COLOUR</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px" }}>
             {TEXT_PRESETS.map(p => (
               <div key={p.id}
@@ -550,12 +550,12 @@ function ProfileSetup({ profile, onSave, onClose }) {
                 }}
               >
                 <div style={{ fontSize:"16px", fontWeight:"900", color:p.color, fontFamily:"Georgia,serif", textShadow:p.shadow, marginBottom:"4px" }}>Aa</div>
-                <div style={{ fontSize:"7px", color:preset===p.id?"#aaa":"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.05em" }}>{p.label}</div>
+                <div style={{ fontSize:"17px", color:preset===p.id?"#aaa":"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.05em" }}>{p.label}</div>
               </div>
             ))}
           </div>
           {/* Readability guarantee note */}
-          <div style={{ marginTop:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace", textAlign:"center", fontStyle:"italic" }}>
+          <div style={{ marginTop:"8px", fontSize:"18px", color:"#333", fontFamily:"'Courier New',monospace", textAlign:"center", fontStyle:"italic" }}>
             All presets include shadow treatment for guaranteed readability over any photo
           </div>
         </div>
@@ -563,7 +563,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
         {/* Preview */}
         {(photo || name) && (
           <div style={{ marginBottom:"24px" }}>
-            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>PREVIEW</div>
+            <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>PREVIEW</div>
             <div style={{ borderRadius:"12px", overflow:"hidden", position:"relative", height:"80px", background:"rgba(0,0,0,0.4)", border:"1px solid #1e1e1e", display:"flex", alignItems:"center", padding:"12px 16px", gap:"12px" }}>
               {photo && cardStyle === "full" && <img src={photo} alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", opacity:0.4 }}/>}
               {photo && (
@@ -572,12 +572,12 @@ function ProfileSetup({ profile, onSave, onClose }) {
                 </div>
               )}
               <div style={{ position:"relative", zIndex:1 }}>
-                <div style={{ fontSize:"13px", fontWeight:"900", color:selectedPreset.color, fontFamily:"Georgia,serif", textShadow:selectedPreset.shadow }}>{name || "Your Name"}</div>
-                <div style={{ fontSize:"9px", color:selectedPreset.color, fontFamily:"'Courier New',monospace", opacity:0.7, textShadow:selectedPreset.shadow }}>Session Report</div>
+                <div style={{ fontSize:"20px", fontWeight:"900", color:selectedPreset.color, fontFamily:"Georgia,serif", textShadow:selectedPreset.shadow }}>{name || "Your Name"}</div>
+                <div style={{ fontSize:"14px", color:selectedPreset.color, fontFamily:"'Courier New',monospace", opacity:0.7, textShadow:selectedPreset.shadow }}>Session Report</div>
               </div>
               <div style={{ marginLeft:"auto", position:"relative", zIndex:1 }}>
                 <div style={{ fontSize:"28px", fontWeight:"900", color:selectedPreset.color, fontFamily:"Georgia,serif", textShadow:selectedPreset.shadow }}>74%</div>
-                <div style={{ fontSize:"7px", color:selectedPreset.color, fontFamily:"'Courier New',monospace", textShadow:selectedPreset.shadow }}>🌟 HEADLINER</div>
+                <div style={{ fontSize:"17px", color:selectedPreset.color, fontFamily:"'Courier New',monospace", textShadow:selectedPreset.shadow }}>🌟 HEADLINER</div>
               </div>
             </div>
           </div>
@@ -590,7 +590,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
             width:"100%", padding:"18px", borderRadius:"14px", border:"none", cursor:"pointer",
             background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
             color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-            fontSize:"13px", fontWeight:"900", letterSpacing:"0.2em", textTransform:"uppercase",
+            fontSize:"20px", fontWeight:"900", letterSpacing:"0.2em", textTransform:"uppercase",
             boxShadow:"0 0 25px rgba(201,168,76,0.3)",
           }}
         >
@@ -604,7 +604,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
 // ── PRO SPLASH PAGE ───────────────────────────────────────────────────────────
 function ProSplash({ onClose }) {
   const [selected,    setSelected]    = useState("annual");
-  const [fontScale,   setFontScale]   = useState(1); // 1 = normal, 1.25 = large, 1.55 = XL
+  const [fontScale,   setFontScale]   = useState(1.55); // 1 = normal, 1.25 = large, 1.55 = XL
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutErr, setCheckoutErr] = useState("");
 
@@ -770,7 +770,7 @@ function ProSplash({ onClose }) {
 
       {/* Font size toggle — for Lorna */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px", display:"flex", alignItems:"center", justifyContent:"center", gap:"12px" }}>
-        <span style={{ fontSize:"10px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>TEXT SIZE</span>
+        <span style={{ fontSize:"15px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>TEXT SIZE</span>
         {[
           { label:"A", scale:1,    size:"11px" },
           { label:"A", scale:1.25, size:"14px" },
@@ -809,7 +809,7 @@ function ProSplash({ onClose }) {
             transition:"all 0.2s",
           }}
         >
-          {checkingOut ? "◈  Opening Checkout..." : `Unlock Pro — ${plans.find(p=>p.id===selected)?.price}`}
+          {checkingOut ? "◈  Opening Checkout..." : `Unlock ${plans.find(p=>p.id===selected)?.label} of Pro — ${plans.find(p=>p.id===selected)?.price}`}
         </button>
         {checkoutErr && (
           <div style={{ marginTop:"10px", fontSize:fs(10), color:"#ff4422", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.08em" }}>
@@ -835,8 +835,8 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
         {/* Header */}
         <div style={{ padding:"16px 16px 12px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #1a1a1a" }}>
           <div>
-            <div style={{ fontSize:"9px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>SESSION REPORT</div>
-            <div style={{ fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"3px" }}>{songs.length} song{songs.length!==1?"s":""} this session</div>
+            <div style={{ fontSize:"14px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>SESSION REPORT</div>
+            <div style={{ fontSize:"18px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"3px" }}>{songs.length} song{songs.length!==1?"s":""} this session</div>
           </div>
           <button onClick={onClose} style={{ background:"none", border:"none", color:"#333", fontSize:"18px", cursor:"pointer" }}>✕</button>
         </div>
@@ -844,7 +844,7 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
         {/* Song list — free tier */}
         <div style={{ padding:"10px 0" }}>
           {songs.length === 0 ? (
-            <div style={{ padding:"20px", textAlign:"center", fontSize:"9px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+            <div style={{ padding:"20px", textAlign:"center", fontSize:"14px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
               NO SONGS LOGGED YET
             </div>
           ) : songs.map((song, i) => {
@@ -853,12 +853,12 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
             return (
               <div key={i} style={{ padding:"10px 16px", borderBottom:"1px solid #111", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div style={{ flex:1, minWidth:0, marginRight:"12px" }}>
-                  <div style={{ fontSize:"13px", color:"#ddd", fontFamily:"'Courier New',monospace", fontWeight:"bold", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{song.title}</div>
-                  <div style={{ fontSize:"11px", color:"#777", fontFamily:"'Courier New',monospace", marginTop:"2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{song.artist}</div>
+                  <div style={{ fontSize:"20px", color:"#ddd", fontFamily:"'Courier New',monospace", fontWeight:"bold", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{song.title}</div>
+                  <div style={{ fontSize:"17px", color:"#777", fontFamily:"'Courier New',monospace", marginTop:"2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{song.artist}</div>
                 </div>
                 <div style={{ textAlign:"right", flexShrink:0 }}>
                   <div style={{ fontSize:"20px", fontWeight:"900", color:col, fontFamily:"Georgia,serif", lineHeight:1, textShadow:`0 0 12px ${col}66` }}>{song.accuracy}%</div>
-                  <div style={{ fontSize:"7px", color:col, fontFamily:"'Courier New',monospace", marginTop:"2px", opacity:0.7 }}>{grade.label}</div>
+                  <div style={{ fontSize:"17px", color:col, fontFamily:"'Courier New',monospace", marginTop:"2px", opacity:0.7 }}>{grade.label}</div>
                 </div>
               </div>
             );
@@ -870,7 +870,7 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
         <div style={{ position:"relative", borderTop:"1px solid #1a1a1a" }}>
           {/* Blurred content */}
           <div className="pro-blur" style={{ padding:"14px 16px" }}>
-            <div style={{ fontSize:"9px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.2em", marginBottom:"10px" }}>PITCH TIMELINE</div>
+            <div style={{ fontSize:"14px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.2em", marginBottom:"10px" }}>PITCH TIMELINE</div>
             <div style={{ height:"60px", background:"rgba(0,0,0,0.3)", borderRadius:"8px", overflow:"hidden" }}>
               <svg width="100%" height="60" style={{ display:"block" }}>
                 <path d="M0,30 C40,20 60,40 100,25 S160,35 200,22 S260,38 300,28 S340,20 380,30" stroke="#C9A84C" strokeWidth="2" fill="none" opacity="0.6"/>
@@ -878,14 +878,14 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
               </svg>
             </div>
             <div style={{ marginTop:"10px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
-              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace" }}>SECTION BREAKDOWN<br/><span style={{ color:"#1a1a1a" }}>Verse 78% · Chorus 91%</span></div>
-              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"8px", color:"#333", fontFamily:"'Courier New',monospace" }}>CLAUDE COACHING<br/><span style={{ color:"#1a1a1a" }}>Support your chest voice...</span></div>
+              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"18px", color:"#333", fontFamily:"'Courier New',monospace" }}>SECTION BREAKDOWN<br/><span style={{ color:"#1a1a1a" }}>Verse 78% · Chorus 91%</span></div>
+              <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"18px", color:"#333", fontFamily:"'Courier New',monospace" }}>CLAUDE COACHING<br/><span style={{ color:"#1a1a1a" }}>Support your chest voice...</span></div>
             </div>
           </div>
 
           {/* Overlay */}
           <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(10,10,10,0.7)", backdropFilter:"blur(1px)", padding:"16px" }}>
-            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"center" }}>
+            <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"center" }}>
               PITCH TIMELINE · COACHING · HISTORY
             </div>
             <button
@@ -894,14 +894,14 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
                 padding:"14px 28px", borderRadius:"12px",
                 background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
                 border:"none", color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-                fontSize:"12px", fontWeight:"900", letterSpacing:"0.2em",
+                fontSize:"18px", fontWeight:"900", letterSpacing:"0.2em",
                 cursor:"pointer", textTransform:"uppercase",
                 boxShadow:"0 0 25px rgba(201,168,76,0.4)",
               }}
             >
               Unlock Pro ✦
             </button>
-            <div style={{ fontSize:"7px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"8px", textAlign:"center", letterSpacing:"0.1em", lineHeight:1.8 }}>
+            <div style={{ fontSize:"17px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"8px", textAlign:"center", letterSpacing:"0.1em", lineHeight:1.8 }}>
               FROM $2.99 · NO APP STORE · OPT-IN ONLY
             </div>
           </div>
@@ -910,7 +910,7 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
 
         {/* Footer */}
         <div style={{ padding:"10px 16px", textAlign:"center", borderTop:"1px solid #111" }}>
-          <div style={{ fontSize:"7px", color:"#1c1c1c", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+          <div style={{ fontSize:"17px", color:"#1c1c1c", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
             Simon Cowell standard: 90% · Whitney Houston: unreachable
           </div>
         </div>
@@ -938,12 +938,12 @@ function AboutModal({ onClose }) {
         <div style={{ textAlign:"center", marginBottom:"28px" }}>
           <div style={{ fontSize:"32px", marginBottom:"8px" }}>🎤</div>
           <div style={{ fontSize:"20px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", letterSpacing:"0.1em", marginBottom:"6px" }}>MIC DROP</div>
-          <div style={{ fontSize:"9px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>ABOUT & SUPPORT</div>
+          <div style={{ fontSize:"14px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>ABOUT & SUPPORT</div>
         </div>
 
         {/* Who we are */}
         <div style={{ background:"rgba(201,168,76,0.05)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#C9A84C", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>WHO WE ARE</div>
+          <div style={{ fontSize:"14px", letterSpacing:"0.25em", color:"#C9A84C", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>WHO WE ARE</div>
           <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
             Mic Drop is built by a very small team based in Queensland, Australia.
             We are not a faceless corporation. We are dedicated developers who believe
@@ -959,14 +959,14 @@ function AboutModal({ onClose }) {
 
         {/* Maintenance window */}
         <div style={{ background:"rgba(46,109,164,0.06)", border:"1px solid rgba(46,109,164,0.2)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#2E6DA4", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SCHEDULED MAINTENANCE</div>
+          <div style={{ fontSize:"14px", letterSpacing:"0.25em", color:"#2E6DA4", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SCHEDULED MAINTENANCE</div>
           <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"12px" }}>
             Any upgrades, bug fixes, or improvements to Mic Drop will be performed
             during our scheduled maintenance window only:
           </div>
           <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"10px", padding:"14px", textAlign:"center", marginBottom:"12px" }}>
             <div style={{ fontSize:"20px", fontWeight:"900", color:"#2E6DA4", fontFamily:"Georgia,serif", letterSpacing:"0.05em" }}>10:30 — 11:00 UTC</div>
-            <div style={{ fontSize:"9px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", marginTop:"4px" }}>DAILY — WHEN REQUIRED</div>
+            <div style={{ fontSize:"14px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", marginTop:"4px" }}>DAILY — WHEN REQUIRED</div>
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px", marginBottom:"12px" }}>
             {[
@@ -978,12 +978,12 @@ function AboutModal({ onClose }) {
               ["🇩🇪","Berlin","11:30 — 12:00"],
             ].map(([flag, city, time]) => (
               <div key={city} style={{ background:"rgba(0,0,0,0.2)", borderRadius:"8px", padding:"8px 10px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <div style={{ fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace" }}>{flag} {city}</div>
-                <div style={{ fontSize:"9px", color:"#2E6DA4", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{time}</div>
+                <div style={{ fontSize:"15px", color:"#555", fontFamily:"'Courier New',monospace" }}>{flag} {city}</div>
+                <div style={{ fontSize:"14px", color:"#2E6DA4", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{time}</div>
               </div>
             ))}
           </div>
-          <div style={{ fontSize:"13px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, fontStyle:"italic" }}>
+          <div style={{ fontSize:"20px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, fontStyle:"italic" }}>
             Maintenance is not always required — this window is reserved so updates
             never interrupt your morning or evening commute. Most days nothing happens
             at all and we like it that way.
@@ -992,7 +992,7 @@ function AboutModal({ onClose }) {
 
         {/* Support */}
         <div style={{ background:"rgba(0,0,0,0.3)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"0.25em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SUPPORT</div>
+          <div style={{ fontSize:"14px", letterSpacing:"0.25em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SUPPORT</div>
           <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"14px" }}>
             Found a bug? Something not working? We genuinely want to know.
             Early users are our most important users — your feedback shapes
@@ -1005,7 +1005,7 @@ function AboutModal({ onClose }) {
               borderRadius:"10px", textAlign:"center", textDecoration:"none",
               border:"1px solid #2a2a2a", background:"rgba(255,255,255,0.03)",
               color:"#C9A84C", fontFamily:"'Courier New',monospace",
-              fontSize:"11px", letterSpacing:"0.15em",
+              fontSize:"17px", letterSpacing:"0.15em",
             }}
           >
             ✉ scvdappcreator@gmail.com
@@ -1014,12 +1014,12 @@ function AboutModal({ onClose }) {
 
         {/* Integrity model reminder */}
         <div style={{ textAlign:"center", padding:"0 8px" }}>
-          <div style={{ fontSize:"13px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, fontStyle:"italic" }}>
+          <div style={{ fontSize:"20px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, fontStyle:"italic" }}>
             Mic Drop operates on an integrity model.<br/>
             We want your money — but we want to earn it first.<br/>
             If we ever fall short of that, email us.
           </div>
-          <div style={{ marginTop:"12px", fontSize:"12px", color:"#222", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+          <div style={{ marginTop:"12px", fontSize:"18px", color:"#222", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
             🇦🇺 Proudly built in Queensland, Australia
           </div>
         </div>
@@ -1068,7 +1068,7 @@ function TokenEntry({ onActivate }) {
   if (!open) return (
     <button
       onClick={() => setOpen(true)}
-      style={{ fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", background:"none", border:"none", cursor:"pointer", textDecoration:"underline", textDecorationColor:"#1a1a1a" }}
+      style={{ fontSize:"18px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", background:"none", border:"none", cursor:"pointer", textDecoration:"underline", textDecorationColor:"#1a1a1a" }}
     >
       Have a token? Enter it here
     </button>
@@ -1076,7 +1076,7 @@ function TokenEntry({ onActivate }) {
 
   return (
     <div style={{ width:"100%", background:"rgba(201,168,76,0.05)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:"12px", padding:"14px 16px" }}>
-      <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"center" }}>ENTER ACCESS TOKEN</div>
+      <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"center" }}>ENTER ACCESS TOKEN</div>
       <div style={{ display:"flex", gap:"8px" }}>
         <input
           type="text"
@@ -1086,7 +1086,7 @@ function TokenEntry({ onActivate }) {
           style={{
             flex:1, padding:"10px 12px", borderRadius:"8px",
             background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a",
-            color:"#aaa", fontFamily:"'Courier New',monospace", fontSize:"11px",
+            color:"#aaa", fontFamily:"'Courier New',monospace", fontSize:"17px",
             outline:"none",
           }}
         />
@@ -1097,18 +1097,18 @@ function TokenEntry({ onActivate }) {
             padding:"10px 16px", borderRadius:"8px", border:"none", cursor:"pointer",
             background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
             color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-            fontSize:"11px", fontWeight:"900", opacity: loading||!token.trim() ? 0.5 : 1,
+            fontSize:"17px", fontWeight:"900", opacity: loading||!token.trim() ? 0.5 : 1,
           }}
         >
           {loading ? "..." : "✦"}
         </button>
       </div>
       {status && (
-        <div style={{ marginTop:"8px", fontSize:"9px", color: status.includes("valid!") ? "#C9A84C" : "#ff4422", fontFamily:"'Courier New',monospace", textAlign:"center" }}>
+        <div style={{ marginTop:"8px", fontSize:"14px", color: status.includes("valid!") ? "#C9A84C" : "#ff4422", fontFamily:"'Courier New',monospace", textAlign:"center" }}>
           {status}
         </div>
       )}
-      <button onClick={() => { setOpen(false); setToken(""); setStatus(""); }} style={{ width:"100%", marginTop:"8px", fontSize:"8px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>
+      <button onClick={() => { setOpen(false); setToken(""); setStatus(""); }} style={{ width:"100%", marginTop:"8px", fontSize:"18px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>
         cancel
       </button>
     </div>
@@ -1125,7 +1125,7 @@ function TrackBanner({ trackInfo, phase }) {
       : "♪  Arm mic to begin — song identification starts automatically  ♪";
   return (
     <div style={{ width:"100%", overflow:"hidden", height:"26px", background:"rgba(0,0,0,0.4)", borderTop:"1px solid #1a1a1a", borderBottom:"1px solid #1a1a1a", display:"flex", alignItems:"center" }}>
-      <div className="banner-track" style={{ fontSize:"12px", color:trackInfo||identifying?"#C9A84C":"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.10em", lineHeight:"28px", paddingLeft:"20px" }}>
+      <div className="banner-track" style={{ fontSize:"18px", color:trackInfo||identifying?"#C9A84C":"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.10em", lineHeight:"28px", paddingLeft:"20px" }}>
         {text}
       </div>
     </div>
@@ -1149,9 +1149,9 @@ class ErrorBoundary extends React.Component {
         style: { background:"#0a0a0a", minHeight:"100vh", padding:"30px 20px", fontFamily:"monospace", color:"#C9A84C" }
       },
         React.createElement("div", { style:{ fontSize:"14px", fontWeight:"bold", marginBottom:"16px" }}, "🔴 APP CRASH — ERROR DETAILS:"),
-        React.createElement("div", { style:{ fontSize:"11px", color:"#ff4444", wordBreak:"break-all", lineHeight:"1.6", background:"#1a0000", padding:"12px", borderRadius:"8px", marginBottom:"12px" }}, this.state.error.message),
-        React.createElement("div", { style:{ fontSize:"9px", color:"#555", wordBreak:"break-all", lineHeight:"1.6" }}, this.state.error.stack?.slice(0,300)),
-        React.createElement("div", { style:{ marginTop:"16px", fontSize:"9px", color:"#333" }}, "Screenshot this and send to support.")
+        React.createElement("div", { style:{ fontSize:"17px", color:"#ff4444", wordBreak:"break-all", lineHeight:"1.6", background:"#1a0000", padding:"12px", borderRadius:"8px", marginBottom:"12px" }}, this.state.error.message),
+        React.createElement("div", { style:{ fontSize:"14px", color:"#555", wordBreak:"break-all", lineHeight:"1.6" }}, this.state.error.stack?.slice(0,300)),
+        React.createElement("div", { style:{ marginTop:"16px", fontSize:"14px", color:"#333" }}, "Screenshot this and send to support.")
       );
     }
     return this.props.children;
@@ -1629,8 +1629,8 @@ function MicDrop() {
                 </div>
             }
             {profile.name
-              ? <div style={{ fontSize:"8px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", marginTop:"3px", letterSpacing:"0.05em", maxWidth:"44px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{profile.name}</div>
-              : <div style={{ fontSize:"7px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", textAlign:"center", marginTop:"3px", letterSpacing:"0.08em" }}>PROFILE</div>
+              ? <div style={{ fontSize:"18px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", marginTop:"3px", letterSpacing:"0.05em", maxWidth:"44px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{profile.name}</div>
+              : <div style={{ fontSize:"17px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", textAlign:"center", marginTop:"3px", letterSpacing:"0.08em" }}>PROFILE</div>
             }
           </div>
 
@@ -1639,15 +1639,15 @@ function MicDrop() {
             <div style={{ fontSize:"26px", fontWeight:"900", letterSpacing:"0.18em", color:"#fff", fontFamily:"Georgia,serif", textTransform:"uppercase" }}>
               🎤 MIC DROP
             </div>
-            <div style={{ fontSize:"7px", letterSpacing:"0.35em", color:"#3a3a3a", marginTop:"2px", textTransform:"uppercase" }}>Vocal Blend Monitor</div>
-            <div style={{ fontSize:"7px", letterSpacing:"0.12em", color:"#1a4a1a", marginTop:"4px" }}>✦ IS AND ALWAYS WILL BE AD FREE ✦</div>
+            <div style={{ fontSize:"12px", letterSpacing:"0.35em", color:"#3a3a3a", marginTop:"2px", textTransform:"uppercase" }}>Vocal Blend Monitor</div>
+            <div style={{ fontSize:"12px", letterSpacing:"0.12em", color:"#3a7a3a", marginTop:"4px" }}>✦ IS AND ALWAYS WILL BE AD FREE ✦</div>
           </div>
 
           {/* Spacer to balance avatar */}
           <div style={{ width:"44px", flexShrink:0 }}/>
         </div>
         <div style={{ height:"16px", display:"flex", alignItems:"center", justifyContent:"center", marginTop:"4px" }}>
-          {clipping && <span className="clip-pulse" style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#ff2200", fontWeight:"bold" }}>⚠ CLIP</span>}
+          {clipping && <span className="clip-pulse" style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#ff2200", fontWeight:"bold" }}>⚠ CLIP</span>}
         </div>
       </div>
 
@@ -1665,14 +1665,14 @@ function MicDrop() {
             }}
           >
             <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-              <span style={{ fontSize:"12px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>
+              <span style={{ fontSize:"18px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>
                 ✦ PRO TRIAL — {trial.daysLeft} DAY{trial.daysLeft!==1?"S":""} REMAINING ✦
               </span>
             </div>
-            <div style={{ fontSize:"11px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", fontStyle:"italic", letterSpacing:"0.08em" }}>
+            <div style={{ fontSize:"17px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", fontStyle:"italic", letterSpacing:"0.08em" }}>
               We want your money — but we want to make sure we're earning it first.
             </div>
-            <div style={{ fontSize:"10px", color:"#3a3a3a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", marginTop:"2px" }}>
+            <div style={{ fontSize:"15px", color:"#3a3a3a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", marginTop:"2px" }}>
               TAP TO SEE PRO FEATURES →
             </div>
           </div>
@@ -1688,13 +1688,13 @@ function MicDrop() {
             border:"1px solid #1e1e1e",
             display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
           }}>
-            <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
+            <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
               ✦ YOUR PRO TRIAL HAS ENDED ✦
             </div>
-            <div style={{ fontSize:"10px", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
+            <div style={{ fontSize:"15px", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
               The core app is <span style={{ color:"#C9A84C" }}>always free</span> — arm, sing, score and share forever.
             </div>
-            <div style={{ fontSize:"10px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
+            <div style={{ fontSize:"15px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
               Pro features are pay as you go, when and if you want them.
             </div>
             <div
@@ -1703,7 +1703,7 @@ function MicDrop() {
                 marginTop:"4px", padding:"8px 20px", borderRadius:"8px",
                 background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
                 color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-                fontSize:"10px", fontWeight:"900", letterSpacing:"0.15em",
+                fontSize:"15px", fontWeight:"900", letterSpacing:"0.15em",
                 cursor:"pointer", textTransform:"uppercase",
               }}
             >
@@ -1721,16 +1721,16 @@ function MicDrop() {
             background:"rgba(0,180,80,0.08)", border:"1px solid rgba(0,180,80,0.3)",
             display:"flex", flexDirection:"column", alignItems:"center", gap:"8px",
           }}>
-            <div style={{ fontSize:"13px", letterSpacing:"0.15em", color:"#00cc55", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
+            <div style={{ fontSize:"20px", letterSpacing:"0.15em", color:"#00cc55", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
               ✦ PAYMENT RECEIVED — THANK YOU ✦
             </div>
-            <div style={{ fontSize:"12px", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
+            <div style={{ fontSize:"18px", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
               Your access token is on its way to your email.<br/>
               Enter it below to unlock Pro features.
             </div>
             <button
               onClick={() => setPaymentReturn(null)}
-              style={{ fontSize:"10px", color:"#444", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace", marginTop:"4px" }}
+              style={{ fontSize:"15px", color:"#444", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace", marginTop:"4px" }}
             >
               dismiss
             </button>
@@ -1746,12 +1746,12 @@ function MicDrop() {
             background:"rgba(255,34,0,0.05)", border:"1px solid rgba(255,34,0,0.2)",
             display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
           }}>
-            <div style={{ fontSize:"12px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.1em" }}>
+            <div style={{ fontSize:"18px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.1em" }}>
               No worries — the core app is always free.
             </div>
             <button
               onClick={() => setPaymentReturn(null)}
-              style={{ fontSize:"10px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}
+              style={{ fontSize:"15px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}
             >
               dismiss
             </button>
@@ -1771,7 +1771,7 @@ function MicDrop() {
             : armed
               ? (
                 <div style={{ borderRadius:"12px", background:"rgba(0,0,0,0)", border:"1px solid #1a1a1a", padding:"18px 12px", textAlign:"center" }}>
-                  <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>TAP IDENTIFY TO BEGIN</div>
+                  <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>TAP IDENTIFY TO BEGIN</div>
                 </div>
               )
               : <PitchIndicator cents={null} />
@@ -1780,7 +1780,7 @@ function MicDrop() {
 
       {/* STATUS — non-phase messages */}
       {statusMsg && !isIdentifying && (
-        <div style={{ fontSize:"9px", color:"#C9A84C", letterSpacing:"0.12em", marginBottom:"4px", padding:"0 20px", textAlign:"center" }}>
+        <div style={{ fontSize:"14px", color:"#C9A84C", letterSpacing:"0.12em", marginBottom:"4px", padding:"0 20px", textAlign:"center" }}>
           {statusMsg}
         </div>
       )}
@@ -1791,22 +1791,22 @@ function MicDrop() {
           <div style={{ background:"rgba(201,168,76,0.07)", border:"1px solid rgba(201,168,76,0.22)", borderRadius:"12px", padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <div>
               <div style={{ fontSize:"17px", color:"#ffffff", fontWeight:"bold", letterSpacing:"0.03em" }}>{trackInfo.title}</div>
-              <div style={{ fontSize:"13px", color:"#aaa", marginTop:"4px" }}>{trackInfo.artist}</div>
+              <div style={{ fontSize:"20px", color:"#aaa", marginTop:"4px" }}>{trackInfo.artist}</div>
             </div>
             <div style={{ textAlign:"right" }}>
-              <div style={{ fontSize:"13px", color:"#aaa" }}>Key of <span style={{ color:"#C9A84C", fontWeight:"bold" }}>{trackInfo.key}</span></div>
-              <div style={{ fontSize:"13px", color:"#aaa", marginTop:"3px" }}><span style={{ color:"#C9A84C", fontWeight:"bold" }}>{trackInfo.bpm}</span> BPM</div>
+              <div style={{ fontSize:"20px", color:"#aaa" }}>Key of <span style={{ color:"#C9A84C", fontWeight:"bold" }}>{trackInfo.key}</span></div>
+              <div style={{ fontSize:"20px", color:"#aaa", marginTop:"3px" }}><span style={{ color:"#C9A84C", fontWeight:"bold" }}>{trackInfo.bpm}</span> BPM</div>
             </div>
           </div>
           {trackInfo.tip && (
-            <div style={{ marginTop:"8px", fontSize:"12px", color:"#777", textAlign:"center", letterSpacing:"0.08em", fontStyle:"italic" }}>
+            <div style={{ marginTop:"8px", fontSize:"18px", color:"#777", textAlign:"center", letterSpacing:"0.08em", fontStyle:"italic" }}>
               💡 {trackInfo.tip}
             </div>
           )}
           {/* Running accuracy for current song */}
           {currentSamples.length > 4 && (
             <div style={{ marginTop:"6px", display:"flex", justifyContent:"center", alignItems:"center", gap:"8px" }}>
-              <span style={{ fontSize:"8px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>THIS SONG</span>
+              <span style={{ fontSize:"18px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>THIS SONG</span>
               <span style={{ fontSize:"14px", fontWeight:"900", color:scoreColor(calcAccuracy(currentSamples)), fontFamily:"Georgia,serif" }}>{calcAccuracy(currentSamples)}%</span>
             </div>
           )}
@@ -1847,9 +1847,9 @@ function MicDrop() {
           </button>
         )}
         <div style={{ display:"flex", alignItems:"center", gap:"12px", height:"16px" }}>
-          {armed && <span className="live-pulse" style={{ fontSize:"9px", color:"#ff4422", letterSpacing:"0.2em" }}>● LIVE</span>}
+          {armed && <span className="live-pulse" style={{ fontSize:"14px", color:"#ff4422", letterSpacing:"0.2em" }}>● LIVE</span>}
           {armed && sessionLog.length > 0 && (
-            <span style={{ fontSize:"9px", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>
+            <span style={{ fontSize:"14px", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>
               {sessionLog.length} song{sessionLog.length!==1?"s":""} logged
             </span>
           )}
@@ -1875,8 +1875,8 @@ function MicDrop() {
         {/* Active users counter */}
         {activeUsers !== null && (
           <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
-            <span className="live-pulse" style={{ fontSize:"8px", color:"#00cc55" }}>●</span>
-            <span style={{ fontSize:"9px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+            <span className="live-pulse" style={{ fontSize:"18px", color:"#00cc55" }}>●</span>
+            <span style={{ fontSize:"14px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
               {activeUsers} singer{activeUsers !== 1 ? "s" : ""} online
             </span>
           </div>
@@ -1886,31 +1886,31 @@ function MicDrop() {
         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
           <a
             href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.0%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
-            style={{ fontSize:"13px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #333" }}
+            style={{ fontSize:"20px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #333" }}
           >
             ✉ Support
           </a>
-          <span style={{ color:"#333", fontSize:"13px" }}>·</span>
+          <span style={{ color:"#333", fontSize:"20px" }}>·</span>
           <button
             onClick={() => setShowAbout(true)}
-            style={{ fontSize:"13px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #333", cursor:"pointer", padding:0 }}
+            style={{ fontSize:"20px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #333", cursor:"pointer", padding:0 }}
           >
             About
           </button>
-          <span style={{ color:"#333", fontSize:"13px" }}>·</span>
+          <span style={{ color:"#333", fontSize:"20px" }}>·</span>
           <button
             onClick={() => setShowSplash(true)}
-            style={{ fontSize:"13px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #554020", cursor:"pointer", padding:0, opacity:0.7 }}
+            style={{ fontSize:"20px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #554020", cursor:"pointer", padding:0, opacity:0.7 }}
           >
             ⭐ Pro
           </button>
-          <span style={{ color:"#333", fontSize:"13px" }}>·</span>
-          <span style={{ fontSize:"13px", color:"#333", fontFamily:"'Courier New',monospace" }}>🇦🇺 QLD</span>
+          <span style={{ color:"#333", fontSize:"20px" }}>·</span>
+          <span style={{ fontSize:"20px", color:"#333", fontFamily:"'Courier New',monospace" }}>🇦🇺 QLD</span>
         </div>
 
         {/* Version */}
-        <div style={{ fontSize:"10px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
-          Mic Drop v2.0 — Powered by AudD + Claude
+        <div style={{ fontSize:"15px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
+          Mic Drop v2.1 — Powered by AudD + Claude
         </div>
 
       </div>
