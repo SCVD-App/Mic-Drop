@@ -99,15 +99,15 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const PROXY_BASE_URL       = "https://micdrop.emblen-scott.workers.dev";
 const RECOGNITION_INTERVAL = 45000;
-const AUDIO_SAMPLE_MS      = 7000;   // 7s recording window
+const AUDIO_SAMPLE_MS      = 7000;
 const NUM_LEDS             = 20;
 const PITCH_SMOOTH_MS      = 300;
-const POCKET_CENTS         = 25;     // tightened — earned, not gifted
+const POCKET_CENTS         = 25;
 const CLOSE_CENTS          = 55;
 const REPORT_INTERVAL_MS   = 500;
-const MIN_VOX_RMS          = 0.015;  // minimum signal to count as singing
+const MIN_VOX_RMS          = 0.015;
 
-// ── PITCH DETECTION (autocorrelation) ────────────────────────────────────────
+// ── PITCH DETECTION ───────────────────────────────────────────────────────────
 function detectPitch(buffer, sampleRate) {
   const SIZE = buffer.length;
   const rms  = Math.sqrt(buffer.reduce((s,v) => s+v*v, 0) / SIZE);
@@ -139,7 +139,7 @@ function freqToNearestCents(freq) {
   return Math.round((midiFloat - midiNearest) * 100);
 }
 
-// ── SCORING ──────────────────────────────────────────────────────────────────
+// ── SCORING ───────────────────────────────────────────────────────────────────
 function calcAccuracy(samples) {
   if (!samples || samples.length === 0) return 0;
   const pocket = samples.filter(d => Math.abs(d.cents) <= POCKET_CENTS).length;
@@ -379,7 +379,6 @@ function ScreenGlow({ cents }) {
 
 // ── COUNTDOWN DISPLAY ────────────────────────────────────────────────────────
 function CountdownDisplay({ phase, countdown }) {
-  // phase: "capturing" | "counting" | "sending" | "enriching"
   const phaseLabel = {
     capturing: "CAPTURING AUDIO SAMPLE",
     counting:  "IDENTIFYING SONG",
@@ -457,7 +456,6 @@ function ProfileSetup({ profile, onSave, onClose }) {
       <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 0", textAlign:"center" }}>
         <div style={{ fontSize:"14px", letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"20px" }}>ARTIST PROFILE</div>
 
-        {/* Photo picker — use label for reliable Android support */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"12px", marginBottom:"24px" }}>
           <label htmlFor="photoInput" style={{ cursor:"pointer" }}>
             <div style={{
@@ -478,13 +476,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
               }
             </div>
           </label>
-          <input
-            id="photoInput"
-            type="file"
-            accept="image/*"
-            onChange={handlePhoto}
-            style={{ display:"none" }}
-          />
+          <input id="photoInput" type="file" accept="image/*" onChange={handlePhoto} style={{ display:"none" }} />
           {photo && (
             <button onClick={() => setPhoto(null)} style={{ fontSize:"18px", color:"#444", fontFamily:"'Courier New',monospace", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em" }}>
               REMOVE PHOTO
@@ -492,25 +484,15 @@ function ProfileSetup({ profile, onSave, onClose }) {
           )}
         </div>
 
-        {/* Name field */}
         <div style={{ marginBottom:"24px" }}>
           <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"left" }}>ARTIST NAME</div>
           <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="Your name..."
-            maxLength={30}
-            style={{
-              width:"100%", padding:"12px 14px", borderRadius:"10px",
-              background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a",
-              color:"#ccc", fontFamily:"'Courier New',monospace", fontSize:"20px",
-              outline:"none", letterSpacing:"0.05em",
-            }}
+            type="text" value={name} onChange={e => setName(e.target.value)}
+            placeholder="Your name..." maxLength={30}
+            style={{ width:"100%", padding:"12px 14px", borderRadius:"10px", background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a", color:"#ccc", fontFamily:"'Courier New',monospace", fontSize:"20px", outline:"none", letterSpacing:"0.05em" }}
           />
         </div>
 
-        {/* Card style */}
         <div style={{ marginBottom:"24px" }}>
           <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>SCORECARD STYLE</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
@@ -518,15 +500,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
               { id:"circle", label:"Circle Avatar", desc:"Clean & universal", icon:"⭕" },
               { id:"full",   label:"Full Background", desc:"Bold & flamboyant", icon:"🌟" },
             ].map(style => (
-              <div key={style.id}
-                onClick={() => setCardStyle(style.id)}
-                style={{
-                  padding:"14px 12px", borderRadius:"12px", cursor:"pointer",
-                  border:`2px solid ${cardStyle===style.id?"#C9A84C":"#1e1e1e"}`,
-                  background: cardStyle===style.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.02)",
-                  textAlign:"center", transition:"all 0.2s",
-                }}
-              >
+              <div key={style.id} onClick={() => setCardStyle(style.id)} style={{ padding:"14px 12px", borderRadius:"12px", cursor:"pointer", border:`2px solid ${cardStyle===style.id?"#C9A84C":"#1e1e1e"}`, background: cardStyle===style.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.02)", textAlign:"center", transition:"all 0.2s" }}>
                 <div style={{ fontSize:"20px", marginBottom:"6px" }}>{style.icon}</div>
                 <div style={{ fontSize:"15px", color:cardStyle===style.id?"#C9A84C":"#777", fontFamily:"'Courier New',monospace", fontWeight:"bold", marginBottom:"3px" }}>{style.label}</div>
                 <div style={{ fontSize:"18px", color:"#444", fontFamily:"'Courier New',monospace" }}>{style.desc}</div>
@@ -535,32 +509,21 @@ function ProfileSetup({ profile, onSave, onClose }) {
           </div>
         </div>
 
-        {/* Text colour presets */}
         <div style={{ marginBottom:"28px" }}>
           <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>TEXT COLOUR</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px" }}>
             {TEXT_PRESETS.map(p => (
-              <div key={p.id}
-                onClick={() => setPreset(p.id)}
-                style={{
-                  padding:"10px 8px", borderRadius:"10px", cursor:"pointer",
-                  border:`2px solid ${preset===p.id?p.color:"#1e1e1e"}`,
-                  background: preset===p.id?`${p.pill}`:"rgba(255,255,255,0.02)",
-                  textAlign:"center", transition:"all 0.2s",
-                }}
-              >
+              <div key={p.id} onClick={() => setPreset(p.id)} style={{ padding:"10px 8px", borderRadius:"10px", cursor:"pointer", border:`2px solid ${preset===p.id?p.color:"#1e1e1e"}`, background: preset===p.id?`${p.pill}`:"rgba(255,255,255,0.02)", textAlign:"center", transition:"all 0.2s" }}>
                 <div style={{ fontSize:"16px", fontWeight:"900", color:p.color, fontFamily:"Georgia,serif", textShadow:p.shadow, marginBottom:"4px" }}>Aa</div>
                 <div style={{ fontSize:"17px", color:preset===p.id?"#aaa":"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.05em" }}>{p.label}</div>
               </div>
             ))}
           </div>
-          {/* Readability guarantee note */}
           <div style={{ marginTop:"8px", fontSize:"18px", color:"#333", fontFamily:"'Courier New',monospace", textAlign:"center", fontStyle:"italic" }}>
             All presets include shadow treatment for guaranteed readability over any photo
           </div>
         </div>
 
-        {/* Preview */}
         {(photo || name) && (
           <div style={{ marginBottom:"24px" }}>
             <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"left" }}>PREVIEW</div>
@@ -583,17 +546,7 @@ function ProfileSetup({ profile, onSave, onClose }) {
           </div>
         )}
 
-        {/* Save */}
-        <button
-          onClick={handleSave}
-          style={{
-            width:"100%", padding:"18px", borderRadius:"14px", border:"none", cursor:"pointer",
-            background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
-            color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-            fontSize:"20px", fontWeight:"900", letterSpacing:"0.2em", textTransform:"uppercase",
-            boxShadow:"0 0 25px rgba(201,168,76,0.3)",
-          }}
-        >
+        <button onClick={handleSave} style={{ width:"100%", padding:"18px", borderRadius:"14px", border:"none", cursor:"pointer", background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)", color:"#0a0a0a", fontFamily:"'Courier New',monospace", fontSize:"20px", fontWeight:"900", letterSpacing:"0.2em", textTransform:"uppercase", boxShadow:"0 0 25px rgba(201,168,76,0.3)" }}>
           Save Profile ✦
         </button>
       </div>
@@ -604,11 +557,10 @@ function ProfileSetup({ profile, onSave, onClose }) {
 // ── PRO SPLASH PAGE ───────────────────────────────────────────────────────────
 function ProSplash({ onClose }) {
   const [selected,    setSelected]    = useState("annual");
-  const [fontScale,   setFontScale]   = useState(1.55); // 1 = normal, 1.25 = large, 1.55 = XL
+  const [fontScale,   setFontScale]   = useState(1.55);
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutErr, setCheckoutErr] = useState("");
 
-  // All font sizes run through scale so the toggle actually works
   const fs = (base) => Math.round(base * fontScale) + "px";
 
   const handleCheckout = async () => {
@@ -644,7 +596,6 @@ function ProSplash({ onClose }) {
     { id:"annual",  label:"1 Year",   price:"$24.99", saving:"30% off — best value" },
   ];
 
-  // Animated pitch graph — gold reference line, red singer line
   const W = 320, H = 90, mid = H/2;
   const refPoints  = [28,26,29,27,28,26,28,27,29,28,27,28,26,29,27,28,27,26,28,27];
   const singPoints = [35,28,42,26,30,38,24,32,44,27,36,29,40,25,33,38,26,35,28,31];
@@ -655,17 +606,9 @@ function ProSplash({ onClose }) {
   }).join(" ");
 
   return (
-    <div style={{
-      position:"fixed", inset:0, zIndex:2000,
-      background:"rgba(0,0,0,0.96)",
-      display:"flex", flexDirection:"column", alignItems:"center",
-      overflowY:"auto", padding:"0 0 40px",
-      animation:"fadeIn 0.3s ease",
-    }}>
-      {/* Close */}
+    <div style={{ position:"fixed", inset:0, zIndex:2000, background:"rgba(0,0,0,0.96)", display:"flex", flexDirection:"column", alignItems:"center", overflowY:"auto", padding:"0 0 40px", animation:"fadeIn 0.3s ease" }}>
       <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#333", fontSize:"24px", cursor:"pointer", zIndex:2001 }}>✕</button>
 
-      {/* Hero */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 24px", textAlign:"center" }}>
         <div style={{ fontSize:fs(11), letterSpacing:"0.35em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"16px" }}>MIC DROP PRO</div>
         <div style={{ fontSize:fs(22), fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", lineHeight:1.3, marginBottom:"12px" }}>
@@ -676,17 +619,13 @@ function ProSplash({ onClose }) {
         </div>
       </div>
 
-      {/* Pitch graph preview */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
         <div style={{ background:"rgba(0,0,0,0.6)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"14px 16px" }}>
           <div style={{ fontSize:fs(8), letterSpacing:"0.2em", color:"#444", fontFamily:"'Courier New',monospace", marginBottom:"10px" }}>PITCH TIMELINE — LIVE SESSION DATA</div>
           <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:"block", borderRadius:"6px", background:"rgba(0,0,0,0.3)" }}>
-            {/* Pocket zone */}
             <rect x="0" y={mid-14} width={W} height="28" fill="rgba(201,168,76,0.06)" rx="2"/>
             <line x1="0" y1={mid} x2={W} y2={mid} stroke="#1a1a1a" strokeWidth="1"/>
-            {/* Reference line — gold */}
             <path d={toPath(refPoints)} stroke="#C9A84C" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
-            {/* Singer line — colour coded */}
             {singPoints.map((v,i) => {
               if (i===0) return null;
               const x1=((i-1)/(singPoints.length-1))*W, x2=(i/(singPoints.length-1))*W;
@@ -707,7 +646,6 @@ function ProSplash({ onClose }) {
         </div>
       </div>
 
-      {/* Feature list */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
         <div style={{ background:"rgba(0,0,0,0.4)", border:"1px solid #1a1a1a", borderRadius:"14px", overflow:"hidden" }}>
           {[
@@ -725,21 +663,11 @@ function ProSplash({ onClose }) {
         </div>
       </div>
 
-      {/* Pricing */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px" }}>
         <div style={{ fontSize:fs(10), letterSpacing:"0.2em", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", marginBottom:"12px" }}>CHOOSE YOUR PLAN — OPT IN, NO AUTO-RENEWAL</div>
         <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
           {plans.map(plan => (
-            <div key={plan.id}
-              onClick={() => setSelected(plan.id)}
-              style={{
-                padding:"14px 16px", borderRadius:"12px", cursor:"pointer",
-                border:`2px solid ${selected===plan.id?"#C9A84C":"#2a2a2a"}`,
-                background: selected===plan.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)",
-                display:"flex", justifyContent:"space-between", alignItems:"center",
-                transition:"all 0.2s",
-              }}
-            >
+            <div key={plan.id} onClick={() => setSelected(plan.id)} style={{ padding:"14px 16px", borderRadius:"12px", cursor:"pointer", border:`2px solid ${selected===plan.id?"#C9A84C":"#2a2a2a"}`, background: selected===plan.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)", display:"flex", justifyContent:"space-between", alignItems:"center", transition:"all 0.2s" }}>
               <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                 <div style={{ width:"18px", height:"18px", borderRadius:"50%", border:`2px solid ${selected===plan.id?"#C9A84C":"#555"}`, background:selected===plan.id?"#C9A84C":"transparent", flexShrink:0 }}/>
                 <span style={{ fontSize:fs(13), color:selected===plan.id?"#C9A84C":"#aaa", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>{plan.label}</span>
@@ -751,7 +679,6 @@ function ProSplash({ onClose }) {
         </div>
       </div>
 
-      {/* The manifesto */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 24px" }}>
         <div style={{ background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:"14px", padding:"20px" }}>
           <div style={{ fontSize:fs(16), fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", lineHeight:1.5, marginBottom:"16px", textAlign:"center" }}>
@@ -768,7 +695,6 @@ function ProSplash({ onClose }) {
         </div>
       </div>
 
-      {/* Font size toggle — for Lorna */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px 20px", display:"flex", alignItems:"center", justifyContent:"center", gap:"12px" }}>
         <span style={{ fontSize:"15px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>TEXT SIZE</span>
         {[
@@ -776,39 +702,12 @@ function ProSplash({ onClose }) {
           { label:"A", scale:1.25, size:"14px" },
           { label:"A", scale:1.55, size:"18px" },
         ].map(({ label, scale, size }) => (
-          <button key={scale}
-            onClick={() => setFontScale(scale)}
-            style={{
-              width:"40px", height:"40px", borderRadius:"8px", cursor:"pointer",
-              border:`2px solid ${fontScale===scale?"#C9A84C":"#2a2a2a"}`,
-              background: fontScale===scale?"rgba(201,168,76,0.1)":"rgba(255,255,255,0.03)",
-              color: fontScale===scale?"#C9A84C":"#555",
-              fontFamily:"Georgia,serif", fontSize:size,
-              fontWeight:"bold", display:"flex", alignItems:"center", justifyContent:"center",
-              transition:"all 0.2s",
-            }}
-          >{label}</button>
+          <button key={scale} onClick={() => setFontScale(scale)} style={{ width:"40px", height:"40px", borderRadius:"8px", cursor:"pointer", border:`2px solid ${fontScale===scale?"#C9A84C":"#2a2a2a"}`, background: fontScale===scale?"rgba(201,168,76,0.1)":"rgba(255,255,255,0.03)", color: fontScale===scale?"#C9A84C":"#555", fontFamily:"Georgia,serif", fontSize:size, fontWeight:"bold", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s" }}>{label}</button>
         ))}
       </div>
 
-      {/* CTA */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"0 24px" }}>
-        <button
-          onClick={handleCheckout}
-          disabled={checkingOut}
-          style={{
-            width:"100%", padding:"20px",
-            borderRadius:"14px", border:"none", cursor: checkingOut ? "not-allowed" : "pointer",
-            background: checkingOut
-              ? "linear-gradient(135deg, #888 0%, #666 100%)"
-              : "linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
-            color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-            fontSize:fs(14), fontWeight:"900", letterSpacing:"0.2em",
-            textTransform:"uppercase",
-            boxShadow: checkingOut ? "none" : "0 0 30px rgba(201,168,76,0.4)",
-            transition:"all 0.2s",
-          }}
-        >
+        <button onClick={handleCheckout} disabled={checkingOut} style={{ width:"100%", padding:"20px", borderRadius:"14px", border:"none", cursor: checkingOut ? "not-allowed" : "pointer", background: checkingOut ? "linear-gradient(135deg, #888 0%, #666 100%)" : "linear-gradient(135deg, #C9A84C 0%, #a07830 100%)", color:"#0a0a0a", fontFamily:"'Courier New',monospace", fontSize:fs(14), fontWeight:"900", letterSpacing:"0.2em", textTransform:"uppercase", boxShadow: checkingOut ? "none" : "0 0 30px rgba(201,168,76,0.4)", transition:"all 0.2s" }}>
           {checkingOut ? "◈  Opening Checkout..." : `Unlock ${plans.find(p=>p.id===selected)?.label} of Pro — ${plans.find(p=>p.id===selected)?.price}`}
         </button>
         {checkoutErr && (
@@ -820,19 +719,16 @@ function ProSplash({ onClose }) {
           NO APP STORE · OPT-IN ONLY · NO AUTO-RENEWAL
         </div>
       </div>
-
     </div>
   );
 }
 
 // ── SESSION REPORT ────────────────────────────────────────────────────────────
 function SessionReport({ songs, onClose, onUnlock, isPro }) {
-
   return (
     <div className="report-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 16px" }}>
       <div style={{ background:"rgba(14,14,14,0.98)", border:"1px solid #1e1e1e", borderRadius:"16px", overflow:"hidden" }}>
 
-        {/* Header */}
         <div style={{ padding:"16px 16px 12px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #1a1a1a" }}>
           <div>
             <div style={{ fontSize:"14px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>SESSION REPORT</div>
@@ -841,7 +737,13 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
           <button onClick={onClose} style={{ background:"none", border:"none", color:"#333", fontSize:"18px", cursor:"pointer" }}>✕</button>
         </div>
 
-        {/* Song list — free tier */}
+        {/* ── Pro badge — only shown when Pro is active ── */}
+        {isPro && (
+          <div style={{ padding:"6px 16px", background:"rgba(201,168,76,0.06)", borderBottom:"1px solid #1a1a1a", display:"flex", alignItems:"center", gap:"6px" }}>
+            <span style={{ fontSize:"12px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.2em" }}>✦ PRO REPORT</span>
+          </div>
+        )}
+
         <div style={{ padding:"10px 0" }}>
           {songs.length === 0 ? (
             <div style={{ padding:"20px", textAlign:"center", fontSize:"14px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
@@ -865,10 +767,9 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
           })}
         </div>
 
-        {/* PRO UPSELL — only shown after trial expires */}
+        {/* PRO UPSELL — only shown when not Pro */}
         {!isPro && (
         <div style={{ position:"relative", borderTop:"1px solid #1a1a1a" }}>
-          {/* Blurred content */}
           <div className="pro-blur" style={{ padding:"14px 16px" }}>
             <div style={{ fontSize:"14px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.2em", marginBottom:"10px" }}>PITCH TIMELINE</div>
             <div style={{ height:"60px", background:"rgba(0,0,0,0.3)", borderRadius:"8px", overflow:"hidden" }}>
@@ -882,23 +783,11 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
               <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"8px", padding:"8px", fontSize:"18px", color:"#333", fontFamily:"'Courier New',monospace" }}>CLAUDE COACHING<br/><span style={{ color:"#1a1a1a" }}>Support your chest voice...</span></div>
             </div>
           </div>
-
-          {/* Overlay */}
           <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(10,10,10,0.7)", backdropFilter:"blur(1px)", padding:"16px" }}>
             <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"8px", textAlign:"center" }}>
               PITCH TIMELINE · COACHING · HISTORY
             </div>
-            <button
-              onClick={onUnlock}
-              style={{
-                padding:"14px 28px", borderRadius:"12px",
-                background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
-                border:"none", color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-                fontSize:"18px", fontWeight:"900", letterSpacing:"0.2em",
-                cursor:"pointer", textTransform:"uppercase",
-                boxShadow:"0 0 25px rgba(201,168,76,0.4)",
-              }}
-            >
+            <button onClick={onUnlock} style={{ padding:"14px 28px", borderRadius:"12px", background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)", border:"none", color:"#0a0a0a", fontFamily:"'Courier New',monospace", fontSize:"18px", fontWeight:"900", letterSpacing:"0.2em", cursor:"pointer", textTransform:"uppercase", boxShadow:"0 0 25px rgba(201,168,76,0.4)" }}>
               Unlock Pro ✦
             </button>
             <div style={{ fontSize:"17px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", marginTop:"8px", textAlign:"center", letterSpacing:"0.1em", lineHeight:1.8 }}>
@@ -906,9 +795,8 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
             </div>
           </div>
         </div>
-        )} {/* end !isPro */}
+        )}
 
-        {/* Footer */}
         <div style={{ padding:"10px 16px", textAlign:"center", borderTop:"1px solid #111" }}>
           <div style={{ fontSize:"17px", color:"#1c1c1c", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
             Simon Cowell standard: 90% · Whitney Houston: unreachable
@@ -923,25 +811,14 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
 // ── ABOUT / SUPPORT MODAL ────────────────────────────────────────────────────
 function AboutModal({ onClose }) {
   return (
-    <div style={{
-      position:"fixed", inset:0, zIndex:3000,
-      background:"rgba(0,0,0,0.97)",
-      display:"flex", flexDirection:"column", alignItems:"center",
-      overflowY:"auto", padding:"0 0 40px",
-      animation:"fadeIn 0.3s ease",
-    }}>
+    <div style={{ position:"fixed", inset:0, zIndex:3000, background:"rgba(0,0,0,0.97)", display:"flex", flexDirection:"column", alignItems:"center", overflowY:"auto", padding:"0 0 40px", animation:"fadeIn 0.3s ease" }}>
       <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#444", fontSize:"24px", cursor:"pointer", zIndex:3001 }}>✕</button>
-
       <div style={{ width:"100%", maxWidth:"420px", padding:"48px 24px 0" }}>
-
-        {/* Header */}
         <div style={{ textAlign:"center", marginBottom:"28px" }}>
           <div style={{ fontSize:"32px", marginBottom:"8px" }}>🎤</div>
           <div style={{ fontSize:"20px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", letterSpacing:"0.1em", marginBottom:"6px" }}>MIC DROP</div>
           <div style={{ fontSize:"14px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>ABOUT & SUPPORT</div>
         </div>
-
-        {/* Who we are */}
         <div style={{ background:"rgba(201,168,76,0.05)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
           <div style={{ fontSize:"14px", letterSpacing:"0.25em", color:"#C9A84C", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>WHO WE ARE</div>
           <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9 }}>
@@ -956,13 +833,10 @@ function AboutModal({ onClose }) {
             Glasshouse Mountains.
           </div>
         </div>
-
-        {/* Maintenance window */}
         <div style={{ background:"rgba(46,109,164,0.06)", border:"1px solid rgba(46,109,164,0.2)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
           <div style={{ fontSize:"14px", letterSpacing:"0.25em", color:"#2E6DA4", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SCHEDULED MAINTENANCE</div>
           <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"12px" }}>
-            Any upgrades, bug fixes, or improvements to Mic Drop will be performed
-            during our scheduled maintenance window only:
+            Any upgrades, bug fixes, or improvements to Mic Drop will be performed during our scheduled maintenance window only:
           </div>
           <div style={{ background:"rgba(0,0,0,0.3)", borderRadius:"10px", padding:"14px", textAlign:"center", marginBottom:"12px" }}>
             <div style={{ fontSize:"20px", fontWeight:"900", color:"#2E6DA4", fontFamily:"Georgia,serif", letterSpacing:"0.05em" }}>10:30 — 11:00 UTC</div>
@@ -984,35 +858,18 @@ function AboutModal({ onClose }) {
             ))}
           </div>
           <div style={{ fontSize:"20px", color:"#555", fontFamily:"'Courier New',monospace", lineHeight:1.8, fontStyle:"italic" }}>
-            Maintenance is not always required — this window is reserved so updates
-            never interrupt your morning or evening commute. Most days nothing happens
-            at all and we like it that way.
+            Maintenance is not always required — this window is reserved so updates never interrupt your morning or evening commute.
           </div>
         </div>
-
-        {/* Support */}
         <div style={{ background:"rgba(0,0,0,0.3)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
           <div style={{ fontSize:"14px", letterSpacing:"0.25em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>SUPPORT</div>
           <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, marginBottom:"14px" }}>
-            Found a bug? Something not working? We genuinely want to know.
-            Early users are our most important users — your feedback shapes
-            everything we build next.
+            Found a bug? Something not working? We genuinely want to know. Early users are our most important users — your feedback shapes everything we build next.
           </div>
-          <a
-            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.0%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
-            style={{
-              display:"block", width:"100%", padding:"14px",
-              borderRadius:"10px", textAlign:"center", textDecoration:"none",
-              border:"1px solid #2a2a2a", background:"rgba(255,255,255,0.03)",
-              color:"#C9A84C", fontFamily:"'Courier New',monospace",
-              fontSize:"17px", letterSpacing:"0.15em",
-            }}
-          >
+          <a href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.1%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`} style={{ display:"block", width:"100%", padding:"14px", borderRadius:"10px", textAlign:"center", textDecoration:"none", border:"1px solid #2a2a2a", background:"rgba(255,255,255,0.03)", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontSize:"17px", letterSpacing:"0.15em" }}>
             ✉ scvdappcreator@gmail.com
           </a>
         </div>
-
-        {/* Integrity model reminder */}
         <div style={{ textAlign:"center", padding:"0 8px" }}>
           <div style={{ fontSize:"20px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, fontStyle:"italic" }}>
             Mic Drop operates on an integrity model.<br/>
@@ -1023,7 +880,6 @@ function AboutModal({ onClose }) {
             🇦🇺 Proudly built in Queensland, Australia
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -1066,10 +922,7 @@ function TokenEntry({ onActivate }) {
   };
 
   if (!open) return (
-    <button
-      onClick={() => setOpen(true)}
-      style={{ fontSize:"18px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", background:"none", border:"none", cursor:"pointer", textDecoration:"underline", textDecorationColor:"#1a1a1a" }}
-    >
+    <button onClick={() => setOpen(true)} style={{ fontSize:"18px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.12em", background:"none", border:"none", cursor:"pointer", textDecoration:"underline", textDecorationColor:"#1a1a1a" }}>
       Have a token? Enter it here
     </button>
   );
@@ -1079,27 +932,11 @@ function TokenEntry({ onActivate }) {
       <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", marginBottom:"10px", textAlign:"center" }}>ENTER ACCESS TOKEN</div>
       <div style={{ display:"flex", gap:"8px" }}>
         <input
-          type="text"
-          value={token}
-          onChange={e => setToken(e.target.value)}
+          type="text" value={token} onChange={e => setToken(e.target.value)}
           placeholder="micdrop_pro_..."
-          style={{
-            flex:1, padding:"10px 12px", borderRadius:"8px",
-            background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a",
-            color:"#aaa", fontFamily:"'Courier New',monospace", fontSize:"17px",
-            outline:"none",
-          }}
+          style={{ flex:1, padding:"10px 12px", borderRadius:"8px", background:"rgba(255,255,255,0.04)", border:"1px solid #2a2a2a", color:"#aaa", fontFamily:"'Courier New',monospace", fontSize:"17px", outline:"none" }}
         />
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !token.trim()}
-          style={{
-            padding:"10px 16px", borderRadius:"8px", border:"none", cursor:"pointer",
-            background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
-            color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-            fontSize:"17px", fontWeight:"900", opacity: loading||!token.trim() ? 0.5 : 1,
-          }}
-        >
+        <button onClick={handleSubmit} disabled={loading || !token.trim()} style={{ padding:"10px 16px", borderRadius:"8px", border:"none", cursor:"pointer", background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)", color:"#0a0a0a", fontFamily:"'Courier New',monospace", fontSize:"17px", fontWeight:"900", opacity: loading||!token.trim() ? 0.5 : 1 }}>
           {loading ? "..." : "✦"}
         </button>
       </div>
@@ -1174,10 +1011,8 @@ function MicDrop() {
   const [lastTrackKey,setLastTrackKey]= useState(null);
   const [statusMsg,   setStatusMsg]   = useState("");
 
-  // Identification phase: null | "capturing" | "counting" | "sending" | "enriching"
   const [idPhase,     setIdPhase]     = useState(null);
   const [countdown,   setCountdown]   = useState(null);
-  // Session log — array of { title, artist, accuracy, samples }
   const [sessionLog,  setSessionLog]  = useState([]);
   const [currentSamples, setCurrentSamples] = useState([]);
   const [showReport,  setShowReport]  = useState(false);
@@ -1207,24 +1042,19 @@ function MicDrop() {
   const reportTimer    = useRef(null);
   const countdownTimer = useRef(null);
   const identifying    = useRef(false);
-  const cleanStreamRef = useRef(null); // clean stream for pitch detection
+  const cleanStreamRef = useRef(null);
   const smoothRef      = useRef(null);
   const pitchHistory   = useRef([]);
-  const trackInfoRef   = useRef(null); // ref mirror for use inside intervals
+  const trackInfoRef   = useRef(null);
 
-  // Keep ref in sync
   useEffect(() => { trackInfoRef.current = trackInfo; }, [trackInfo]);
 
-  // ── ANALYTICS PING — fires once on load ──────────────────────────────────
+  // ── ANALYTICS PING ───────────────────────────────────────────────────────
   useEffect(() => {
     try {
       fetch(`${PROXY_BASE_URL}/ping`, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          v:"1.6", ts:Date.now(),
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        }),
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ v:"1.6", ts:Date.now(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone }),
       }).catch(()=>{});
     } catch {}
   }, []);
@@ -1234,11 +1064,7 @@ function MicDrop() {
     try {
       await fetch(`${PROXY_BASE_URL}/ping`, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          sessionId: sessionId.current,
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          v: "1.5",
-        }),
+        body: JSON.stringify({ sessionId: sessionId.current, tz: Intl.DateTimeFormat().resolvedOptions().timeZone, v: "1.5" }),
       });
     } catch {}
   }, []);
@@ -1247,22 +1073,19 @@ function MicDrop() {
     try {
       const res  = await fetch(`${PROXY_BASE_URL}/active`);
       const data = await res.json();
-      // Add 1 to include this user, minimum 1
       setActiveUsers(Math.max(1, (data.count || 0) + 1));
     } catch {}
   }, []);
 
-  // Fetch active count on mount
   useEffect(() => {
     fetchActive();
-    const t = setInterval(fetchActive, 5 * 60 * 1000); // refresh every 5min
+    const t = setInterval(fetchActive, 5 * 60 * 1000);
     return () => clearInterval(t);
   }, [fetchActive]);
 
-  // Ping while armed — every 5 minutes
   useEffect(() => {
     if (armed) {
-      sendPing(); // immediate ping on arm
+      sendPing();
       pingTimer.current = setInterval(sendPing, 5 * 60 * 1000);
     } else {
       clearInterval(pingTimer.current);
@@ -1281,16 +1104,14 @@ function MicDrop() {
     setSmoothCents(med);
   }, []);
 
-  // ── COMMIT CURRENT SONG TO SESSION LOG ──────────────────────────────────
+  // ── COMMIT SONG TO LOG ───────────────────────────────────────────────────
   const commitSongToLog = useCallback((info, samples) => {
     if (!info || samples.length < 5) return;
     const accuracy = calcAccuracy(samples);
     setSessionLog(prev => {
-      // Update existing entry or add new one
       const idx = prev.findIndex(s => s.title === info.title && s.artist === info.artist);
       if (idx >= 0) {
         const updated = [...prev];
-        // Merge samples for running accuracy
         updated[idx] = { ...updated[idx], accuracy, samples:[...updated[idx].samples, ...samples] };
         updated[idx].accuracy = calcAccuracy(updated[idx].samples);
         return updated;
@@ -1303,8 +1124,6 @@ function MicDrop() {
   const recognizeTrack = useCallback(async () => {
     if (!mediaStream.current || identifying.current) return;
     identifying.current = true;
-
-    // Phase 1 — capturing (6 seconds, no countdown)
     setIdPhase("capturing");
     setCountdown(null);
 
@@ -1323,7 +1142,6 @@ function MicDrop() {
         setTimeout(() => { if (recorder.state !== "inactive") recorder.stop(); }, AUDIO_SAMPLE_MS);
       });
 
-      // Phase 2 — countdown 3, 2, 1 runs visually while we prepare and send
       setIdPhase("counting");
       let cd = 3;
       setCountdown(cd);
@@ -1344,9 +1162,7 @@ function MicDrop() {
         r.readAsDataURL(blob);
       });
 
-      // Countdown and fetch run in parallel — no artificial wait
       setIdPhase("sending");
-
       const resp = await fetch(`${PROXY_BASE_URL}/recognize`, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ audio:base64, mimeType }),
@@ -1365,12 +1181,8 @@ function MicDrop() {
         const key = `${title}||${artist}`;
 
         if (key !== lastTrackKey) {
-          // Commit previous song before switching
           if (trackInfoRef.current) {
-            setCurrentSamples(prev => {
-              commitSongToLog(trackInfoRef.current, prev);
-              return [];
-            });
+            setCurrentSamples(prev => { commitSongToLog(trackInfoRef.current, prev); return []; });
           }
           setIdPhase("enriching");
           try {
@@ -1405,7 +1217,6 @@ function MicDrop() {
   // ── ARM / DISARM ─────────────────────────────────────────────────────────
   const toggleArmed = async () => {
     if (armed) {
-      // Commit final song before disarming
       if (trackInfoRef.current) {
         setCurrentSamples(prev => { commitSongToLog(trackInfoRef.current, prev); return []; });
       }
@@ -1426,8 +1237,6 @@ function MicDrop() {
       identifying.current = false;
       pitchHistory.current = []; smoothRef.current = null;
     } else {
-      // Create AudioContext FIRST — must be within direct user gesture.
-      // On mobile, the gesture context expires after any await call.
       let audioCtxTemp;
       try {
         audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100, latencyHint: 'playback' });
@@ -1440,21 +1249,13 @@ function MicDrop() {
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl:  false,
-            channelCount:     1,        // mono — prevents Bluetooth stereo mode switching
-            googHighpassFilter: false,  // Chrome hint: disable internal HP filter (we do our own)
-          },
+          audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1, googHighpassFilter:false },
           video: false,
         });
         mediaStream.current    = stream;
         cleanStreamRef.current = null;
 
         const source   = audioCtxTemp.createMediaStreamSource(stream);
-
-        // VOX — highpass filtered for pitch detection
         const hpFilter = audioCtxTemp.createBiquadFilter();
         hpFilter.type            = "highpass";
         hpFilter.frequency.value = 200;
@@ -1465,14 +1266,11 @@ function MicDrop() {
         source.connect(hpFilter);
         hpFilter.connect(anal);
 
-        // ROOM — unfiltered raw signal for ambient metering
         const roomAnal = audioCtxTemp.createAnalyser();
         roomAnal.fftSize = 1024;
         roomAnal.smoothingTimeConstant = 0.85;
         source.connect(roomAnal);
 
-        // Explicitly silence output — Android routes AudioContext to speaker
-        // even without connecting to destination. This mutes that path.
         const silencer = audioCtxTemp.createGain();
         silencer.gain.value = 0;
         silencer.connect(audioCtxTemp.destination);
@@ -1483,7 +1281,6 @@ function MicDrop() {
         pitchBuffer.current  = new Float32Array(anal.fftSize);
         roomBuffer.current   = new Float32Array(roomAnal.fftSize);
 
-        // Arm after everything is ready
         setArmed(true);
 
         setTimeout(() => recognizeTrack(), 300);
@@ -1513,9 +1310,7 @@ function MicDrop() {
   // ── METERING + PITCH ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!armed) { cancelAnimationFrame(animFrame.current); return; }
-    let localTick = 0;
     const animate = () => {
-      localTick++;
       if (analyser.current) {
         analyser.current.getFloatTimeDomainData(pitchBuffer.current);
         const sampleRate = audioCtx.current?.sampleRate || 44100;
@@ -1524,7 +1319,6 @@ function MicDrop() {
         setPitchCents(cents);
         if (cents !== null) addPitchSample(cents);
         else { pitchHistory.current=[]; smoothRef.current=null; setSmoothCents(null); }
-        // VOX — real signal from highpass filtered analyser
         const voxBuf = pitchBuffer.current;
         const voxRms = Math.sqrt(voxBuf.reduce((s,v)=>s+v*v,0)/voxBuf.length);
         const voxDb  = 20 * Math.log10(Math.max(voxRms, 1e-6));
@@ -1532,7 +1326,6 @@ function MicDrop() {
         setVoxMeter(voxLvl);
         if (voxLvl > voxPeak) { setVoxPeak(voxLvl); clearTimeout(voxPeakTimer.current); voxPeakTimer.current = setTimeout(()=>setVoxPeak(0),1600); }
 
-        // ROOM — real signal from unfiltered analyser
         if (roomAnalyser.current && roomBuffer.current) {
           roomAnalyser.current.getFloatTimeDomainData(roomBuffer.current);
           const roomRms = Math.sqrt(roomBuffer.current.reduce((s,v)=>s+v*v,0)/roomBuffer.current.length);
@@ -1567,7 +1360,6 @@ function MicDrop() {
     try {
       const start = localStorage.getItem("micDrop_trialStart");
       if (!start) {
-        // First launch — start trial now
         localStorage.setItem("micDrop_trialStart", Date.now().toString());
         return { active:true, daysLeft:TRIAL_DAYS, expired:false };
       }
@@ -1578,8 +1370,22 @@ function MicDrop() {
     } catch { return { active:true, daysLeft:TRIAL_DAYS, expired:false }; }
   };
 
-  const [trial] = useState(() => getTrialState());
-  const isPro   = trial.active; // Pro features available during trial
+  // ─────────────────────────────────────────────────────────────────────────
+  // isPro FIX: trial is now settable state so token activation can refresh it.
+  // proUnlocked is a separate flag stored in localStorage via micDrop_proExpiry.
+  // isPro = trial active OR a valid token has been entered and not yet expired.
+  // ─────────────────────────────────────────────────────────────────────────
+  const [trial,       setTrial]       = useState(() => getTrialState());
+  const [proUnlocked, setProUnlocked] = useState(() => {
+    try {
+      const expiry = localStorage.getItem("micDrop_proExpiry");
+      if (!expiry) return false;
+      return Date.now() < parseInt(expiry);
+    } catch { return false; }
+  });
+
+  const isPro = trial.active || proUnlocked;
+
   const isIdentifying = idPhase !== null;
   const sessionAccuracy = sessionLog.length > 0
     ? Math.round(sessionLog.reduce((s,g)=>s+g.accuracy,0)/sessionLog.length) : null;
@@ -1587,39 +1393,26 @@ function MicDrop() {
   // ── PAYMENT RETURN DETECTION ──────────────────────────────────────────────
   const [paymentReturn, setPaymentReturn] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get("payment"); // "success" | "cancelled" | null
+    return params.get("payment");
   });
 
   useEffect(() => {
-    if (paymentReturn) {
-      // Clean the URL without reloading
-      window.history.replaceState({}, "", window.location.pathname);
-    }
+    if (paymentReturn) window.history.replaceState({}, "", window.location.pathname);
   }, [paymentReturn]);
+
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
 
-      {/* ABOUT MODAL */}
-      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
-
-      {/* PROFILE SETUP */}
+      {showAbout   && <AboutModal onClose={() => setShowAbout(false)} />}
       {showProfile && <ProfileSetup profile={profile} onSave={setProfile} onClose={() => setShowProfile(false)} />}
+      {showSplash  && <ProSplash onClose={() => setShowSplash(false)} />}
 
-      {/* PRO SPLASH */}
-      {showSplash && <ProSplash onClose={() => setShowSplash(false)} />}
-
-      {/* SCREEN GLOW — only after track identified */}
       {armed && trackInfo && <ScreenGlow cents={smoothCents} />}
 
       {/* HEADER */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"22px 20px 6px" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-
-          {/* Avatar — tappable */}
-          <div
-            onClick={() => setShowProfile(true)}
-            style={{ cursor:"pointer", flexShrink:0 }}
-          >
+          <div onClick={() => setShowProfile(true)} style={{ cursor:"pointer", flexShrink:0 }}>
             {profile.photo
               ? <div style={{ width:"44px", height:"44px", borderRadius:"50%", overflow:"hidden", border:"2px solid #C9A84C", boxShadow:"0 0 12px rgba(201,168,76,0.3)" }}>
                   <img src={profile.photo} alt="profile" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
@@ -1633,8 +1426,6 @@ function MicDrop() {
               : <div style={{ fontSize:"17px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", textAlign:"center", marginTop:"3px", letterSpacing:"0.08em" }}>PROFILE</div>
             }
           </div>
-
-          {/* Title — centred */}
           <div style={{ textAlign:"center", flex:1 }}>
             <div style={{ fontSize:"26px", fontWeight:"900", letterSpacing:"0.18em", color:"#fff", fontFamily:"Georgia,serif", textTransform:"uppercase" }}>
               🎤 MIC DROP
@@ -1642,8 +1433,6 @@ function MicDrop() {
             <div style={{ fontSize:"12px", letterSpacing:"0.35em", color:"#3a3a3a", marginTop:"2px", textTransform:"uppercase" }}>Vocal Blend Monitor</div>
             <div style={{ fontSize:"12px", letterSpacing:"0.12em", color:"#3a7a3a", marginTop:"4px" }}>✦ IS AND ALWAYS WILL BE AD FREE ✦</div>
           </div>
-
-          {/* Spacer to balance avatar */}
           <div style={{ width:"44px", flexShrink:0 }}/>
         </div>
         <div style={{ height:"16px", display:"flex", alignItems:"center", justifyContent:"center", marginTop:"4px" }}>
@@ -1654,16 +1443,7 @@ function MicDrop() {
       {/* TRIAL BANNER */}
       {trial.active && !trial.expired && (
         <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
-          <div
-            onClick={() => setShowSplash(true)}
-            style={{
-              borderRadius:"10px", padding:"10px 14px",
-              background:"rgba(201,168,76,0.07)",
-              border:"1px solid rgba(201,168,76,0.18)",
-              display:"flex", flexDirection:"column", alignItems:"center", gap:"4px",
-              cursor:"pointer",
-            }}
-          >
+          <div onClick={() => setShowSplash(true)} style={{ borderRadius:"10px", padding:"10px 14px", background:"rgba(201,168,76,0.07)", border:"1px solid rgba(201,168,76,0.18)", display:"flex", flexDirection:"column", alignItems:"center", gap:"4px", cursor:"pointer" }}>
             <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
               <span style={{ fontSize:"18px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontWeight:"bold" }}>
                 ✦ PRO TRIAL — {trial.daysLeft} DAY{trial.daysLeft!==1?"S":""} REMAINING ✦
@@ -1679,15 +1459,10 @@ function MicDrop() {
         </div>
       )}
 
-      {/* TRIAL EXPIRED BANNER */}
-      {trial.expired && (
+      {/* TRIAL EXPIRED BANNER — hidden if proUnlocked */}
+      {trial.expired && !proUnlocked && (
         <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
-          <div style={{
-            borderRadius:"10px", padding:"12px 14px",
-            background:"rgba(0,0,0,0.4)",
-            border:"1px solid #1e1e1e",
-            display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
-          }}>
+          <div style={{ borderRadius:"10px", padding:"12px 14px", background:"rgba(0,0,0,0.4)", border:"1px solid #1e1e1e", display:"flex", flexDirection:"column", alignItems:"center", gap:"6px" }}>
             <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#555", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
               ✦ YOUR PRO TRIAL HAS ENDED ✦
             </div>
@@ -1697,18 +1472,18 @@ function MicDrop() {
             <div style={{ fontSize:"15px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
               Pro features are pay as you go, when and if you want them.
             </div>
-            <div
-              onClick={() => setShowSplash(true)}
-              style={{
-                marginTop:"4px", padding:"8px 20px", borderRadius:"8px",
-                background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
-                color:"#0a0a0a", fontFamily:"'Courier New',monospace",
-                fontSize:"15px", fontWeight:"900", letterSpacing:"0.15em",
-                cursor:"pointer", textTransform:"uppercase",
-              }}
-            >
+            <div onClick={() => setShowSplash(true)} style={{ marginTop:"4px", padding:"8px 20px", borderRadius:"8px", background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)", color:"#0a0a0a", fontFamily:"'Courier New',monospace", fontSize:"15px", fontWeight:"900", letterSpacing:"0.15em", cursor:"pointer", textTransform:"uppercase" }}>
               Did we earn your $2.99 USD?
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PRO ACTIVE BANNER — shown when token unlocked */}
+      {proUnlocked && (
+        <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
+          <div style={{ borderRadius:"10px", padding:"8px 14px", background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.2)", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px" }}>
+            <span style={{ fontSize:"12px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.2em" }}>✦ PRO ACTIVE</span>
           </div>
         </div>
       )}
@@ -1716,11 +1491,7 @@ function MicDrop() {
       {/* PAYMENT SUCCESS BANNER */}
       {paymentReturn === "success" && (
         <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
-          <div style={{
-            borderRadius:"10px", padding:"14px 16px",
-            background:"rgba(0,180,80,0.08)", border:"1px solid rgba(0,180,80,0.3)",
-            display:"flex", flexDirection:"column", alignItems:"center", gap:"8px",
-          }}>
+          <div style={{ borderRadius:"10px", padding:"14px 16px", background:"rgba(0,180,80,0.08)", border:"1px solid rgba(0,180,80,0.3)", display:"flex", flexDirection:"column", alignItems:"center", gap:"8px" }}>
             <div style={{ fontSize:"20px", letterSpacing:"0.15em", color:"#00cc55", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
               ✦ PAYMENT RECEIVED — THANK YOU ✦
             </div>
@@ -1728,10 +1499,7 @@ function MicDrop() {
               Your access token is on its way to your email.<br/>
               Enter it below to unlock Pro features.
             </div>
-            <button
-              onClick={() => setPaymentReturn(null)}
-              style={{ fontSize:"15px", color:"#444", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace", marginTop:"4px" }}
-            >
+            <button onClick={() => setPaymentReturn(null)} style={{ fontSize:"15px", color:"#444", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace", marginTop:"4px" }}>
               dismiss
             </button>
           </div>
@@ -1741,25 +1509,17 @@ function MicDrop() {
       {/* PAYMENT CANCELLED BANNER */}
       {paymentReturn === "cancelled" && (
         <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
-          <div style={{
-            borderRadius:"10px", padding:"12px 14px",
-            background:"rgba(255,34,0,0.05)", border:"1px solid rgba(255,34,0,0.2)",
-            display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
-          }}>
+          <div style={{ borderRadius:"10px", padding:"12px 14px", background:"rgba(255,34,0,0.05)", border:"1px solid rgba(255,34,0,0.2)", display:"flex", flexDirection:"column", alignItems:"center", gap:"6px" }}>
             <div style={{ fontSize:"18px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.1em" }}>
               No worries — the core app is always free.
             </div>
-            <button
-              onClick={() => setPaymentReturn(null)}
-              style={{ fontSize:"15px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}
-            >
+            <button onClick={() => setPaymentReturn(null)} style={{ fontSize:"15px", color:"#333", background:"none", border:"none", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>
               dismiss
             </button>
           </div>
         </div>
       )}
 
-      {/* BANNER */}
       <TrackBanner trackInfo={trackInfo} phase={idPhase} />
 
       {/* PITCH / COUNTDOWN AREA */}
@@ -1769,23 +1529,17 @@ function MicDrop() {
           : armed && isIdentifying
             ? <CountdownDisplay phase={idPhase} countdown={countdown} />
             : armed
-              ? (
-                <div style={{ borderRadius:"12px", background:"rgba(0,0,0,0)", border:"1px solid #1a1a1a", padding:"18px 12px", textAlign:"center" }}>
-                  <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>TAP IDENTIFY TO BEGIN</div>
-                </div>
-              )
+              ? <div style={{ borderRadius:"12px", background:"rgba(0,0,0,0)", border:"1px solid #1a1a1a", padding:"18px 12px", textAlign:"center" }}><div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#2a2a2a", fontFamily:"'Courier New',monospace" }}>TAP IDENTIFY TO BEGIN</div></div>
               : <PitchIndicator cents={null} />
         }
       </div>
 
-      {/* STATUS — non-phase messages */}
       {statusMsg && !isIdentifying && (
         <div style={{ fontSize:"14px", color:"#C9A84C", letterSpacing:"0.12em", marginBottom:"4px", padding:"0 20px", textAlign:"center" }}>
           {statusMsg}
         </div>
       )}
 
-      {/* TRACK CARD */}
       {trackInfo && !showReport && (
         <div className="track-card" style={{ width:"100%", maxWidth:"420px", padding:"0 20px 10px" }}>
           <div style={{ background:"rgba(201,168,76,0.07)", border:"1px solid rgba(201,168,76,0.22)", borderRadius:"12px", padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -1803,7 +1557,6 @@ function MicDrop() {
               💡 {trackInfo.tip}
             </div>
           )}
-          {/* Running accuracy for current song */}
           {currentSamples.length > 4 && (
             <div style={{ marginTop:"6px", display:"flex", justifyContent:"center", alignItems:"center", gap:"8px" }}>
               <span style={{ fontSize:"18px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>THIS SONG</span>
@@ -1813,7 +1566,6 @@ function MicDrop() {
         </div>
       )}
 
-      {/* SESSION REPORT */}
       {showReport && (
         <SessionReport songs={sessionLog} onClose={() => setShowReport(false)} onUnlock={() => { setShowReport(false); setShowSplash(true); }} isPro={isPro} />
       )}
@@ -1859,20 +1611,22 @@ function MicDrop() {
       {/* FOOTER */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"16px 20px 0", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
 
-        {/* Token entry — for comp tokens and Pro unlock */}
+        {/* ─────────────────────────────────────────────────────────────────
+            TOKEN ENTRY — FIX APPLIED
+            onActivate now writes micDrop_proExpiry (an absolute timestamp)
+            and sets proUnlocked state directly. No backwards math.
+            isPro updates immediately without a page reload.
+            ───────────────────────────────────────────────────────────────── */}
         <TokenEntry onActivate={(days) => {
           try {
-            // Store trial extension in localStorage
-            const current = localStorage.getItem("micDrop_trialStart");
-            if (current) {
-              const extended = parseInt(current) + (days * 24 * 60 * 60 * 1000);
-              localStorage.setItem("micDrop_trialStart", (Date.now() - (extended - Date.now())).toString());
-            }
+            const expiryMs = Date.now() + (days * 24 * 60 * 60 * 1000);
+            localStorage.setItem("micDrop_proExpiry", expiryMs.toString());
+            setProUnlocked(true);
+            setTrial(getTrialState()); // refresh trial display too
           } catch {}
-          alert(`✦ Token activated — ${days} days of Pro access added. Thank you for your patience!`);
+          alert(`✦ Token activated — ${days} days of Pro unlocked. Welcome to Pro!`);
         }}/>
 
-        {/* Active users counter */}
         {activeUsers !== null && (
           <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
             <span className="live-pulse" style={{ fontSize:"18px", color:"#00cc55" }}>●</span>
@@ -1882,39 +1636,27 @@ function MicDrop() {
           </div>
         )}
 
-        {/* Support + About links */}
         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-          <a
-            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.0%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
-            style={{ fontSize:"20px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #333" }}
-          >
+          <a href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.1%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`} style={{ fontSize:"20px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", textDecoration:"none", borderBottom:"1px solid #333" }}>
             ✉ Support
           </a>
           <span style={{ color:"#333", fontSize:"20px" }}>·</span>
-          <button
-            onClick={() => setShowAbout(true)}
-            style={{ fontSize:"20px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #333", cursor:"pointer", padding:0 }}
-          >
+          <button onClick={() => setShowAbout(true)} style={{ fontSize:"20px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #333", cursor:"pointer", padding:0 }}>
             About
           </button>
           <span style={{ color:"#333", fontSize:"20px" }}>·</span>
-          <button
-            onClick={() => setShowSplash(true)}
-            style={{ fontSize:"20px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #554020", cursor:"pointer", padding:0, opacity:0.7 }}
-          >
+          <button onClick={() => setShowSplash(true)} style={{ fontSize:"20px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #554020", cursor:"pointer", padding:0, opacity:0.7 }}>
             ⭐ Pro
           </button>
           <span style={{ color:"#333", fontSize:"20px" }}>·</span>
           <span style={{ fontSize:"20px", color:"#333", fontFamily:"'Courier New',monospace" }}>🇦🇺 QLD</span>
         </div>
 
-        {/* Version */}
         <div style={{ fontSize:"15px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
           Mic Drop v2.1 — Powered by AudD + Claude
         </div>
 
       </div>
-
     </div>
   );
 }
