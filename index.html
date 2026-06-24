@@ -1210,11 +1210,11 @@ function DressingRoom({ onClose, isPro }) {
   }
 
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:3000, background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", overflowY:"auto", animation:"fadeIn 0.3s ease" }}>
-      <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#444", fontSize:"24px", cursor:"pointer", zIndex:3001 }}>✕</button>
+    <div style={{ position:"fixed", inset:0, zIndex:3000, background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", overflowY:"auto", animation:"fadeIn 0.3s ease", paddingBottom:"40px" }}>
+      <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"rgba(0,0,0,0.7)", border:"1px solid #333", borderRadius:"50%", width:"36px", height:"36px", color:"#aaa", fontSize:"18px", cursor:"pointer", zIndex:3001, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
 
       {/* Full-bleed backdrop */}
-      <div style={{ width:"100%", maxWidth:"420px", position:"relative" }}>
+      <div style={{ width:"100%", maxWidth:"420px", position:"relative", flexShrink:0 }}>
         <div style={{ width:"100%", height:"220px", background:"#111", position:"relative", overflow:"hidden" }}>
           {room.backdrop
             ? <img src={room.backdrop} alt="backdrop" style={{ width:"100%", height:"100%", objectFit:"cover", opacity:0.7 }}/>
@@ -1226,19 +1226,19 @@ function DressingRoom({ onClose, isPro }) {
           {/* Gradient overlay so title reads */}
           <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%)" }}/>
           {/* Title over backdrop */}
-          <div style={{ position:"absolute", bottom:"16px", left:"20px", right:"60px" }}>
+          <div style={{ position:"absolute", bottom:"16px", left:"20px", right:"20px" }}>
             <div style={{ fontSize:"11px", letterSpacing:"0.35em", color:"rgba(201,168,76,0.7)", fontFamily:"'Courier New',monospace", marginBottom:"4px" }}>THE DRESSING ROOM</div>
             <div style={{ fontSize:"22px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", letterSpacing:"0.05em" }}>
               {room.receipts.length > 0 ? `${room.receipts.length} receipt${room.receipts.length!==1?"s":""} on the wall` : "Your wall is empty — go perform."}
             </div>
           </div>
-          {/* Backdrop controls */}
-          <div style={{ position:"absolute", bottom:"16px", right:"16px", display:"flex", flexDirection:"column", gap:"6px" }}>
-            <label htmlFor="backdropInput" style={{ cursor:"pointer", padding:"6px 10px", borderRadius:"8px", background:"rgba(0,0,0,0.6)", border:"1px solid #333", fontSize:"16px", textAlign:"center" }}>
-              {room.backdrop ? "✎" : "+"}
+          {/* Backdrop controls — bottom left, away from close button */}
+          <div style={{ position:"absolute", top:"12px", left:"16px", display:"flex", flexDirection:"row", gap:"6px" }}>
+            <label htmlFor="backdropInput" style={{ cursor:"pointer", padding:"6px 12px", borderRadius:"8px", background:"rgba(0,0,0,0.6)", border:"1px solid #333", fontSize:"12px", color:"#aaa", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
+              {room.backdrop ? "✎ CHANGE" : "+ BACKDROP"}
             </label>
             {room.backdrop && (
-              <button onClick={removeBackdrop} style={{ padding:"6px 10px", borderRadius:"8px", background:"rgba(0,0,0,0.6)", border:"1px solid #333", color:"#ff4422", fontSize:"14px", cursor:"pointer" }}>✕</button>
+              <button onClick={removeBackdrop} style={{ padding:"6px 10px", borderRadius:"8px", background:"rgba(0,0,0,0.6)", border:"1px solid #333", color:"#ff4422", fontSize:"12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>REMOVE</button>
             )}
           </div>
           <input id="backdropInput" type="file" accept="image/*" onChange={handleBackdrop} style={{ display:"none" }} ref={backdropRef}/>
@@ -1485,13 +1485,119 @@ function AboutModal({ onClose, profile }) {
   const answers = profile?.quizAnswers || {};
   const answered = Object.keys(answers).length;
 
-  // Tally A vs B to derive personality
   const aCount = Object.values(answers).filter(v => v === "a").length;
   const bCount = Object.values(answers).filter(v => v === "b").length;
-  const personality = answered < 3 ? null
-    : aCount > bCount + 2 ? { label:"THE CLASSICIST", desc:"You don't need Auto-Tune. You need a grand piano, a single spotlight, and the right song. You were born in the wrong decade and you know it.", icon:"🎹" }
-    : bCount > aCount + 2 ? { label:"THE MODERNIST",  desc:"You appreciate the craft but you live in the now. Your playlist is a conversation, not a museum. You make people feel something new.", icon:"✨" }
-    : { label:"THE PURIST",    desc:"You can't be put in a box and you won't be. You know every era has its genius. Your playlist is legendary and your karaoke set list is untouchable.", icon:"👑" };
+
+  // Specific cheeky callouts based on actual answers
+  const getPersonality = () => {
+    if (answered < 3) return null;
+
+    // Check for specific iconic combinations first
+    const zeppelin  = answers["q2"] === "a";
+    const purple    = answers["q2"] === "b";
+    const whitney   = answers["q3"] === "b";
+    const mariah    = answers["q3"] === "a";
+    const freddie   = answers["q12"] === "b";
+    const bowie     = answers["q12"] === "a";
+    const michael   = answers["q6"] === "a";
+    const prince    = answers["q6"] === "b";
+    const elton     = answers["q1"] === "a";
+    const madonna   = answers["q1"] === "b";
+    const acdc      = answers["q10"] === "a";
+    const inxs      = answers["q10"] === "b";
+    const taylor    = answers["q13"] === "a";
+    const beyonce   = answers["q13"] === "b";
+    const aretha    = answers["q8"] === "a";
+    const bohemian  = answers["q11"] === "a";
+
+    // Rock god path
+    if (zeppelin && acdc && freddie) return {
+      icon:"🤘", label:"ROCK GOD IN THE BUILDING",
+      desc:"Zeppelin. AC/DC. Freddie Mercury. We see you. You don't do playlists — you do setlists. The only thing louder than your music taste is your air guitar.",
+    };
+    if (zeppelin && acdc) return {
+      icon:"⚡", label:"WE HAVE A ROCK GOD IN THE HOUSE",
+      desc:"Zeppelin AND AC/DC? Your neighbours have filed complaints and you consider that a compliment. The smoke machine is non-negotiable.",
+    };
+    if (purple && freddie) return {
+      icon:"🎸", label:"VINTAGE ROCK ROYALTY",
+      desc:"Deep Purple and Freddie Mercury — you understand that real rock requires a keyboard player who went to music school. Tasteful. Devastating. Correct.",
+    };
+
+    // Diva path
+    if (whitney && aretha && freddie) return {
+      icon:"👑", label:"YOU REALLY KNOW YOUR DIVAS",
+      desc:"Whitney. Aretha. Freddie. The holy trinity of vocal power. You don't just appreciate great singers — you study them. And quietly judge everyone else at karaoke.",
+    };
+    if (whitney && mariah) return {
+      icon:"🕊️", label:"CAUGHT IN THE GREAT DIVA DEBATE",
+      desc:"You chose Whitney AND Mariah? Bold move. For the record, the answer is Whitney. But we respect the chaos.",
+    };
+    if (whitney) return {
+      icon:"🌹", label:"WHITNEY WAS THE ANSWER",
+      desc:"Always was. Always will be. You know it, we know it, and anyone who's heard 'I Will Always Love You' at full volume in an empty car knows it too.",
+    };
+    if (mariah) return {
+      icon:"🎁", label:"ALL MARIAH WANTS IS YOUR RESPECT",
+      desc:"And you gave it. Five octaves, a Christmas monopoly, and a whistle register that defies physics. The correct choice for anyone who takes vocal gymnastics seriously.",
+    };
+
+    // Aussie path
+    if (acdc && inxs) return {
+      icon:"🦘", label:"PURE UNADULTERATED AUSTRALIAN",
+      desc:"AC/DC AND INXS? You're either from Queensland or you should be. The greatest music export this country ever produced and you know both halves of the argument.",
+    };
+    if (acdc) return {
+      icon:"⚡", label:"FOR THOSE ABOUT TO SING, WE SALUTE YOU",
+      desc:"AC/DC in the building. Highway to Hell on the karaoke list. Thunderstruck as a warm-up. You don't do quiet and we're not here to change that.",
+    };
+    if (inxs) return {
+      icon:"🎤", label:"NEVER TEAR US APART",
+      desc:"INXS over AC/DC takes a certain sophistication. Michael Hutchence had the voice, the cheekbones, and the leather jacket. You clearly have the taste.",
+    };
+
+    // Pop royalty
+    if (beyonce && taylor) return {
+      icon:"🐝", label:"DIPLOMATICALLY CORRECT",
+      desc:"Both? You're either genuinely undecided or you just don't want the internet coming for you. Smart. Very smart.",
+    };
+    if (beyonce) return {
+      icon:"🐝", label:"THE BEYHIVE HAS ENTERED THE CHAT",
+      desc:"Single Ladies. Lemonade. Renaissance. You didn't come to play and neither did she. Respect.",
+    };
+    if (taylor) return {
+      icon:"🐍", label:"WE KNEW YOU WERE TROUBLE",
+      desc:"Taylor Swift in the building. You've memorised every Easter egg, defended every album era, and you absolutely cried at the Eras Tour. No shame. None whatsoever.",
+    };
+
+    // Bohemian Rhapsody obsessive
+    if (bohemian && freddie) return {
+      icon:"🎭", label:"FREDDIE MERCURY IS YOUR SPIRIT ANIMAL",
+      desc:"Bohemian Rhapsody AND Freddie over Bowie? You've done the car scene. You know every part change. You are the champion, my friend.",
+    };
+
+    // Classic vs Modern spread
+    if (elton && madonna && michael) return {
+      icon:"🎹", label:"YOU LIVED THROUGH THE GOLDEN ERA",
+      desc:"Elton, Madonna, Michael — you were there when pop music was actually dangerous. These weren't just songs, they were events. Lucky you.",
+    };
+
+    // Generic but still cheeky based on lean
+    if (aCount > bCount + 3) return {
+      icon:"🎹", label:"A CLASSICIST OF THE HIGHEST ORDER",
+      desc:"You don't need an algorithm to tell you what's good. You already know. You were born knowing. The vinyl collection is probably alphabetised.",
+    };
+    if (bCount > aCount + 3) return {
+      icon:"✨", label:"LIVING IN THE NOW",
+      desc:"Fresh ears, current taste, zero nostalgia tax. You appreciate that great music is still being made and you're not apologising for it.",
+    };
+    return {
+      icon:"👑", label:"ABSOLUTELY CANNOT BE CATEGORISED",
+      desc:"You pick Zeppelin then Taylor then Aretha then Bruno. You defy genre, era, and algorithmic prediction. Your playlist would break Spotify's recommendation engine and we mean that as the highest compliment.",
+    };
+  };
+
+  const personality = getPersonality();
 
   return (
     <div style={{
