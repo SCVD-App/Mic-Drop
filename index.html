@@ -427,12 +427,103 @@ const TEXT_PRESETS = [
   { id:"red",     label:"Coroner Red",   color:"#FF2200",  shadow:"0 2px 8px rgba(0,0,0,0.9), 0 0 12px rgba(255,34,0,0.6)", pill:"rgba(0,0,0,0.5)" },
 ];
 
+// ── MUSIC PERSONALITY QUIZ ────────────────────────────────────────────────────
+const QUIZ_QUESTIONS = [
+  { id:"q1",  label:"The voice of a generation?",         a:"Elton John 🎹",        b:"Madonna 👑" },
+  { id:"q2",  label:"Greatest rock band ever?",           a:"Led Zeppelin 🤘",       b:"Deep Purple 🔮" },
+  { id:"q3",  label:"Queen of vocals?",                   a:"Mariah Carey 🕊️",       b:"Whitney Houston 🌹" },
+  { id:"q4",  label:"King of cool?",                      a:"Frank Sinatra 🎩",       b:"Dean Martin 🥃" },
+  { id:"q5",  label:"Guitar god?",                        a:"Jimi Hendrix ⚡",        b:"Eric Clapton 🎸" },
+  { id:"q6",  label:"The throne belongs to?",             a:"Michael Jackson 🌙",    b:"Prince 💜" },
+  { id:"q7",  label:"Best Beatles era?",                  a:"Early mop-top 🎀",      b:"Later psychedelic 🌀" },
+  { id:"q8",  label:"Soul royalty?",                      a:"Aretha Franklin 👸",    b:"Stevie Wonder 🌟" },
+  { id:"q9",  label:"Pop perfection?",                    a:"ABBA ✨",               b:"Fleetwood Mac 🌊" },
+  { id:"q10", label:"Aussie rock legends?",               a:"AC/DC ⚡",              b:"INXS 🎤" },
+  { id:"q11", label:"Karaoke weapon of choice?",          a:"Bohemian Rhapsody 🎭",  b:"Don't Stop Believin' 🚀" },
+  { id:"q12", label:"The one who had it all?",            a:"David Bowie 🌌",        b:"Freddie Mercury 👑" },
+  // For the kids (post-Bruno, but still recognisable)
+  { id:"q13", label:"Pop royalty right now?",             a:"Taylor Swift 🐍",       b:"Beyoncé 🐝" },
+  { id:"q14", label:"Smoothest voice of the era?",        a:"Bruno Mars 🌹",         b:"John Legend 🎹" },
+  { id:"q15", label:"Best feel-good anthem?",             a:"Happy — Pharrell 🎩",   b:"Uptown Funk 🕺" },
+  { id:"q16", label:"Who made R&B matter again?",         a:"Adele 💔",              b:"Sam Smith 🌊" },
+  { id:"q17", label:"Best comeback story?",               a:"Eminem — Recovery 🔥",  b:"Justin Timberlake — 20/20 🌊" },
+  { id:"q18", label:"Anthem for the ages?",               a:"Shallow — Lady Gaga 🎬",b:"Rolling in the Deep — Adele 💥" },
+];
+
+function MusicQuiz({ answers, onChange }) {
+  const [page, setPage] = useState(0);
+  const perPage = 3;
+  const total   = QUIZ_QUESTIONS.length;
+  const pages   = Math.ceil(total / perPage);
+  const visible = QUIZ_QUESTIONS.slice(page * perPage, page * perPage + perPage);
+  const answered = Object.keys(answers).length;
+
+  return (
+    <div style={{ marginBottom:"24px" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px" }}>
+        <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace" }}>
+          🎵 MUSIC PERSONALITY
+        </div>
+        <div style={{ fontSize:"12px", color:"#444", fontFamily:"'Courier New',monospace" }}>
+          {answered}/{total} answered
+        </div>
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+        {visible.map(q => (
+          <div key={q.id} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid #1e1e1e", borderRadius:"12px", padding:"12px 14px" }}>
+            <div style={{ fontSize:"13px", color:"#555", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", marginBottom:"8px" }}>
+              {q.label}
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px" }}>
+              {[{val:"a", label:q.a}, {val:"b", label:q.b}].map(opt => (
+                <div key={opt.val}
+                  onClick={() => onChange(q.id, opt.val)}
+                  style={{
+                    padding:"10px 8px", borderRadius:"8px", cursor:"pointer", textAlign:"center",
+                    border:`2px solid ${answers[q.id]===opt.val?"#C9A84C":"#1e1e1e"}`,
+                    background: answers[q.id]===opt.val?"rgba(201,168,76,0.12)":"rgba(255,255,255,0.02)",
+                    transition:"all 0.15s",
+                  }}
+                >
+                  <div style={{ fontSize:"14px", color: answers[q.id]===opt.val?"#C9A84C":"#666", fontFamily:"'Courier New',monospace", lineHeight:1.4 }}>
+                    {opt.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:"10px" }}>
+        <button
+          onClick={() => setPage(p => Math.max(0, p-1))}
+          disabled={page === 0}
+          style={{ padding:"8px 16px", borderRadius:"8px", border:"1px solid #2a2a2a", background:"none", color: page===0?"#222":"#555", fontFamily:"'Courier New',monospace", fontSize:"13px", cursor:page===0?"default":"pointer" }}
+        >◁ PREV</button>
+        <div style={{ fontSize:"12px", color:"#333", fontFamily:"'Courier New',monospace" }}>
+          {page+1} / {pages}
+        </div>
+        <button
+          onClick={() => setPage(p => Math.min(pages-1, p+1))}
+          disabled={page === pages-1}
+          style={{ padding:"8px 16px", borderRadius:"8px", border:"1px solid #2a2a2a", background:"none", color: page===pages-1?"#222":"#555", fontFamily:"'Courier New',monospace", fontSize:"13px", cursor:page===pages-1?"default":"pointer" }}
+        >NEXT ▷</button>
+      </div>
+    </div>
+  );
+}
+
 // ── PROFILE SETUP ─────────────────────────────────────────────────────────────
 function ProfileSetup({ profile, onSave, onClose }) {
   const [name,      setName]      = useState(profile.name      || "");
   const [photo,     setPhoto]     = useState(profile.photo     || null);
   const [cardStyle, setCardStyle] = useState(profile.cardStyle || "circle");
   const [preset,    setPreset]    = useState(profile.preset    || "gold");
+  const [quizAnswers, setQuizAnswers] = useState(profile.quizAnswers || {});
+
   const handlePhoto = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -441,11 +532,15 @@ function ProfileSetup({ profile, onSave, onClose }) {
     reader.readAsDataURL(file);
   };
 
+  const handleQuizAnswer = (qid, val) => {
+    setQuizAnswers(prev => ({ ...prev, [qid]: val }));
+  };
+
   const handleSave = () => {
     try {
-      localStorage.setItem("micDrop_profile", JSON.stringify({ name, photo, cardStyle, preset }));
+      localStorage.setItem("micDrop_profile", JSON.stringify({ name, photo, cardStyle, preset, quizAnswers }));
     } catch {}
-    onSave({ name, photo, cardStyle, preset });
+    onSave({ name, photo, cardStyle, preset, quizAnswers });
     onClose();
   };
 
@@ -583,6 +678,12 @@ function ProfileSetup({ profile, onSave, onClose }) {
             </div>
           </div>
         )}
+
+        {/* Music Personality Quiz */}
+        <div style={{ marginBottom:"8px" }}>
+          <div style={{ height:"1px", background:"linear-gradient(to right, transparent, #2a2a2a, transparent)", marginBottom:"24px" }}/>
+          <MusicQuiz answers={quizAnswers} onChange={handleQuizAnswer} />
+        </div>
 
         {/* Save */}
         <button
@@ -1010,7 +1111,202 @@ function ProSongCard({ song }) {
   );
 }
 
-// ── SESSION REPORT ────────────────────────────────────────────────────────────
+// ── DRESSING ROOM ─────────────────────────────────────────────────────────────
+const MAX_RECEIPTS = 9;
+
+function loadDressingRoom() {
+  try {
+    const raw = localStorage.getItem("micDrop_dressingRoom");
+    return raw ? JSON.parse(raw) : { backdrop: null, receipts: [] };
+  } catch { return { backdrop: null, receipts: [] }; }
+}
+
+function saveDressingRoom(data) {
+  try { localStorage.setItem("micDrop_dressingRoom", JSON.stringify(data)); } catch {}
+}
+
+// Called from SessionReport — saves a receipt thumbnail to the Dressing Room
+async function saveReceiptToDressingRoom(reportEl, songTitle, artist, accuracy, grade) {
+  try {
+    const canvas = await html2canvas(reportEl, {
+      backgroundColor: "#0a0a0a", scale: 1, useCORS: true, logging: false,
+    });
+    // Compress to thumbnail — max 300px wide
+    const thumb = document.createElement("canvas");
+    const ratio  = Math.min(1, 300 / canvas.width);
+    thumb.width  = Math.round(canvas.width  * ratio);
+    thumb.height = Math.round(canvas.height * ratio);
+    thumb.getContext("2d").drawImage(canvas, 0, 0, thumb.width, thumb.height);
+    const thumbnail = thumb.toDataURL("image/jpeg", 0.7);
+
+    const room = loadDressingRoom();
+    const receipt = {
+      id:        Date.now(),
+      thumbnail,
+      title:     songTitle,
+      artist,
+      accuracy,
+      grade:     grade.label,
+      gradeColor: grade.color,
+      date:      new Date().toLocaleDateString("en-AU", { day:"numeric", month:"short", year:"numeric" }),
+    };
+    // Newest first, cap at MAX_RECEIPTS
+    room.receipts = [receipt, ...room.receipts].slice(0, MAX_RECEIPTS);
+    saveDressingRoom(room);
+    return true;
+  } catch { return false; }
+}
+
+function DressingRoom({ onClose, isPro }) {
+  const [room,        setRoom]        = useState(() => loadDressingRoom());
+  const [viewing,     setViewing]     = useState(null); // receipt being viewed full-screen
+  const [saving,      setSaving]      = useState(false);
+  const backdropRef = useRef(null);
+
+  const handleBackdrop = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Compress backdrop — draw to canvas at max 800px wide
+      const img = new Image();
+      img.onload = () => {
+        const cvs = document.createElement("canvas");
+        const ratio = Math.min(1, 800 / img.width);
+        cvs.width  = Math.round(img.width  * ratio);
+        cvs.height = Math.round(img.height * ratio);
+        cvs.getContext("2d").drawImage(img, 0, 0, cvs.width, cvs.height);
+        const compressed = cvs.toDataURL("image/jpeg", 0.75);
+        const updated = { ...room, backdrop: compressed };
+        setRoom(updated);
+        saveDressingRoom(updated);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeBackdrop = () => {
+    const updated = { ...room, backdrop: null };
+    setRoom(updated);
+    saveDressingRoom(updated);
+  };
+
+  const removeReceipt = (id) => {
+    const updated = { ...room, receipts: room.receipts.filter(r => r.id !== id) };
+    setRoom(updated);
+    saveDressingRoom(updated);
+  };
+
+  if (!isPro) {
+    return (
+      <div style={{ position:"fixed", inset:0, zIndex:3000, background:"rgba(0,0,0,0.97)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px" }}>
+        <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#444", fontSize:"24px", cursor:"pointer" }}>✕</button>
+        <div style={{ fontSize:"32px", marginBottom:"16px" }}>🎭</div>
+        <div style={{ fontSize:"20px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", marginBottom:"12px", textAlign:"center" }}>THE DRESSING ROOM</div>
+        <div style={{ fontSize:"14px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.9 }}>Pro feature — unlock to set your stage.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:3000, background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", overflowY:"auto", animation:"fadeIn 0.3s ease" }}>
+      <button onClick={onClose} style={{ position:"fixed", top:"16px", right:"20px", background:"none", border:"none", color:"#444", fontSize:"24px", cursor:"pointer", zIndex:3001 }}>✕</button>
+
+      {/* Full-bleed backdrop */}
+      <div style={{ width:"100%", maxWidth:"420px", position:"relative" }}>
+        <div style={{ width:"100%", height:"220px", background:"#111", position:"relative", overflow:"hidden" }}>
+          {room.backdrop
+            ? <img src={room.backdrop} alt="backdrop" style={{ width:"100%", height:"100%", objectFit:"cover", opacity:0.7 }}/>
+            : <div style={{ width:"100%", height:"100%", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"8px", border:"1px dashed #2a2a2a" }}>
+                <div style={{ fontSize:"28px" }}>🎭</div>
+                <div style={{ fontSize:"12px", letterSpacing:"0.25em", color:"#333", fontFamily:"'Courier New',monospace" }}>TAP TO SET YOUR STAGE</div>
+              </div>
+          }
+          {/* Gradient overlay so title reads */}
+          <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%)" }}/>
+          {/* Title over backdrop */}
+          <div style={{ position:"absolute", bottom:"16px", left:"20px", right:"60px" }}>
+            <div style={{ fontSize:"11px", letterSpacing:"0.35em", color:"rgba(201,168,76,0.7)", fontFamily:"'Courier New',monospace", marginBottom:"4px" }}>THE DRESSING ROOM</div>
+            <div style={{ fontSize:"22px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", letterSpacing:"0.05em" }}>
+              {room.receipts.length > 0 ? `${room.receipts.length} receipt${room.receipts.length!==1?"s":""} on the wall` : "Your wall is empty — go perform."}
+            </div>
+          </div>
+          {/* Backdrop controls */}
+          <div style={{ position:"absolute", bottom:"16px", right:"16px", display:"flex", flexDirection:"column", gap:"6px" }}>
+            <label htmlFor="backdropInput" style={{ cursor:"pointer", padding:"6px 10px", borderRadius:"8px", background:"rgba(0,0,0,0.6)", border:"1px solid #333", fontSize:"16px", textAlign:"center" }}>
+              {room.backdrop ? "✎" : "+"}
+            </label>
+            {room.backdrop && (
+              <button onClick={removeBackdrop} style={{ padding:"6px 10px", borderRadius:"8px", background:"rgba(0,0,0,0.6)", border:"1px solid #333", color:"#ff4422", fontSize:"14px", cursor:"pointer" }}>✕</button>
+            )}
+          </div>
+          <input id="backdropInput" type="file" accept="image/*" onChange={handleBackdrop} style={{ display:"none" }} ref={backdropRef}/>
+        </div>
+      </div>
+
+      {/* Wall of Receipts */}
+      <div style={{ width:"100%", maxWidth:"420px", padding:"16px 20px" }}>
+        {room.receipts.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"40px 0" }}>
+            <div style={{ fontSize:"14px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em", lineHeight:2 }}>
+              NO RECEIPTS YET<br/>
+              <span style={{ color:"#1a1a1a" }}>After a session, tap "Save to Dressing Room"<br/>in your Pro report to pin it here.</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize:"11px", letterSpacing:"0.25em", color:"#333", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>
+              WALL OF RECEIPTS — {room.receipts.length}/{MAX_RECEIPTS}
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px" }}>
+              {room.receipts.map(r => (
+                <div key={r.id} style={{ position:"relative", borderRadius:"8px", overflow:"hidden", background:"#111", border:"1px solid #1e1e1e", cursor:"pointer" }}
+                  onClick={() => setViewing(r)}
+                >
+                  {/* Polaroid thumbnail */}
+                  <img src={r.thumbnail} alt={r.title} style={{ width:"100%", aspectRatio:"3/4", objectFit:"cover", display:"block" }}/>
+                  {/* Caption strip */}
+                  <div style={{ padding:"5px 6px", background:"#0a0a0a" }}>
+                    <div style={{ fontSize:"10px", color:"#aaa", fontFamily:"'Courier New',monospace", fontWeight:"bold", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.title}</div>
+                    <div style={{ fontSize:"11px", color:r.gradeColor, fontFamily:"Georgia,serif", fontWeight:"900" }}>{r.accuracy}%</div>
+                  </div>
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeReceipt(r.id); }}
+                    style={{ position:"absolute", top:"4px", right:"4px", width:"20px", height:"20px", borderRadius:"50%", background:"rgba(0,0,0,0.7)", border:"none", color:"#ff4422", fontSize:"12px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", lineHeight:1 }}
+                  >✕</button>
+                </div>
+              ))}
+            </div>
+            {room.receipts.length >= MAX_RECEIPTS && (
+              <div style={{ marginTop:"10px", fontSize:"12px", color:"#333", fontFamily:"'Courier New',monospace", textAlign:"center", letterSpacing:"0.1em" }}>
+                WALL FULL — REMOVE ONE TO ADD ANOTHER
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Full-screen receipt viewer */}
+      {viewing && (
+        <div style={{ position:"fixed", inset:0, zIndex:4000, background:"rgba(0,0,0,0.97)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px" }}
+          onClick={() => setViewing(null)}
+        >
+          <img src={viewing.thumbnail} alt={viewing.title} style={{ maxWidth:"100%", maxHeight:"80vh", borderRadius:"12px", boxShadow:"0 0 40px rgba(0,0,0,0.8)" }}/>
+          <div style={{ marginTop:"16px", textAlign:"center" }}>
+            <div style={{ fontSize:"18px", fontWeight:"900", color:viewing.gradeColor, fontFamily:"Georgia,serif" }}>{viewing.accuracy}% — {viewing.grade}</div>
+            <div style={{ fontSize:"14px", color:"#555", fontFamily:"'Courier New',monospace", marginTop:"4px" }}>{viewing.title} · {viewing.date}</div>
+            <div style={{ fontSize:"12px", color:"#333", fontFamily:"'Courier New',monospace", marginTop:"12px", letterSpacing:"0.15em" }}>TAP ANYWHERE TO CLOSE</div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+
 function SessionReport({ songs, onClose, onUnlock, isPro }) {
   const reportRef = useRef(null);
   const [snapping, setSnapping] = useState(false);
@@ -1134,9 +1430,9 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
 
       </div>
 
-      {/* DROP THE RECEIPTS — Pro only, outside the capture div so button doesn't appear in screenshot */}
+      {/* DROP THE RECEIPTS + SAVE TO DRESSING ROOM — Pro only */}
       {isPro && songs.length > 0 && (
-        <div style={{ marginTop:"10px", padding:"0 4px" }}>
+        <div style={{ marginTop:"10px", padding:"0 4px", display:"flex", flexDirection:"column", gap:"8px" }}>
           <button
             onClick={dropTheReceipts}
             disabled={snapping}
@@ -1155,6 +1451,29 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
           >
             {snapping ? "◈  Capturing..." : "📸  Drop the Receipts"}
           </button>
+          <button
+            onClick={async () => {
+              if (!reportRef.current || snapping) return;
+              setSnapping(true);
+              // Save best song to dressing room
+              const best = [...songs].sort((a,b) => b.accuracy - a.accuracy)[0];
+              const grade = gradeFromAccuracy(best.accuracy);
+              const ok = await saveReceiptToDressingRoom(reportRef.current, best.title, best.artist, best.accuracy, grade);
+              setSnapping(false);
+              alert(ok ? `✦ Pinned to your Dressing Room — ${best.accuracy}% on ${best.title}` : "Couldn't save — try again.");
+            }}
+            disabled={snapping}
+            style={{
+              width:"100%", padding:"12px", borderRadius:"12px", border:"1px solid rgba(201,168,76,0.25)",
+              cursor: snapping ? "not-allowed" : "pointer",
+              background:"rgba(201,168,76,0.06)",
+              color:"#C9A84C", fontFamily:"'Courier New',monospace",
+              fontSize:"14px", fontWeight:"900", letterSpacing:"0.2em",
+              textTransform:"uppercase", transition:"all 0.2s",
+            }}
+          >
+            🎭  Save to Dressing Room
+          </button>
         </div>
       )}
     </div>
@@ -1162,7 +1481,18 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
 }
 
 // ── ABOUT / SUPPORT MODAL ────────────────────────────────────────────────────
-function AboutModal({ onClose }) {
+function AboutModal({ onClose, profile }) {
+  const answers = profile?.quizAnswers || {};
+  const answered = Object.keys(answers).length;
+
+  // Tally A vs B to derive personality
+  const aCount = Object.values(answers).filter(v => v === "a").length;
+  const bCount = Object.values(answers).filter(v => v === "b").length;
+  const personality = answered < 3 ? null
+    : aCount > bCount + 2 ? { label:"THE CLASSICIST", desc:"You don't need Auto-Tune. You need a grand piano, a single spotlight, and the right song. You were born in the wrong decade and you know it.", icon:"🎹" }
+    : bCount > aCount + 2 ? { label:"THE MODERNIST",  desc:"You appreciate the craft but you live in the now. Your playlist is a conversation, not a museum. You make people feel something new.", icon:"✨" }
+    : { label:"THE PURIST",    desc:"You can't be put in a box and you won't be. You know every era has its genius. Your playlist is legendary and your karaoke set list is untouchable.", icon:"👑" };
+
   return (
     <div style={{
       position:"fixed", inset:0, zIndex:3000,
@@ -1181,6 +1511,37 @@ function AboutModal({ onClose }) {
           <div style={{ fontSize:"20px", fontWeight:"900", color:"#fff", fontFamily:"Georgia,serif", letterSpacing:"0.1em", marginBottom:"6px" }}>MIC DROP</div>
           <div style={{ fontSize:"14px", letterSpacing:"0.3em", color:"#444", fontFamily:"'Courier New',monospace" }}>ABOUT & SUPPORT</div>
         </div>
+
+        {/* Music Personality Result */}
+        {personality && (
+          <div style={{ background:"linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.03) 100%)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:"14px", padding:"20px", marginBottom:"16px", textAlign:"center" }}>
+            <div style={{ fontSize:"32px", marginBottom:"8px" }}>{personality.icon}</div>
+            <div style={{ fontSize:"18px", fontWeight:"900", color:"#C9A84C", fontFamily:"Georgia,serif", letterSpacing:"0.08em", marginBottom:"10px" }}>
+              {personality.label}
+            </div>
+            <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.9, fontStyle:"italic" }}>
+              {personality.desc}
+            </div>
+            <div style={{ marginTop:"14px", display:"flex", justifyContent:"center", gap:"8px" }}>
+              {QUIZ_QUESTIONS.slice(0, Math.min(answered, 18)).map(q => (
+                answers[q.id] && (
+                  <div key={q.id} style={{ width:"8px", height:"8px", borderRadius:"50%", background: answers[q.id]==="a"?"#C9A84C":"#2E6DA4", opacity:0.7 }}/>
+                )
+              ))}
+            </div>
+            <div style={{ marginTop:"6px", fontSize:"11px", color:"#333", fontFamily:"'Courier New',monospace", letterSpacing:"0.15em" }}>
+              GOLD = CLASSIC · BLUE = MODERN · {answered} OF 18 ANSWERED
+            </div>
+          </div>
+        )}
+
+        {answered < 3 && (
+          <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid #1e1e1e", borderRadius:"14px", padding:"16px", marginBottom:"16px", textAlign:"center" }}>
+            <div style={{ fontSize:"14px", color:"#333", fontFamily:"'Courier New',monospace", lineHeight:1.9, letterSpacing:"0.08em" }}>
+              Answer the music questions in your profile<br/>to unlock your music personality type.
+            </div>
+          </div>
+        )}
 
         {/* Who we are */}
         <div style={{ background:"rgba(201,168,76,0.05)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:"14px", padding:"20px", marginBottom:"16px" }}>
@@ -1240,7 +1601,7 @@ function AboutModal({ onClose }) {
             everything we build next.
           </div>
           <a
-            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.0%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
+            href={`mailto:scvdappcreator@gmail.com?subject=Mic Drop Support&body=App version: v2.1%0ADevice: ${navigator.userAgent}%0A%0ADescribe your issue:%0A`}
             style={{
               display:"block", width:"100%", padding:"14px",
               borderRadius:"10px", textAlign:"center", textDecoration:"none",
@@ -1421,10 +1782,11 @@ function MicDrop() {
   // Session log — array of { title, artist, accuracy, samples }
   const [sessionLog,  setSessionLog]  = useState([]);
   const [currentSamples, setCurrentSamples] = useState([]);
-  const [showReport,  setShowReport]  = useState(false);
-  const [showSplash,  setShowSplash]  = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showAbout,   setShowAbout]   = useState(false);
+  const [showReport,       setShowReport]       = useState(false);
+  const [showSplash,       setShowSplash]       = useState(false);
+  const [showProfile,      setShowProfile]      = useState(false);
+  const [showAbout,        setShowAbout]        = useState(false);
+  const [showDressingRoom, setShowDressingRoom] = useState(false);
   const [profile,     setProfile]     = useState(() => {
     try {
       const saved = localStorage.getItem("micDrop_profile");
@@ -1841,13 +2203,16 @@ function MicDrop() {
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
 
       {/* ABOUT MODAL */}
-      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} profile={profile} />}
 
       {/* PROFILE SETUP */}
       {showProfile && <ProfileSetup profile={profile} onSave={setProfile} onClose={() => setShowProfile(false)} />}
 
       {/* PRO SPLASH */}
       {showSplash && <ProSplash onClose={() => setShowSplash(false)} />}
+
+      {/* DRESSING ROOM */}
+      {showDressingRoom && <DressingRoom onClose={() => setShowDressingRoom(false)} isPro={isPro} />}
 
       {/* SCREEN GLOW — only after track identified */}
       {armed && trackInfo && <ScreenGlow cents={smoothCents} />}
@@ -2144,6 +2509,13 @@ function MicDrop() {
             style={{ fontSize:"20px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #554020", cursor:"pointer", padding:0, opacity:0.7 }}
           >
             ⭐ Pro
+          </button>
+          <span style={{ color:"#333", fontSize:"20px" }}>·</span>
+          <button
+            onClick={() => setShowDressingRoom(true)}
+            style={{ fontSize:"20px", color:"#666", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #333", cursor:"pointer", padding:0 }}
+          >
+            🎭
           </button>
           <span style={{ color:"#333", fontSize:"20px" }}>·</span>
           <span style={{ fontSize:"20px", color:"#333", fontFamily:"'Courier New',monospace" }}>🇦🇺 QLD</span>
