@@ -1,7 +1,0 @@
-name = "micdrop"
-main = "worker.js"
-compatibility_date = "2024-01-01"
-
-[[kv_namespaces]]
-binding = "MICDROP_KV"
-id = "4bbcd6329d4a471ea34bd79766de1860"
