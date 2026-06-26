@@ -31,6 +31,9 @@
     @keyframes glowPulse   { from { opacity:0.7; } to { opacity:1; } }
     @keyframes msgPop      { 0% { opacity:0; transform:translateY(8px) scale(0.95); } 15% { opacity:1; transform:translateY(0) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translateY(-6px); } }
     @keyframes countPop    { 0% { transform:scale(1.4); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+    @keyframes vipGlowIn   { 0% { opacity:0; } 100% { opacity:1; } }
+    @keyframes vipGlowOut  { 0% { opacity:1; } 100% { opacity:0; } }
+    @keyframes vipTextPop  { 0% { opacity:0; transform:scale(0.85); } 100% { opacity:1; transform:scale(1); } }
 
     .live-pulse { animation:pulse 1s infinite alternate; }
     .clip-pulse { animation:pulse 0.3s infinite alternate; }
@@ -2581,7 +2584,48 @@ function MicDrop() {
               localStorage.setItem("micDrop_trialStart", (Date.now() - (extended - Date.now())).toString());
             }
           } catch {}
-          alert(`✦ Token activated — ${days} days of Pro access added. Thank you for your patience!`);
+          (() => {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+              position:fixed; inset:0; z-index:9999; pointer-events:none;
+              display:flex; align-items:center; justify-content:center;
+              background:transparent;
+            `;
+            const edges = [
+              { top:'0', left:'0', right:'0', height:'45vh', background:'radial-gradient(ellipse at top, rgba(201,168,76,0.85) 0%, transparent 70%)' },
+              { bottom:'0', left:'0', right:'0', height:'45vh', background:'radial-gradient(ellipse at bottom, rgba(201,168,76,0.85) 0%, transparent 70%)' },
+              { top:'0', left:'0', bottom:'0', width:'35vw', background:'radial-gradient(ellipse at left, rgba(201,168,76,0.7) 0%, transparent 70%)' },
+              { top:'0', right:'0', bottom:'0', width:'35vw', background:'radial-gradient(ellipse at right, rgba(201,168,76,0.7) 0%, transparent 70%)' },
+            ];
+            edges.forEach(edgeStyle => {
+              const edge = document.createElement('div');
+              edge.style.cssText = 'position:fixed; pointer-events:none; animation:vipGlowIn 1s ease forwards;';
+              Object.assign(edge.style, edgeStyle);
+              overlay.appendChild(edge);
+            });
+            const msg = document.createElement('div');
+            msg.style.cssText = `
+              position:relative; z-index:10000; text-align:center;
+              animation:vipTextPop 0.8s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+              padding:32px 40px; border-radius:20px;
+              background:rgba(0,0,0,0.75);
+              border:1px solid rgba(201,168,76,0.5);
+              box-shadow:0 0 60px rgba(201,168,76,0.3);
+            `;
+            msg.innerHTML = `
+              <div style="font-size:48px; margin-bottom:14px;">👑</div>
+              <div style="font-family:Georgia,serif; font-size:22px; font-weight:900; color:#C9A84C; letter-spacing:0.15em; margin-bottom:10px;">VIP ACCESS GRANTED</div>
+              <div style="font-family:'Courier New',monospace; font-size:13px; color:#fff; letter-spacing:0.2em; margin-bottom:8px;">THE DRESSING ROOM IS OPEN</div>
+              <div style="font-family:'Courier New',monospace; font-size:12px; color:#888; letter-spacing:0.15em;">${days} DAYS OF PRO &middot; GO DROP SOME RECEIPTS</div>
+            `;
+            overlay.appendChild(msg);
+            document.body.appendChild(overlay);
+            setTimeout(() => {
+              overlay.style.transition = 'opacity 5s ease';
+              overlay.style.opacity = '0';
+              setTimeout(() => overlay.remove(), 5000);
+            }, 5000);
+          })();
         }}/>
 
         {/* Active users counter */}
