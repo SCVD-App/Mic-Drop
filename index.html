@@ -1259,8 +1259,11 @@ function DressingRoom({ onClose, isPro }) {
           </div>
         ) : (
           <>
-            <div style={{ fontSize:"11px", letterSpacing:"0.25em", color:"#333", fontFamily:"'Courier New',monospace", marginBottom:"12px" }}>
+            <div style={{ fontSize:"11px", letterSpacing:"0.25em", color:"#333", fontFamily:"'Courier New',monospace", marginBottom:"8px" }}>
               WALL OF RECEIPTS — {room.receipts.length}/{MAX_RECEIPTS}
+            </div>
+            <div style={{ fontSize:"11px", color:"#2a2a2a", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", marginBottom:"12px", textAlign:"center", lineHeight:1.8 }}>
+              ✦ Receipts are saved on this device — cloud sync coming soon
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"8px" }}>
               {room.receipts.map(r => (
@@ -2291,7 +2294,20 @@ function MicDrop() {
   };
 
   const [trial] = useState(() => getTrialState());
-  const isPro   = trial.active; // Pro features available during trial
+
+  // Check paid Pro status from token activation
+  const getProPaidState = () => {
+    try {
+      const expiry = localStorage.getItem("micDrop_proExpiry");
+      if (!expiry) return { paid: false, daysLeft: 0 };
+      const ms = parseInt(expiry) - Date.now();
+      if (ms <= 0) return { paid: false, daysLeft: 0 };
+      return { paid: true, daysLeft: Math.ceil(ms / (1000 * 60 * 60 * 24)) };
+    } catch { return { paid: false, daysLeft: 0 }; }
+  };
+
+  const [proPaid, setProPaid] = useState(() => getProPaidState());
+  const isPro = trial.active || proPaid.paid;
   const isIdentifying = idPhase !== null;
   const sessionAccuracy = sessionLog.length > 0
     ? Math.round(sessionLog.reduce((s,g)=>s+g.accuracy,0)/sessionLog.length) : null;
@@ -2366,8 +2382,30 @@ function MicDrop() {
         </div>
       </div>
 
-      {/* TRIAL BANNER */}
-      {trial.active && !trial.expired && (
+      {/* PAID PRO BANNER — paying subscriber */}
+      {proPaid.paid && (
+        <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
+          <div style={{
+            borderRadius:"10px", padding:"12px 14px",
+            background:"rgba(201,168,76,0.10)",
+            border:"1px solid rgba(201,168,76,0.35)",
+            display:"flex", flexDirection:"column", alignItems:"center", gap:"4px",
+          }}>
+            <div style={{ fontSize:"14px", letterSpacing:"0.2em", color:"#C9A84C", fontFamily:"'Courier New',monospace", fontWeight:"bold", textAlign:"center" }}>
+              👑 BACKSTAGE PASS ACTIVE
+            </div>
+            <div style={{ fontSize:"13px", color:"#888", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7 }}>
+              The full Mic Drop experience is yours — {proPaid.daysLeft} day{proPaid.daysLeft !== 1 ? "s" : ""} remaining.
+            </div>
+            <div style={{ fontSize:"12px", color:"#555", fontFamily:"'Courier New',monospace", textAlign:"center", lineHeight:1.7, marginTop:"2px" }}>
+              ✦ Arm up. Sing something worth bragging about. ✦
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TRIAL ACTIVE BANNER — free trial only, not paid */}
+      {trial.active && !trial.expired && !proPaid.paid && (
         <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
           <div
             onClick={() => setShowSplash(true)}
@@ -2394,8 +2432,8 @@ function MicDrop() {
         </div>
       )}
 
-      {/* TRIAL EXPIRED BANNER */}
-      {trial.expired && (
+      {/* TRIAL EXPIRED BANNER — only show if not a paid subscriber */}
+      {trial.expired && !proPaid.paid && (
         <div style={{ width:"100%", maxWidth:"420px", padding:"6px 20px 0" }}>
           <div style={{
             borderRadius:"10px", padding:"12px 14px",
@@ -2577,13 +2615,13 @@ function MicDrop() {
         {/* Token entry — for comp tokens and Pro unlock */}
         <TokenEntry onActivate={(days) => {
           try {
-            // Store trial extension in localStorage
-            const current = localStorage.getItem("micDrop_trialStart");
-            if (current) {
-              const extended = parseInt(current) + (days * 24 * 60 * 60 * 1000);
-              localStorage.setItem("micDrop_trialStart", (Date.now() - (extended - Date.now())).toString());
-            }
+            // Set paid Pro expiry — days from now
+            const expiry = Date.now() + (days * 24 * 60 * 60 * 1000);
+            localStorage.setItem("micDrop_proExpiry", expiry.toString());
+            // Refresh Pro paid state
+            setProPaid({ paid: true, daysLeft: days });
           } catch {}
+          // VIP golden glow moment
           (() => {
             const overlay = document.createElement('div');
             overlay.style.cssText = `
@@ -2616,7 +2654,7 @@ function MicDrop() {
               <div style="font-size:48px; margin-bottom:14px;">👑</div>
               <div style="font-family:Georgia,serif; font-size:22px; font-weight:900; color:#C9A84C; letter-spacing:0.15em; margin-bottom:10px;">VIP ACCESS GRANTED</div>
               <div style="font-family:'Courier New',monospace; font-size:13px; color:#fff; letter-spacing:0.2em; margin-bottom:8px;">THE DRESSING ROOM IS OPEN</div>
-              <div style="font-family:'Courier New',monospace; font-size:12px; color:#888; letter-spacing:0.15em;">${days} DAYS OF PRO &middot; GO DROP SOME RECEIPTS</div>
+              <div style="font-family:'Courier New',monospace; font-size:12px; color:#888; letter-spacing:0.15em;">${days} DAYS OF PRO &middot; DROP SOME RECEIPTS</div>
             `;
             overlay.appendChild(msg);
             document.body.appendChild(overlay);
@@ -2626,6 +2664,7 @@ function MicDrop() {
               setTimeout(() => overlay.remove(), 5000);
             }, 5000);
           })();
+          alert(`✦ Token activated — ${days} days of Pro access added. Thank you for your patience!`);
         }}/>
 
         {/* Active users counter */}
