@@ -109,7 +109,8 @@ const PITCH_SMOOTH_MS      = 300;
 const POCKET_CENTS         = 25;     // tightened — earned, not gifted
 const CLOSE_CENTS          = 55;
 const REPORT_INTERVAL_MS   = 500;
-const MIN_VOX_RMS          = 0.015;  // minimum signal to count as singing
+const MIN_VOX_RMS          = 0.035;  // narrowband gate — must exceed backing track bleed
+const MAX_VOX_FREQ         = 3000;   // human singing voice tops out ~3kHz
 
 // ── PITCH DETECTION (autocorrelation) ────────────────────────────────────────
 function detectPitch(buffer, sampleRate) {
@@ -2298,16 +2299,24 @@ function MicDrop() {
 
         const source   = audioCtxTemp.createMediaStreamSource(stream);
 
-        // VOX — highpass filtered for pitch detection
+        // VOX — narrowband bandpass filter for pitch detection
+        // Isolates human singing voice (200Hz–3kHz) — rejects backing track bleed
         const hpFilter = audioCtxTemp.createBiquadFilter();
         hpFilter.type            = "highpass";
-        hpFilter.frequency.value = 200;
-        hpFilter.Q.value         = 0.7;
+        hpFilter.frequency.value = 200;   // cuts bass rumble and low music content
+        hpFilter.Q.value         = 0.9;   // tighter rolloff than before
+
+        const lpFilter = audioCtxTemp.createBiquadFilter();
+        lpFilter.type            = "lowpass";
+        lpFilter.frequency.value = 3000;  // cuts hi-hat, cymbals, upper music content
+        lpFilter.Q.value         = 0.9;
+
         const anal     = audioCtxTemp.createAnalyser();
         anal.fftSize   = 2048;
         anal.smoothingTimeConstant = 0.8;
         source.connect(hpFilter);
-        hpFilter.connect(anal);
+        hpFilter.connect(lpFilter);       // chain: source → HP → LP → analyser
+        lpFilter.connect(anal);
 
         // ROOM — unfiltered raw signal for ambient metering
         const roomAnal = audioCtxTemp.createAnalyser();
