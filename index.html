@@ -2472,6 +2472,24 @@ function MicDrop() {
 
   const [trial] = useState(() => getTrialState());
 
+  // ── MIGRATION: old token system stored Pro as extended trial ─────────────
+  // If micDrop_proExpiry doesn't exist but trial is massively extended
+  // (more than TRIAL_DAYS), treat the excess as paid Pro time and migrate.
+  const migrateLegacyPro = () => {
+    try {
+      if (localStorage.getItem("micDrop_proExpiry")) return; // already migrated
+      const start = localStorage.getItem("micDrop_trialStart");
+      if (!start) return;
+      const trialEnd = parseInt(start) + TRIAL_MS;
+      // If trial end is more than 8 days in the future, user has paid Pro time
+      const buffer = 8 * 24 * 60 * 60 * 1000;
+      if (trialEnd > Date.now() + buffer) {
+        localStorage.setItem("micDrop_proExpiry", trialEnd.toString());
+      }
+    } catch {}
+  };
+  migrateLegacyPro();
+
   // Check paid Pro status from token activation
   const getProPaidState = () => {
     try {
@@ -2795,11 +2813,18 @@ function MicDrop() {
         {/* Token entry — for comp tokens and Pro unlock */}
         <TokenEntry onActivate={(days) => {
           try {
-            // Set paid Pro expiry — days from now
-            const expiry = Date.now() + (days * 24 * 60 * 60 * 1000);
-            localStorage.setItem("micDrop_proExpiry", expiry.toString());
-            // Refresh Pro paid state
-            setProPaid({ paid: true, daysLeft: days });
+            // Stack tokens correctly — extend from current expiry if still valid
+            // otherwise start fresh from now
+            const DAY_MS = 24 * 60 * 60 * 1000;
+            const existing = localStorage.getItem("micDrop_proExpiry");
+            const baseTime = existing && parseInt(existing) > Date.now()
+              ? parseInt(existing)   // extend from current expiry end
+              : Date.now();          // start fresh from now
+            const newExpiry = baseTime + (days * DAY_MS);
+            localStorage.setItem("micDrop_proExpiry", newExpiry.toString());
+            // Calculate actual days remaining from now for display
+            const daysRemaining = Math.ceil((newExpiry - Date.now()) / DAY_MS);
+            setProPaid({ paid: true, daysLeft: daysRemaining });
           } catch {}
           // VIP golden glow moment
           (() => {
