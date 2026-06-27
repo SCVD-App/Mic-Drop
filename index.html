@@ -2912,6 +2912,16 @@ function MicDrop() {
             🎭
           </button>
           <span style={{ color:"#333", fontSize:"20px" }}>·</span>
+          <button
+            onClick={() => {
+              const from = encodeURIComponent((profile.name || "").trim() || "a friend");
+              window.open(`invite.html?from=${from}`, "_blank");
+            }}
+            style={{ fontSize:"20px", color:"#C9A84C", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em", background:"none", border:"none", borderBottom:"1px solid #554020", cursor:"pointer", padding:0, opacity:0.85 }}
+          >
+            🎤 Invite
+          </button>
+          <span style={{ color:"#333", fontSize:"20px" }}>·</span>
           <span style={{ fontSize:"20px", color:"#333", fontFamily:"'Courier New',monospace" }}>🇦🇺 QLD</span>
         </div>
 

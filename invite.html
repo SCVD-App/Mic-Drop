@@ -1,479 +1,526 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Mic Drop — You've Been Challenged</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
-<!-- Primary Meta -->
-<meta name="description" content="I built an app to check my own singing. Now I need to know what it says when someone who can actually sing uses it. You're my test case.">
-<meta name="theme-color" content="#C9A84C">
+  <!-- Dynamic OG tags are set by JS below — these are fallbacks for crawlers that don't run JS -->
+  <title id="pageTitle">🎤 Mic Drop — You've Been Challenged</title>
+  <meta name="description" content="Sing. Score. Drop the Receipts. Find out what the app calls your singing — Coroner, Rising Star, Legendary or DIVA. No bar tab. No cheesy pick-up lines. No shoes required." />
 
-<!-- Open Graph (Facebook, Messenger, WhatsApp) -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://scvd-app.github.io/Mic-Drop/invite.html">
-<meta property="og:title" content="🎤 Mic Drop — You've Been Challenged">
-<meta property="og:description" content="Sing. Score. Drop the Receipts. Find out what the app calls your singing — Coroner, Rising Star, Legendary or DIVA. No bar tab. No sleazy guys. No shoes required.">
-<meta property="og:image" content="https://scvd-app.github.io/Mic-Drop/icon-512.png">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
-<meta property="og:site_name" content="Mic Drop by SCVD Apps">
+  <meta property="og:title" content="🎤 Mic Drop — You've Been Challenged" />
+  <meta property="og:description" content="Sing. Score. Drop the Receipts. Find out what the app calls your singing — Coroner, Rising Star, Legendary or DIVA. No bar tab. No cheesy pick-up lines. No shoes required." />
+  <meta property="og:image" content="https://scvd-app.github.io/Mic-Drop/icon-512.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:url" content="https://scvd-app.github.io/Mic-Drop/invite.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mic Drop by SCVD Apps" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="🎤 Mic Drop — You've Been Challenged" />
+  <meta name="twitter:description" content="Sing. Score. Drop the Receipts. Find out what the app calls your singing." />
+  <meta name="twitter:image" content="https://scvd-app.github.io/Mic-Drop/icon-512.png" />
 
-<!-- Twitter / X Card -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="🎤 Mic Drop — You've Been Challenged">
-<meta name="twitter:description" content="Sing. Score. Drop the Receipts. Find out what the app calls your singing.">
-<meta name="twitter:image" content="https://scvd-app.github.io/Mic-Drop/icon-512.png">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;500;600&display=swap');
+  <meta name="theme-color" content="#C9A84C" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700;900&family=Josefin+Sans:wght@300;400;600&display=swap');
 
-  :root {
-    --black:  #0d0d0d;
-    --gold:   #C9A84C;
-    --gold2:  #e8c46a;
-    --white:  #f5f3ee;
-    --dim:    #888;
-    --dark:   #141414;
-    --panel:  #181818;
-  }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  html, body {
-    min-height: 100vh;
-    background: var(--black);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Barlow', sans-serif;
-    padding: 24px 16px;
-  }
+    html, body {
+      background: #0a0a0a;
+      color: #f5f3ee;
+      min-height: 100vh;
+      font-family: 'Josefin Sans', 'Courier New', monospace;
+    }
 
-  .card {
-    width: 100%;
-    max-width: 480px;
-    background: var(--panel);
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-  }
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 0 0 60px;
+    }
 
-  /* Gold top bar */
-  .card::before {
-    content: '';
-    display: block;
-    height: 5px;
-    background: linear-gradient(90deg, var(--gold), var(--gold2), var(--gold));
-  }
+    .page {
+      width: 100%;
+      max-width: 480px;
+      padding: 0 20px;
+    }
 
-  /* ── HEADER ── */
-  .header {
-    padding: 32px 32px 24px;
-    position: relative;
-    overflow: hidden;
-  }
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      padding: 48px 0 32px;
+      border-bottom: 1px solid #1a1a1a;
+      margin-bottom: 36px;
+    }
 
-  .header-bg {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 80% 40%, rgba(201,168,76,0.07) 0%, transparent 70%);
-    pointer-events: none;
-  }
+    .challenge-label {
+      font-family: 'Josefin Sans', monospace;
+      font-size: 12px;
+      letter-spacing: 0.5em;
+      color: #555;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
 
-  .app-eyebrow {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+    .mic-icon {
+      font-size: 52px;
+      margin-bottom: 14px;
+      display: block;
+    }
 
-  .app-eyebrow::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #2a2a2a;
-  }
+    .app-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      color: #C9A84C;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
 
-  .app-name {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 4.5rem;
-    line-height: 0.9;
-    color: var(--white);
-    text-transform: uppercase;
-    letter-spacing: -1px;
-  }
+    .tagline {
+      font-size: 13px;
+      letter-spacing: 0.3em;
+      color: #444;
+      text-transform: uppercase;
+      margin-bottom: 0;
+    }
 
-  .app-name span {
-    color: var(--gold);
-  }
+    /* ── FROM MESSAGE ── */
+    .from-card {
+      background: rgba(201, 168, 76, 0.06);
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      border-radius: 16px;
+      padding: 28px 24px;
+      margin-bottom: 32px;
+    }
 
-  .app-tagline {
-    margin-top: 14px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--dim);
-  }
+    .from-label {
+      font-size: 11px;
+      letter-spacing: 0.45em;
+      color: #C9A84C;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
 
-  /* Animated pitch wave */
-  .wave-container {
-    height: 60px;
-    padding: 0 32px;
-    margin: 4px 0 0;
-  }
+    .from-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: #C9A84C;
+      margin-bottom: 18px;
+    }
 
-  .wave-svg { width: 100%; height: 100%; }
+    .from-message {
+      font-size: 15px;
+      color: #aaa;
+      line-height: 1.85;
+      letter-spacing: 0.03em;
+    }
 
-  /* ── CHALLENGE BLOCK ── */
-  .challenge {
-    padding: 20px 32px 24px;
-    border-top: 1px solid #222;
-    border-bottom: 1px solid #222;
-  }
+    .from-message em {
+      color: #C9A84C;
+      font-style: normal;
+    }
 
-  .challenge-from {
-    font-size: 0.78rem;
-    color: var(--dim);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
+    /* ── HOW IT WORKS ── */
+    .section-title {
+      font-size: 11px;
+      letter-spacing: 0.45em;
+      color: #555;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
 
-  .challenge-text {
-    font-size: 1.05rem;
-    line-height: 1.55;
-    color: var(--white);
-  }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
 
-  .challenge-text em {
-    font-style: normal;
-    color: var(--gold);
-    font-weight: 600;
-  }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid #181818;
+      border-radius: 12px;
+      padding: 16px;
+    }
 
-  /* ── HOW IT WORKS ── */
-  .how {
-    padding: 24px 32px;
-  }
+    .step-num {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 28px;
+      font-weight: 900;
+      color: #C9A84C;
+      opacity: 0.5;
+      line-height: 1;
+      flex-shrink: 0;
+      width: 24px;
+    }
 
-  .how-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--dim);
-    margin-bottom: 16px;
-  }
+    .step-text {
+      font-size: 14px;
+      color: #888;
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+      padding-top: 2px;
+    }
 
-  .steps {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
+    .step-text strong {
+      color: #ccc;
+      font-weight: 600;
+    }
 
-  .step {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-  }
+    /* ── GRADE LADDER ── */
+    .grades {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid #1a1a1a;
+      border-radius: 16px;
+      padding: 22px 20px;
+      margin-bottom: 32px;
+    }
 
-  .step-num {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 1.1rem;
-    color: var(--gold);
-    min-width: 24px;
-    line-height: 1.3;
-  }
+    .grade-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #111;
+    }
 
-  .step-text {
-    font-size: 0.92rem;
-    color: #aaa;
-    line-height: 1.45;
-  }
+    .grade-row:last-child {
+      border-bottom: none;
+    }
 
-  .step-text strong {
-    color: var(--white);
-    font-weight: 600;
-  }
+    .grade-emoji {
+      font-size: 20px;
+      width: 32px;
+    }
 
-  /* ── GRADES STRIP ── */
-  .grades {
-    padding: 0 32px 24px;
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
+    .grade-label {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      color: #666;
+      flex: 1;
+      padding-left: 8px;
+    }
 
-  .grade-pill {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.05em;
-    padding: 4px 10px;
-    border: 1px solid #2a2a2a;
-    border-radius: 100px;
-    color: var(--dim);
-    white-space: nowrap;
-  }
+    .grade-row.gold .grade-label {
+      color: #C9A84C;
+    }
 
-  .grade-pill.top {
-    border-color: var(--gold);
-    color: var(--gold);
-    background: rgba(201,168,76,0.06);
-  }
+    .grade-threshold {
+      font-size: 11px;
+      color: #333;
+      letter-spacing: 0.1em;
+      text-align: right;
+    }
 
-  /* ── CTA ── */
-  .cta-block {
-    padding: 0 32px 32px;
-  }
+    .grade-row.gold .grade-threshold {
+      color: #554020;
+    }
 
-  .cta-btn {
-    display: block;
-    width: 100%;
-    padding: 18px;
-    background: var(--gold);
-    color: var(--black);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 1.3rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 6px;
-    transition: background 0.15s, transform 0.1s;
-    cursor: pointer;
-    border: none;
-  }
+    .diva-note {
+      margin-top: 14px;
+      font-size: 11px;
+      color: #333;
+      letter-spacing: 0.15em;
+      text-align: center;
+      font-style: italic;
+    }
 
-  .cta-btn:hover {
-    background: var(--gold2);
-    transform: translateY(-1px);
-  }
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
 
-  .cta-btn:active {
-    transform: translateY(0);
-  }
+    .cta-btn {
+      display: block;
+      width: 100%;
+      padding: 20px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #C9A84C 0%, #a07830 100%);
+      color: #0a0a0a;
+      font-family: 'Josefin Sans', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      text-decoration: none;
+      margin-bottom: 14px;
+      box-shadow: 0 0 30px rgba(201, 168, 76, 0.25);
+      transition: all 0.2s;
+    }
 
-  .cta-sub {
-    margin-top: 12px;
-    text-align: center;
-    font-size: 0.75rem;
-    color: #444;
-    line-height: 1.5;
-  }
+    .cta-btn:active {
+      transform: scale(0.98);
+      box-shadow: 0 0 15px rgba(201, 168, 76, 0.2);
+    }
 
-  /* ── FOOTER ── */
-  .card-footer {
-    padding: 16px 32px;
-    border-top: 1px solid #1e1e1e;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+    .cta-sub {
+      font-size: 12px;
+      color: #333;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
 
-  .footer-brand {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.15em;
-    color: #333;
-    text-transform: uppercase;
-  }
+    /* ── SHARE ROW ── */
+    .share-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
 
-  .footer-score {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    color: #333;
-    text-align: right;
-    letter-spacing: 0.05em;
-  }
+    .share-btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #2a2a2a;
+      background: rgba(255, 255, 255, 0.02);
+      color: #555;
+      font-family: 'Josefin Sans', monospace;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-  /* ── SHARE TOOLS (only shown in standalone page context) ── */
-  .share-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 28px;
-    justify-content: center;
-    max-width: 480px;
-    width: 100%;
-  }
+    .share-btn:active {
+      background: rgba(255, 255, 255, 0.05);
+      transform: scale(0.98);
+    }
 
-  .share-btn {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 10px 20px;
-    border-radius: 4px;
-    border: 1px solid #2a2a2a;
-    background: #181818;
-    color: var(--white);
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      padding-top: 24px;
+      border-top: 1px solid #111;
+    }
 
-  .share-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .footer-brand {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 18px;
+      letter-spacing: 0.3em;
+      color: #222;
+      margin-bottom: 6px;
+    }
 
-  /* Pulse animation on mic emoji */
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(0.92); }
-  }
+    .footer-sub {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: #1a1a1a;
+    }
 
-  .mic-pulse { display: inline-block; animation: pulse 2.2s ease-in-out infinite; }
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(201, 168, 76, 0.15);
+      border: 1px solid rgba(201, 168, 76, 0.4);
+      color: #C9A84C;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
 
-  /* Animated dots on the wave */
-  @keyframes dotMove {
-    0%   { opacity: 0.3; }
-    50%  { opacity: 1; }
-    100% { opacity: 0.3; }
-  }
-
-  .wave-dot { animation: dotMove 1.8s ease-in-out infinite; }
-  .wave-dot:nth-child(2) { animation-delay: 0.3s; }
-  .wave-dot:nth-child(3) { animation-delay: 0.6s; }
-  .wave-dot:nth-child(4) { animation-delay: 0.9s; }
-  .wave-dot:nth-child(5) { animation-delay: 1.2s; }
-  .wave-dot:nth-child(6) { animation-delay: 1.5s; }
-
-</style>
+    .toast.show { opacity: 1; }
+  </style>
 </head>
 <body>
 
-<div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:540px;">
+<div class="page">
 
-  <div class="card">
-
-    <!-- HEADER -->
-    <div class="header">
-      <div class="header-bg"></div>
-      <div class="app-eyebrow">🎤 You've been challenged</div>
-      <div class="app-name">MIC<br><span>DROP</span></div>
-      <div class="app-tagline">Sing. Score. Drop the Receipts.</div>
-    </div>
-
-    <!-- ANIMATED PITCH WAVE -->
-    <div class="wave-container">
-      <svg class="wave-svg" viewBox="0 0 400 60" preserveAspectRatio="none">
-        <!-- Pocket zone band -->
-        <rect x="0" y="20" width="400" height="20" fill="rgba(201,168,76,0.06)" rx="0"/>
-        <!-- Pitch line -->
-        <polyline
-          points="0,32 25,28 50,30 75,26 100,30 125,33 150,27 175,29 200,25 225,30 250,32 275,28 300,26 325,30 350,28 375,31 400,29"
-          fill="none"
-          stroke="#C9A84C"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          opacity="0.9"
-        />
-        <!-- Animated dots -->
-        <circle class="wave-dot" cx="50"  cy="30" r="4" fill="#C9A84C"/>
-        <circle class="wave-dot" cx="125" cy="33" r="4" fill="#C9A84C"/>
-        <circle class="wave-dot" cx="200" cy="25" r="4" fill="#e8c46a"/>
-        <circle class="wave-dot" cx="275" cy="28" r="4" fill="#C9A84C"/>
-        <circle class="wave-dot" cx="350" cy="28" r="4" fill="#C9A84C"/>
-      </svg>
-    </div>
-
-    <!-- CHALLENGE MESSAGE -->
-    <div class="challenge">
-      <div class="challenge-from">A message from Scott</div>
-      <div class="challenge-text">
-        Mate — I built this app to check my own singing. Then I found out what it calls a bad singer.<br><br>
-        Now I need to know what it says when <em>someone who can actually sing</em> uses it.<br><br>
-        You're my test case. Don't let me down. <span class="mic-pulse">🎤</span>
-      </div>
-    </div>
-
-    <!-- HOW IT WORKS -->
-    <div class="how">
-      <div class="how-title">How it works</div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-text"><strong>Install it like an app</strong> — it's web-based, so just open the link and add it to your home screen. No App Store needed.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-text"><strong>Play your song</strong> through Spotify, YouTube Music, whatever you use — Mic Drop runs over the top of it.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-text"><strong>Sing.</strong> The app listens through your microphone, tracks your pitch in real time, and matches it against the song.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-text"><strong>Get your verdict.</strong> Then share the receipt. Studio recordings work best — live versions can trip it up.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GRADE PILLS -->
-    <div class="grades">
-      <div class="grade-pill">🔪 Coroner</div>
-      <div class="grade-pill">🎤 Open Mic</div>
-      <div class="grade-pill">⭐ Rising Star</div>
-      <div class="grade-pill">🌟 Headliner</div>
-      <div class="grade-pill">💫 Legendary</div>
-      <div class="grade-pill top">👑 DIVA</div>
-    </div>
-
-    <!-- CTA -->
-    <div class="cta-block">
-      <a class="cta-btn" href="https://scvd-app.github.io/Mic-Drop/" target="_blank">
-        Open Mic Drop →
-      </a>
-      <div class="cta-sub">Free to use · Web app · No download required<br>Works on iPhone &amp; Android</div>
-    </div>
-
-    <!-- FOOTER -->
-    <div class="card-footer">
-      <div class="footer-brand">SCVD Apps</div>
-      <div class="footer-score">95%+ = DIVA<br>Whitney standard. Unreachable.</div>
-    </div>
-
+  <!-- HEADER -->
+  <div class="header">
+    <div class="challenge-label">You've been challenged</div>
+    <span class="mic-icon">🎤</span>
+    <div class="app-title">MIC&nbsp;&nbsp;DROP</div>
+    <div class="tagline">Sing. Score. Drop the Receipts.</div>
   </div>
 
-  <!-- SHARE TOOLS -->
+  <!-- FROM MESSAGE — personalised -->
+  <div class="from-card">
+    <div class="from-label">A message from</div>
+    <div class="from-name" id="senderName">a friend</div>
+    <div class="from-message" id="senderMessage">
+      I've been singing my heart out at home with this app and honestly? I'm hooked.<br><br>
+      No bar tab. No cheesy pick-up lines. No shoes required — just you, your phone, and whatever song
+      you've been quietly nailing in the shower.<br><br>
+      Come join the fun. Find out what the app reckons. Then share the receipt. 🎤
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-title">How it works</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>Install it like an app</strong> — it's web-based, so just open the link and add it to your home screen. No App Store needed.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text"><strong>Play your song</strong> through Spotify, YouTube Music, whatever you use — Mic Drop runs over the top of it.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text"><strong>Sing.</strong> The app listens through your microphone, tracks your pitch in real time, and matches it against the song.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text"><strong>Get your verdict.</strong> Then share the receipt. Studio recordings work best — live versions can trip it up.</div>
+    </div>
+  </div>
+
+  <!-- GRADE LADDER -->
+  <div class="grades">
+    <div class="section-title" style="margin-bottom:14px;">The verdicts</div>
+    <div class="grade-row">
+      <div class="grade-emoji">🔪</div>
+      <div class="grade-label">CORONER</div>
+      <div class="grade-threshold">Very low</div>
+    </div>
+    <div class="grade-row">
+      <div class="grade-emoji">🎤</div>
+      <div class="grade-label">OPEN MIC</div>
+      <div class="grade-threshold">31–65%</div>
+    </div>
+    <div class="grade-row">
+      <div class="grade-emoji">⭐</div>
+      <div class="grade-label">RISING STAR</div>
+      <div class="grade-threshold">66–84%</div>
+    </div>
+    <div class="grade-row">
+      <div class="grade-emoji">🌟</div>
+      <div class="grade-label">HEADLINER</div>
+      <div class="grade-threshold">85–89%</div>
+    </div>
+    <div class="grade-row">
+      <div class="grade-emoji">💫</div>
+      <div class="grade-label">LEGENDARY</div>
+      <div class="grade-threshold">90–94%</div>
+    </div>
+    <div class="grade-row gold">
+      <div class="grade-emoji">👑</div>
+      <div class="grade-label">DIVA</div>
+      <div class="grade-threshold">95%+</div>
+    </div>
+    <div class="diva-note">95%+ = DIVA · Whitney standard. Unreachable.</div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <a class="cta-btn" href="https://scvd-app.github.io/Mic-Drop/">
+      Open Mic Drop →
+    </a>
+    <div class="cta-sub">Free to use · Web app · No download required<br>Works on iPhone &amp; Android</div>
+  </div>
+
+  <!-- SHARE ROW -->
   <div class="share-row">
     <button class="share-btn" onclick="copyLink()">📋 Copy Link</button>
-    <button class="share-btn" onclick="nativeShare()">↗ Share</button>
+    <button class="share-btn" onclick="shareNative()">↗ Share</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-brand">SCVD Apps</div>
+    <div class="footer-sub">🇦🇺 Queensland, Australia</div>
   </div>
 
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="toast">Link copied!</div>
+
 <script>
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      alert('Link copied! Send it to your mates.');
-    }).catch(() => {
-      prompt('Copy this link:', window.location.href);
-    });
+  // ── READ ?from= PARAM AND PERSONALISE ────────────────────────────────────
+  (function() {
+    const params    = new URLSearchParams(window.location.search);
+    const rawFrom   = (params.get("from") || "").trim();
+    const senderRaw = rawFrom || "";
+
+    // Capitalise first letter of each word, max 40 chars
+    const sender = senderRaw
+      ? senderRaw.slice(0, 40).replace(/\b\w/g, c => c.toUpperCase())
+      : "";
+
+    if (sender) {
+      // Name display
+      document.getElementById("senderName").textContent = sender;
+
+      // Personalised message copy — uses their name naturally
+      const firstName = sender.split(/\s+/)[0];
+      document.getElementById("senderMessage").innerHTML =
+        `I've been singing my heart out at home with this app and honestly? I'm hooked.<br><br>` +
+        `No bar tab. No cheesy pick-up lines. No shoes required — just you, your phone, and whatever song ` +
+        `you've been quietly nailing in the shower.<br><br>` +
+        `Come join the fun. Find out what the app reckons. Then share the receipt. 🎤`;
+
+      // Update page title
+      document.title = `🎤 ${firstName} challenged you — Mic Drop`;
+    }
+  })();
+
+  // ── SHARE FUNCTIONS ───────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2200);
   }
 
-  function nativeShare() {
+  function copyLink() {
+    const url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => showToast("Link copied!")).catch(() => fallbackCopy(url));
+    } else {
+      fallbackCopy(url);
+    }
+  }
+
+  function fallbackCopy(url) {
+    const el = document.createElement("textarea");
+    el.value = url;
+    el.style.cssText = "position:fixed;opacity:0;";
+    document.body.appendChild(el);
+    el.select();
+    try { document.execCommand("copy"); showToast("Link copied!"); } catch {}
+    document.body.removeChild(el);
+  }
+
+  function shareNative() {
+    const params   = new URLSearchParams(window.location.search);
+    const rawFrom  = (params.get("from") || "").trim();
+    const sender   = rawFrom ? rawFrom.slice(0, 40).replace(/\b\w/g, c => c.toUpperCase()) : null;
+    const firstName = sender ? sender.split(/\s+/)[0] : null;
+
+    const shareData = {
+      title: firstName ? `${firstName} challenged you — Mic Drop` : "🎤 Mic Drop — You've Been Challenged",
+      text:  firstName
+        ? `${firstName} wants to know how good you really sound. Sing. Score. Drop the Receipts. 🎤`
+        : "Sing. Score. Drop the Receipts. Find out what the app calls your singing. 🎤",
+      url: window.location.href,
+    };
+
     if (navigator.share) {
-      navigator.share({
-        title: 'Mic Drop — Can you hit DIVA?',
-        text: 'I built a pitch accuracy app. Find out what it calls your singing.',
-        url: 'https://scvd-app.github.io/Mic-Drop/'
-      });
+      navigator.share(shareData).catch(() => {});
     } else {
       copyLink();
     }
