@@ -2275,7 +2275,7 @@ function MicDrop() {
       // On mobile, the gesture context expires after any await call.
       let audioCtxTemp;
       try {
-        audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100, latencyHint: 'playback' });
+        audioCtxTemp = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000, latencyHint: 'playback' });
         if (audioCtxTemp.state === 'suspended') await audioCtxTemp.resume();
       } catch(e) {
         setStatusMsg(`Audio engine failed: ${e.message}`);
@@ -2324,10 +2324,12 @@ function MicDrop() {
         roomAnal.smoothingTimeConstant = 0.85;
         source.connect(roomAnal);
 
-        // Explicitly silence output — Android routes AudioContext to speaker
-        // even without connecting to destination. This mutes that path.
+        // Silencer — routes mic input to destination at zero gain
+        // This prevents Android from routing AudioContext output to speaker
+        // Must be connected to source to be effective — floating gain node does nothing
         const silencer = audioCtxTemp.createGain();
         silencer.gain.value = 0;
+        source.connect(silencer);
         silencer.connect(audioCtxTemp.destination);
 
         audioCtx.current     = audioCtxTemp;
