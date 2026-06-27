@@ -1243,6 +1243,15 @@ function ProSongCard({ song }) {
 // ── DRESSING ROOM ─────────────────────────────────────────────────────────────
 const MAX_RECEIPTS = 9;
 
+// ── SERVER-SIDE RECEIPT STORAGE ──────────────────────────────────────────────
+// Receipts stored in Cloudflare KV via worker, keyed to Pro token
+// localStorage used as fast local cache — server is source of truth
+
+function getStoredToken() {
+  try { return localStorage.getItem("micDrop_proToken") || null; }
+  catch { return null; }
+}
+
 function loadDressingRoom() {
   try {
     const raw = localStorage.getItem("micDrop_dressingRoom");
@@ -1252,6 +1261,44 @@ function loadDressingRoom() {
 
 function saveDressingRoom(data) {
   try { localStorage.setItem("micDrop_dressingRoom", JSON.stringify(data)); } catch {}
+}
+
+// Sync receipts FROM server into localStorage cache
+async function syncReceiptsFromServer(token) {
+  try {
+    const res = await fetch(`${PROXY_BASE_URL}/receipts?token=${encodeURIComponent(token)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (Array.isArray(data.receipts)) {
+      const room = loadDressingRoom();
+      room.receipts = data.receipts;
+      saveDressingRoom(room);
+    }
+  } catch { /* silent — use local cache */ }
+}
+
+// Save a receipt to server AND local cache
+async function saveReceiptToServer(token, receipt) {
+  if (!token) return;
+  try {
+    await fetch(`${PROXY_BASE_URL}/receipts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, receipt }),
+    });
+  } catch { /* silent — receipt already in local cache */ }
+}
+
+// Delete a receipt from server AND local cache
+async function deleteReceiptFromServer(token, id) {
+  if (!token) return;
+  try {
+    await fetch(`${PROXY_BASE_URL}/receipts`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, id }),
+    });
+  } catch { /* silent */ }
 }
 
 // Called from SessionReport — saves a receipt thumbnail to the Dressing Room
@@ -1270,27 +1317,39 @@ async function saveReceiptToDressingRoom(reportEl, songTitle, artist, accuracy, 
 
     const room = loadDressingRoom();
     const receipt = {
-      id:        Date.now(),
+      id:         Date.now(),
       thumbnail,
-      title:     songTitle,
+      title:      songTitle,
       artist,
       accuracy,
-      grade:     grade.label,
+      grade:      grade.label,
       gradeColor: grade.color,
-      date:      new Date().toLocaleDateString("en-AU", { day:"numeric", month:"short", year:"numeric" }),
+      date:       new Date().toLocaleDateString("en-AU", { day:"numeric", month:"short", year:"numeric" }),
     };
-    // Newest first, cap at MAX_RECEIPTS
+    // Save to local cache first — fast
     room.receipts = [receipt, ...room.receipts].slice(0, MAX_RECEIPTS);
     saveDressingRoom(room);
+    // Save to server in background — receipts survive device/browser clears
+    const token = getStoredToken();
+    if (token) saveReceiptToServer(token, receipt);
     return true;
   } catch { return false; }
 }
 
-function DressingRoom({ onClose, isPro }) {
+function DressingRoom({ onClose, isPro, proToken }) {
   const [room,        setRoom]        = useState(() => loadDressingRoom());
-  const [viewing,     setViewing]     = useState(null); // receipt being viewed full-screen
+  const [viewing,     setViewing]     = useState(null);
   const [saving,      setSaving]      = useState(false);
   const backdropRef = useRef(null);
+
+  // Sync receipts from server when Backstage opens
+  useEffect(() => {
+    if (proToken) {
+      syncReceiptsFromServer(proToken).then(() => {
+        setRoom(loadDressingRoom());
+      });
+    }
+  }, [proToken]);
 
   const handleBackdrop = (e) => {
     const file = e.target.files?.[0];
@@ -1325,6 +1384,8 @@ function DressingRoom({ onClose, isPro }) {
     const updated = { ...room, receipts: room.receipts.filter(r => r.id !== id) };
     setRoom(updated);
     saveDressingRoom(updated);
+    // Delete from server in background
+    if (proToken) deleteReceiptFromServer(proToken, id);
   };
 
   if (!isPro) {
@@ -1930,7 +1991,7 @@ function TokenEntry({ onActivate }) {
           setOpen(false);
           setToken("");
           setStatus("");
-          onActivate(data.days);
+          onActivate(data.days, token.trim());
         }, 1000);
       } else {
         setStatus("Invalid token — please check and try again");
@@ -2535,7 +2596,7 @@ function MicDrop() {
       {showSplash && <ProSplash onClose={() => setShowSplash(false)} />}
 
       {/* DRESSING ROOM */}
-      {showDressingRoom && <DressingRoom onClose={() => setShowDressingRoom(false)} isPro={isPro} />}
+      {showDressingRoom && <DressingRoom onClose={() => setShowDressingRoom(false)} isPro={isPro} proToken={getStoredToken()} />}
 
       {/* SCREEN GLOW — only after track identified */}
       {armed && trackInfo && <ScreenGlow cents={smoothCents} />}
@@ -2811,7 +2872,7 @@ function MicDrop() {
       <div style={{ width:"100%", maxWidth:"420px", padding:"16px 20px 0", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
 
         {/* Token entry — for comp tokens and Pro unlock */}
-        <TokenEntry onActivate={(days) => {
+        <TokenEntry onActivate={(days, rawToken) => {
           try {
             // Stack tokens correctly — extend from current expiry if still valid
             // otherwise start fresh from now
@@ -2822,6 +2883,8 @@ function MicDrop() {
               : Date.now();          // start fresh from now
             const newExpiry = baseTime + (days * DAY_MS);
             localStorage.setItem("micDrop_proExpiry", newExpiry.toString());
+            // Store raw token for server-side receipt access
+            if (rawToken) localStorage.setItem("micDrop_proToken", rawToken);
             // Calculate actual days remaining from now for display
             const daysRemaining = Math.ceil((newExpiry - Date.now()) / DAY_MS);
             setProPaid({ paid: true, daysLeft: daysRemaining });
