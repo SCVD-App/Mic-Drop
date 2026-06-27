@@ -1152,7 +1152,7 @@ function PitchBreakdown({ samples }) {
 function ProSongCard({ song }) {
   const [coaching,    setCoaching]    = useState(null);
   const [loadCoach,   setLoadCoach]   = useState(false);
-  const [expanded,    setExpanded]    = useState(false);
+  const [expanded,    setExpanded]    = useState(true); // expanded by default
   const col   = scoreColor(song.accuracy);
   const grade = gradeFromAccuracy(song.accuracy);
 
@@ -1185,14 +1185,14 @@ function ProSongCard({ song }) {
     }
   };
 
-  const toggleExpand = () => {
-    setExpanded(e => !e);
-    if (!expanded && !coaching) fetchCoaching();
-  };
+  // Auto-fetch coaching when card mounts — no tap required
+  useEffect(() => { fetchCoaching(); }, []);
+
+  const toggleExpand = () => setExpanded(e => !e);
 
   return (
     <div style={{ borderBottom:"1px solid #111" }}>
-      {/* Song row — always visible */}
+      {/* Song row — tappable to collapse/expand */}
       <div onClick={toggleExpand} style={{ padding:"10px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
         <div style={{ flex:1, minWidth:0, marginRight:"12px" }}>
           <div style={{ fontSize:"20px", color:"#ddd", fontFamily:"'Courier New',monospace", fontWeight:"bold", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{song.title}</div>
@@ -1203,11 +1203,11 @@ function ProSongCard({ song }) {
             <div style={{ fontSize:"20px", fontWeight:"900", color:col, fontFamily:"Georgia,serif", lineHeight:1, textShadow:`0 0 12px ${col}66` }}>{song.accuracy}%</div>
             <div style={{ fontSize:"17px", color:col, fontFamily:"'Courier New',monospace", marginTop:"2px", opacity:0.7 }}>{grade.label}</div>
           </div>
-          <span style={{ fontSize:"16px", color:"#333", transition:"transform 0.2s", display:"inline-block", transform: expanded?"rotate(180deg)":"rotate(0deg)" }}>▾</span>
+          <span style={{ fontSize:"16px", color:"#555", transition:"transform 0.2s", display:"inline-block", transform: expanded?"rotate(180deg)":"rotate(0deg)" }}>▾</span>
         </div>
       </div>
 
-      {/* Expanded Pro detail */}
+      {/* Pro detail — expanded by default, tap header to collapse */}
       {expanded && (
         <div style={{ padding:"0 16px 14px", borderTop:"1px solid #0d0d0d" }}>
 
@@ -1230,7 +1230,7 @@ function ProSongCard({ song }) {
             ) : coaching ? (
               <div style={{ fontSize:"14px", color:"#aaa", fontFamily:"'Courier New',monospace", lineHeight:1.8, letterSpacing:"0.04em" }}>{coaching}</div>
             ) : (
-              <div style={{ fontSize:"13px", color:"#333", fontFamily:"'Courier New',monospace" }}>Tap the song to load coaching.</div>
+              <div style={{ fontSize:"13px", color:"#333", fontFamily:"'Courier New',monospace" }}>Loading your coaching...</div>
             )}
           </div>
 
