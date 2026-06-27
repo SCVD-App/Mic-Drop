@@ -706,6 +706,131 @@ function ProfileSetup({ profile, onSave, onClose }) {
   );
 }
 
+// ── ONBOARDING MODAL ──────────────────────────────────────────────────────────
+function OnboardingModal({ onClose }) {
+  const [step, setStep] = React.useState(0);
+  const steps = [
+    {
+      emoji: "🎵",
+      title: "STEP 1",
+      heading: "Play your song",
+      body: "Open Spotify, YouTube, or anywhere you listen to music. Hit play on a song you love to sing.",
+      cta: "Got it →",
+    },
+    {
+      emoji: "🎤",
+      title: "STEP 2",
+      heading: "Hold your phone like a mic",
+      body: "Hold your phone up near your mouth — just like you're holding a microphone. The app listens to YOU, not the music.",
+      cta: "Got it →",
+    },
+    {
+      emoji: "🌟",
+      title: "STEP 3",
+      heading: "Sing along and get scored",
+      body: "Arm the mic, sing your heart out, and Mic Drop will score your pitch in real time. No singing lessons required.",
+      cta: "Let's go 🎤",
+    },
+  ];
+  const current = steps[step];
+  const handleNext = () => {
+    if (step < steps.length - 1) {
+      setStep(step + 1);
+    } else {
+      try { localStorage.setItem("micDrop_onboarded", "1"); } catch {}
+      onClose();
+    }
+  };
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:9000,
+      background:"rgba(0,0,0,0.92)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      padding:"24px",
+    }}>
+      <div style={{
+        width:"100%", maxWidth:"380px",
+        background:"#111",
+        border:"1px solid rgba(201,168,76,0.3)",
+        borderRadius:"20px",
+        padding:"36px 28px 28px",
+        display:"flex", flexDirection:"column", alignItems:"center",
+        boxShadow:"0 0 60px rgba(201,168,76,0.1)",
+        textAlign:"center",
+      }}>
+        {/* Step indicators */}
+        <div style={{ display:"flex", gap:"8px", marginBottom:"28px" }}>
+          {steps.map((_, i) => (
+            <div key={i} style={{
+              width: i === step ? "24px" : "8px",
+              height:"8px", borderRadius:"4px",
+              background: i === step ? "#C9A84C" : i < step ? "#555" : "#222",
+              transition:"all 0.3s ease",
+            }}/>
+          ))}
+        </div>
+        {/* Emoji */}
+        <div style={{ fontSize:"56px", marginBottom:"16px", lineHeight:1 }}>
+          {current.emoji}
+        </div>
+        {/* Step label */}
+        <div style={{
+          fontSize:"11px", letterSpacing:"0.3em", color:"#C9A84C",
+          fontFamily:"'Courier New',monospace", marginBottom:"10px",
+          fontWeight:"bold",
+        }}>
+          {current.title}
+        </div>
+        {/* Heading */}
+        <div style={{
+          fontSize:"22px", fontWeight:"900", color:"#fff",
+          fontFamily:"Georgia,serif", marginBottom:"14px",
+          letterSpacing:"0.05em",
+        }}>
+          {current.heading}
+        </div>
+        {/* Body */}
+        <div style={{
+          fontSize:"15px", color:"#888", lineHeight:1.7,
+          fontFamily:"'Courier New',monospace", marginBottom:"32px",
+          letterSpacing:"0.05em",
+        }}>
+          {current.body}
+        </div>
+        {/* CTA Button */}
+        <div
+          onClick={handleNext}
+          style={{
+            width:"100%", padding:"14px",
+            background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+            borderRadius:"10px", cursor:"pointer",
+            fontSize:"15px", fontWeight:"900",
+            color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+            letterSpacing:"0.15em", textTransform:"uppercase",
+            textAlign:"center",
+          }}
+        >
+          {current.cta}
+        </div>
+        {/* Skip */}
+        <div
+          onClick={() => {
+            try { localStorage.setItem("micDrop_onboarded", "1"); } catch {}
+            onClose();
+          }}
+          style={{
+            marginTop:"16px", fontSize:"12px", color:"#333",
+            fontFamily:"'Courier New',monospace", cursor:"pointer",
+            letterSpacing:"0.15em", textTransform:"uppercase",
+          }}
+        >
+          skip
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── PRO SPLASH PAGE ───────────────────────────────────────────────────────────
 function ProSplash({ onClose }) {
   const [selected,    setSelected]    = useState("annual");
@@ -1899,6 +2024,10 @@ function MicDrop() {
   const [showProfile,      setShowProfile]      = useState(false);
   const [showAbout,        setShowAbout]        = useState(false);
   const [showDressingRoom, setShowDressingRoom] = useState(false);
+  const [showOnboarding,   setShowOnboarding]   = useState(() => {
+    try { return !localStorage.getItem("micDrop_onboarded"); }
+    catch { return true; }
+  });
   const [profile,     setProfile]     = useState(() => {
     try {
       const saved = localStorage.getItem("micDrop_profile");
@@ -2326,6 +2455,9 @@ function MicDrop() {
   }, [paymentReturn]);
   return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", fontFamily:"'Courier New',monospace", paddingBottom:"24px", position:"relative" }}>
+
+      {/* ONBOARDING */}
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
 
       {/* ABOUT MODAL */}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} profile={profile} />}
