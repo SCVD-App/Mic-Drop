@@ -109,7 +109,7 @@ const PITCH_SMOOTH_MS      = 300;
 const POCKET_CENTS         = 25;     // tightened — earned, not gifted
 const CLOSE_CENTS          = 55;
 const REPORT_INTERVAL_MS   = 500;
-const MIN_VOX_RMS          = 0.035;  // narrowband gate — must exceed backing track bleed
+const MIN_VOX_RMS          = 0.06;   // narrowband gate — rejects backing track bleed, requires close vocal signal
 const MAX_VOX_FREQ         = 3000;   // human singing voice tops out ~3kHz
 
 // ── PITCH DETECTION (autocorrelation) ────────────────────────────────────────
@@ -1425,11 +1425,34 @@ function DressingRoom({ onClose, isPro }) {
         <div style={{ position:"fixed", inset:0, zIndex:4000, background:"rgba(0,0,0,0.97)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px" }}
           onClick={() => setViewing(null)}
         >
-          <img src={viewing.thumbnail} alt={viewing.title} style={{ maxWidth:"100%", maxHeight:"80vh", borderRadius:"12px", boxShadow:"0 0 40px rgba(0,0,0,0.8)" }}/>
-          <div style={{ marginTop:"16px", textAlign:"center" }}>
+          <img
+            src={viewing.thumbnail}
+            alt={viewing.title}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth:"100%", maxHeight:"70vh", borderRadius:"12px", boxShadow:"0 0 40px rgba(0,0,0,0.8)" }}
+          />
+          <div style={{ marginTop:"16px", textAlign:"center" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize:"18px", fontWeight:"900", color:viewing.gradeColor, fontFamily:"Georgia,serif" }}>{viewing.accuracy}% — {viewing.grade}</div>
             <div style={{ fontSize:"14px", color:"#555", fontFamily:"'Courier New',monospace", marginTop:"4px" }}>{viewing.title} · {viewing.date}</div>
-            <div style={{ fontSize:"12px", color:"#333", fontFamily:"'Courier New',monospace", marginTop:"12px", letterSpacing:"0.15em" }}>TAP ANYWHERE TO CLOSE</div>
+            {/* Download receipt to camera roll */}
+            <div
+              onClick={() => {
+                const a = document.createElement("a");
+                a.href = viewing.thumbnail;
+                a.download = `mic-drop-${viewing.title.replace(/\s+/g,"-").toLowerCase()}.jpg`;
+                a.click();
+              }}
+              style={{
+                marginTop:"16px", padding:"10px 24px", borderRadius:"8px",
+                background:"linear-gradient(135deg, #C9A84C 0%, #a07830 100%)",
+                color:"#0a0a0a", fontFamily:"'Courier New',monospace",
+                fontSize:"13px", fontWeight:"900", letterSpacing:"0.15em",
+                cursor:"pointer", display:"inline-block",
+              }}
+            >
+              ⬇ SAVE RECEIPT
+            </div>
+            <div style={{ fontSize:"12px", color:"#333", fontFamily:"'Courier New',monospace", marginTop:"12px", letterSpacing:"0.15em" }}>TAP OUTSIDE TO CLOSE</div>
           </div>
         </div>
       )}
@@ -1454,15 +1477,29 @@ function SessionReport({ songs, onClose, onUnlock, isPro }) {
         logging: false,
       });
       canvas.toBlob(async (blob) => {
-        const file = new File([blob], "mic-drop-performance.png", { type:"image/png" });
-        if (navigator.share && navigator.canShare({ files:[file] })) {
-          await navigator.share({ files:[file], title:"Mic Drop Performance Report" });
-        } else {
-          // Fallback — direct download
-          const a = document.createElement("a");
-          a.href  = URL.createObjectURL(blob);
-          a.download = "mic-drop-performance.png";
-          a.click();
+        try {
+          const file = new File([blob], "mic-drop-performance.png", { type:"image/png" });
+          if (navigator.share && navigator.canShare && navigator.canShare({ files:[file] })) {
+            // Web Share API — lets user choose save to Photos, WhatsApp, etc
+            await navigator.share({
+              files: [file],
+              title: "Mic Drop Performance",
+              text: "Check out my Mic Drop receipt! 🎤 #DropTheReceipts",
+            });
+          } else {
+            // Fallback — create object URL and trigger download
+            const url = URL.createObjectURL(blob);
+            const a   = document.createElement("a");
+            a.href     = url;
+            a.download = "mic-drop-performance.png";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }
+        } catch(shareErr) {
+          // User cancelled share or share failed — silent fail is fine
+          console.log("Share cancelled or failed:", shareErr);
         }
       }, "image/png");
     } catch(e) {
