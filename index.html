@@ -2252,11 +2252,23 @@ function MicDrop() {
     setCountdown(null);
 
     try {
-      const chunks   = [];
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
-      const recorder = new MediaRecorder(mediaStream.current, { mimeType });
+      const chunks = [];
+      const MIME_CANDIDATES = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4;codecs=mp4a.40.2",   // iOS Safari — AAC in MP4 container
+        "audio/mp4",                     // iOS Safari fallback
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+      ];
+      const mimeType = MIME_CANDIDATES.find(t => MediaRecorder.isTypeSupported(t)) || "";
+      // If nothing on the list is supported, omit mimeType entirely and let the
+      // browser pick its own default rather than passing an unverified string
+      // (an unsupported type throws immediately on iOS Safari).
+      const recorder = mimeType
+        ? new MediaRecorder(mediaStream.current, { mimeType })
+        : new MediaRecorder(mediaStream.current);
+      const actualMimeType = recorder.mimeType || mimeType || "audio/mp4";
       recorder.ondataavailable = (e) => { if (e.data?.size > 0) chunks.push(e.data); };
 
       await new Promise((resolve, reject) => {
@@ -2279,7 +2291,7 @@ function MicDrop() {
 
       if (!chunks.length) { setStatusMsg("No audio captured — check mic permissions"); setTimeout(()=>setStatusMsg(""),4000); return; }
 
-      const blob   = new Blob(chunks, { type:mimeType });
+      const blob   = new Blob(chunks, { type:actualMimeType });
       const base64 = await new Promise((res, rej) => {
         const r = new FileReader();
         r.onloadend = () => r.result?.includes(",") ? res(r.result.split(",")[1]) : rej(new Error("FileReader failed"));
@@ -2292,7 +2304,7 @@ function MicDrop() {
 
       const resp = await fetch(`${PROXY_BASE_URL}/recognize`, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ audio:base64, mimeType }),
+        body: JSON.stringify({ audio:base64, mimeType:actualMimeType }),
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
