@@ -2515,13 +2515,16 @@ function MicDrop() {
           }
         }, REPORT_INTERVAL_MS);
       } catch (err) {
+        pushDebug("getUserMedia error", `${err.name}: ${err.message}`);
         const msg = err.message.includes("timeout")
           ? "Mic timeout — close Facebook, Messenger and other apps then try again."
           : err.name === "NotAllowedError"
             ? "Microphone access denied — check Chrome permissions in Android Settings."
             : err.name === "NotFoundError"
               ? "No microphone found — check your device settings."
-              : `Mic error: ${err.name} — ${err.message}`;
+              : err.name === "NotReadableError"
+                ? "Mic's already in use by another app — force close Facebook, Messenger and any other camera/mic apps, then try again."
+                : `Mic error: ${err.name} — ${err.message}`;
         setStatusMsg(msg);
         setTimeout(() => setStatusMsg(""), 8000);
       }
