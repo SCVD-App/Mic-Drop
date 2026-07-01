@@ -2845,6 +2845,11 @@ function MicDrop() {
 
       {/* BUTTONS */}
       <div style={{ width:"100%", maxWidth:"420px", padding:"20px 20px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:"10px" }}>
+        {!armed && (
+          <div style={{ fontSize:"13px", color:"#777", textAlign:"center", lineHeight:"1.5", padding:"0 10px 2px", maxWidth:"360px" }}>
+            🚫 Force close Facebook &amp; Messenger before arming — they like to hog the mic. Besides, Zuckerberg ain't invited to this party anyway. He ain't got no candy for you.
+          </div>
+        )}
         <button className={`arm-btn${armed?" armed":""}`} onClick={toggleArmed}>
           {armed ? "⏹  DISARM" : "⏺  ARM MIC"}
         </button>
