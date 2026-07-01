@@ -2112,6 +2112,54 @@ function MicDrop() {
   const [lastTrackKey,setLastTrackKey]= useState(null);
   const [statusMsg,   setStatusMsg]   = useState("");
 
+  // ── DEBUG OVERLAY — tester-facing diagnostic log ──
+  // Toggle: tap the footer version text 5x quickly. Never enabled by default.
+  const [showDebug,   setShowDebug]   = useState(false);
+  const [debugLog,     setDebugLog]    = useState([]);
+  const [lastMimeType, setLastMimeType]= useState(null);
+  const debugTapCount = useRef(0);
+  const debugTapTimer = useRef(null);
+  const pushDebug = useCallback((label, detail) => {
+    setDebugLog(prev => [
+      { t: new Date().toLocaleTimeString(), label, detail: typeof detail === "string" ? detail : JSON.stringify(detail) },
+      ...prev,
+    ].slice(0, 40)); // cap at 40 entries so it never bloats
+  }, []);
+  useEffect(() => {
+    const onErr = (e) => pushDebug("window.onerror", e?.message || String(e));
+    const onRej = (e) => pushDebug("unhandledrejection", e?.reason?.message || String(e?.reason || e));
+    window.addEventListener("error", onErr);
+    window.addEventListener("unhandledrejection", onRej);
+    return () => {
+      window.removeEventListener("error", onErr);
+      window.removeEventListener("unhandledrejection", onRej);
+    };
+  }, [pushDebug]);
+  const handleVersionTap = useCallback(() => {
+    debugTapCount.current += 1;
+    clearTimeout(debugTapTimer.current);
+    debugTapTimer.current = setTimeout(() => { debugTapCount.current = 0; }, 1500);
+    if (debugTapCount.current >= 5) {
+      debugTapCount.current = 0;
+      setShowDebug(s => !s);
+    }
+  }, []);
+  const shareDebugLog = useCallback(async () => {
+    const ua = navigator.userAgent;
+    const lines = [
+      `Mic Drop debug log — ${new Date().toLocaleString()}`,
+      `UA: ${ua}`,
+      `Last mimeType: ${lastMimeType || "n/a"}`,
+      "",
+      ...debugLog.map(d => `[${d.t}] ${d.label}: ${d.detail}`),
+    ].join("\n");
+    try {
+      if (navigator.share) await navigator.share({ text: lines, title: "Mic Drop debug log" });
+      else { await navigator.clipboard.writeText(lines); setStatusMsg("Debug log copied to clipboard"); setTimeout(()=>setStatusMsg(""),3000); }
+    } catch {} // user cancelled share sheet — not an error
+  }, [debugLog, lastMimeType]);
+
+
   // Identification phase: null | "capturing" | "counting" | "sending" | "enriching"
   const [idPhase,     setIdPhase]     = useState(null);
   const [countdown,   setCountdown]   = useState(null);
@@ -2269,6 +2317,8 @@ function MicDrop() {
         ? new MediaRecorder(mediaStream.current, { mimeType })
         : new MediaRecorder(mediaStream.current);
       const actualMimeType = recorder.mimeType || mimeType || "audio/mp4";
+      setLastMimeType(actualMimeType);
+      pushDebug("mimeType selected", actualMimeType);
       recorder.ondataavailable = (e) => { if (e.data?.size > 0) chunks.push(e.data); };
 
       await new Promise((resolve, reject) => {
@@ -2292,6 +2342,7 @@ function MicDrop() {
       if (!chunks.length) { setStatusMsg("No audio captured — check mic permissions"); setTimeout(()=>setStatusMsg(""),4000); return; }
 
       const blob   = new Blob(chunks, { type:actualMimeType });
+      pushDebug("blob captured", `${blob.size} bytes, ${chunks.length} chunks, type=${blob.type}`);
       const base64 = await new Promise((res, rej) => {
         const r = new FileReader();
         r.onloadend = () => r.result?.includes(",") ? res(r.result.split(",")[1]) : rej(new Error("FileReader failed"));
@@ -2310,6 +2361,7 @@ function MicDrop() {
       const data = await resp.json();
 
       if (data.status === "error") {
+        pushDebug("AudD error", data.error?.error_message || "unknown");
         setStatusMsg(`AudD: ${data.error?.error_message || "error"}`);
         setTimeout(()=>setStatusMsg(""), 5000);
         return;
@@ -2347,6 +2399,7 @@ function MicDrop() {
         setTimeout(()=>setStatusMsg(""), 5000);
       }
     } catch (err) {
+      pushDebug("recognizeTrack catch", err?.message || String(err));
       setStatusMsg(`Error: ${err.message}`);
       setTimeout(()=>setStatusMsg(""), 5000);
     } finally {
@@ -3006,16 +3059,62 @@ function MicDrop() {
           </button>
         </div>
 
-        {/* Version */}
-        <div style={{ fontSize:"15px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase" }}>
+        {/* Version — tap 5x quickly to toggle tester debug overlay */}
+        <div
+          onClick={handleVersionTap}
+          style={{ fontSize:"15px", color:"#2a2a2a", letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer", userSelect:"none" }}
+        >
           Mic Drop v2.1 — Powered by AudD + Claude
         </div>
 
       </div>
 
+      {/* ── TESTER DEBUG OVERLAY ── */}
+      {showDebug && (
+        <div style={{
+          position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.94)",
+          display:"flex", flexDirection:"column", padding:"16px",
+        }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px" }}>
+            <div style={{ color:"#C9A84C", fontFamily:"'Courier New',monospace", fontSize:"16px", letterSpacing:"0.05em" }}>
+              🐛 DEBUG — Mic Drop
+            </div>
+            <button onClick={() => setShowDebug(false)} style={{ background:"none", border:"1px solid #444", color:"#aaa", borderRadius:"6px", padding:"4px 10px", fontSize:"14px" }}>
+              Close
+            </button>
+          </div>
+          <div style={{ color:"#888", fontSize:"12px", fontFamily:"'Courier New',monospace", marginBottom:"10px", lineHeight:"1.6" }}>
+            <div>UA: {navigator.userAgent}</div>
+            <div>Last mimeType: {lastMimeType || "n/a"}</div>
+            <div>Armed: {String(armed)} · Identifying: {String(identifying.current)}</div>
+          </div>
+          <div style={{ flex:1, overflowY:"auto", border:"1px solid #222", borderRadius:"8px", padding:"8px" }}>
+            {debugLog.length === 0 && (
+              <div style={{ color:"#555", fontSize:"13px", fontFamily:"'Courier New',monospace" }}>
+                No events logged yet — arm the mic and try Identify Track.
+              </div>
+            )}
+            {debugLog.map((d, i) => (
+              <div key={i} style={{ marginBottom:"8px", paddingBottom:"8px", borderBottom:"1px solid #1a1a1a" }}>
+                <div style={{ color:"#666", fontSize:"11px", fontFamily:"'Courier New',monospace" }}>{d.t}</div>
+                <div style={{ color:"#C9A84C", fontSize:"13px", fontFamily:"'Courier New',monospace" }}>{d.label}</div>
+                <div style={{ color:"#ccc", fontSize:"12px", fontFamily:"'Courier New',monospace", wordBreak:"break-word" }}>{d.detail}</div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={shareDebugLog}
+            style={{ marginTop:"10px", background:"#C9A84C", color:"#000", border:"none", borderRadius:"8px", padding:"12px", fontSize:"15px", fontWeight:"bold", fontFamily:"'Courier New',monospace" }}
+          >
+            📤 Share / Copy Log
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary><MicDrop /></ErrorBoundary>);
 </script>
