@@ -3410,12 +3410,15 @@ function MicDrop() {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ audio:base64, mimeType:actualMimeType }),
       });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      // 429 (rate limited) / 413 (clip too big) come back from the worker as
+      // AudD-shaped errors so the message below can show them.
+      if (!resp.ok && resp.status !== 429 && resp.status !== 413) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
 
       if (data.status === "error") {
         pushDebug("AudD error", data.error?.error_message || "unknown");
-        setStatusMsg(`AudD: ${data.error?.error_message || "error"}`);
+        const fromWorker = resp.status === 429 || resp.status === 413;
+        setStatusMsg(fromWorker ? data.error?.error_message : `AudD: ${data.error?.error_message || "error"}`);
         setTimeout(()=>setStatusMsg(""), 5000);
         return;
       }
@@ -3733,6 +3736,55 @@ function MicDrop() {
   };
 
   const [proPaid, setProPaid] = useState(() => getProPaidState());
+
+  // ── PRO CHECK WITH THE WORKER (security pass 10 Nov 2026) ─────────────────
+  // The Pro flags above live in localStorage, so anyone could type them in.
+  // On load, confirm the stored token is genuine. Only an explicit
+  // "valid: false" from the worker revokes anything — offline / network
+  // errors leave Pro alone so paying users are never locked out by a blip.
+  //   • Lifetime flag needs a genuine lifetime token, or it's cleared.
+  //   • Timed Pro with a token: token must be genuine, or it's cleared.
+  //   • Timed Pro with no token (legacy migrated time): kept, but capped at
+  //     400 days out — the longest any real token grants.
+  useEffect(() => {
+    let cancelled = false;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const clearLifetime = () => { localStorage.removeItem("micDrop_proLifetime"); };
+    const clearTimed    = () => { localStorage.removeItem("micDrop_proExpiry"); };
+    (async () => {
+      try {
+        const lifetime = localStorage.getItem("micDrop_proLifetime") === "1";
+        const expiry   = localStorage.getItem("micDrop_proExpiry");
+        const token    = localStorage.getItem("micDrop_proToken");
+        if (!lifetime && !expiry) return;
+
+        if (!token) {
+          if (lifetime) clearLifetime();
+          const maxExpiry = Date.now() + 400 * DAY_MS;
+          if (expiry && parseInt(expiry) > maxExpiry) localStorage.setItem("micDrop_proExpiry", String(maxExpiry));
+          if (!cancelled) setProPaid(getProPaidState());
+          return;
+        }
+
+        const res = await fetch(`${PROXY_BASE_URL}/verify-token`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.valid === false) {
+          clearLifetime(); clearTimed(); localStorage.removeItem("micDrop_proToken");
+        } else if (data.valid === true && lifetime && data.type !== "lifetime") {
+          clearLifetime();
+        } else {
+          return;
+        }
+        if (!cancelled) setProPaid(getProPaidState());
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const isPro = trial.active || proPaid.paid;
   const isIdentifying = idPhase !== null;
   const sessionAccuracy = sessionLog.length > 0
