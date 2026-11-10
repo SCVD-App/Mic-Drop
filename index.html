@@ -1429,8 +1429,20 @@ function saveDressingRoom(data) {
   try { localStorage.setItem("micDrop_dressingRoom", JSON.stringify(data)); } catch {}
 }
 
+// ⚠ Server receipt sync is OFF (10 Nov 2026). Two reasons:
+//  1. The worker has never had MICDROP_KV connected, so the server always
+//     answered with an empty list — and the sync below then overwrote the
+//     user's local receipts with that empty list every time Backstage opened.
+//  2. Receipts are keyed by Pro token, but every customer on the same plan
+//     gets the SAME token (tokens are type+days+HMAC, no per-buyer part), so
+//     connecting KV would make customers on a plan share one receipt list.
+// Receipts stay on the device (as they effectively always have) until tokens
+// are unique per purchase. Flip this back to true only after that.
+const RECEIPT_SERVER_SYNC = false;
+
 // Sync receipts FROM server into localStorage cache
 async function syncReceiptsFromServer(token) {
+  if (!RECEIPT_SERVER_SYNC) return;
   try {
     const res = await fetch(`${PROXY_BASE_URL}/receipts?token=${encodeURIComponent(token)}`);
     if (!res.ok) return;
@@ -1445,7 +1457,7 @@ async function syncReceiptsFromServer(token) {
 
 // Save a receipt to server AND local cache
 async function saveReceiptToServer(token, receipt) {
-  if (!token) return;
+  if (!RECEIPT_SERVER_SYNC || !token) return;
   try {
     await fetch(`${PROXY_BASE_URL}/receipts`, {
       method: "POST",
@@ -1457,7 +1469,7 @@ async function saveReceiptToServer(token, receipt) {
 
 // Delete a receipt from server AND local cache
 async function deleteReceiptFromServer(token, id) {
-  if (!token) return;
+  if (!RECEIPT_SERVER_SYNC || !token) return;
   try {
     await fetch(`${PROXY_BASE_URL}/receipts`, {
       method: "DELETE",
@@ -3221,9 +3233,6 @@ function MicDrop() {
     })();
   }, [pushDebug]);
 
-  const [activeUsers, setActiveUsers] = useState(null);
-  const pingTimer    = useRef(null);
-  const sessionId    = useRef(`${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
   const voxPeakTimer   = useRef(null);
   const roomPeakTimer  = useRef(null);
   const animFrame      = useRef(null);
@@ -3259,60 +3268,9 @@ function MicDrop() {
   useEffect(() => { lastTrackKeyRef.current = lastTrackKey; }, [lastTrackKey]);
   useEffect(() => { spotifyStatusRef.current = spotifyStatus; }, [spotifyStatus]);
 
-  // ── ANALYTICS PING — fires once on load ──────────────────────────────────
-  useEffect(() => {
-    try {
-      fetch(`${PROXY_BASE_URL}/ping`, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          v:"1.6", ts:Date.now(),
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        }),
-      }).catch(()=>{});
-    } catch {}
-  }, []);
-
-  // ── ACTIVE USER COUNTER ───────────────────────────────────────────────────
-  const sendPing = useCallback(async () => {
-    try {
-      await fetch(`${PROXY_BASE_URL}/ping`, {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          sessionId: sessionId.current,
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          v: "1.5",
-        }),
-      });
-    } catch {}
-  }, []);
-
-  const fetchActive = useCallback(async () => {
-    try {
-      const res  = await fetch(`${PROXY_BASE_URL}/active`);
-      const data = await res.json();
-      // Add 1 to include this user, minimum 1
-      setActiveUsers(Math.max(1, (data.count || 0) + 1));
-    } catch {}
-  }, []);
-
-  // Fetch active count on mount
-  useEffect(() => {
-    fetchActive();
-    const t = setInterval(fetchActive, 5 * 60 * 1000); // refresh every 5min
-    return () => clearInterval(t);
-  }, [fetchActive]);
-
-  // Ping while armed — every 5 minutes
-  useEffect(() => {
-    if (armed) {
-      sendPing(); // immediate ping on arm
-      pingTimer.current = setInterval(sendPing, 5 * 60 * 1000);
-    } else {
-      clearInterval(pingTimer.current);
-    }
-    return () => clearInterval(pingTimer.current);
-  }, [armed, sendPing]);
+  // Load ping + "singers online" counter removed 10 Nov 2026 — the count was
+  // never real (worker had no KV). Usage will be measured like Duology's
+  // free-version counter when Mic Drop's marketing rolls out.
 
   // ── PITCH SMOOTHING ──────────────────────────────────────────────────────
   const addPitchSample = useCallback((cents) => {
@@ -4218,16 +4176,6 @@ function MicDrop() {
           })();
           alert(type === "lifetime" ? "✦ Lifetime Pro activated — welcome to the backstage pass. Thank you for your patience!" : `✦ Token activated — ${days} days of Pro access added. Thank you for your patience!`);
         }}/>
-
-        {/* Active users counter */}
-        {activeUsers !== null && (
-          <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
-            <span className="live-pulse" style={{ fontSize:"18px", color:"#00cc55" }}>●</span>
-            <span style={{ fontSize:"14px", color:"#444", fontFamily:"'Courier New',monospace", letterSpacing:"0.1em" }}>
-              {activeUsers} singer{activeUsers !== 1 ? "s" : ""} online
-            </span>
-          </div>
-        )}
 
         {/* Support + About links */}
         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
